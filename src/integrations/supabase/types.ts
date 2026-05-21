@@ -14,13 +14,59 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      qr_links: {
+        Row: {
+          clicks: number
+          color: string
+          created_at: string
+          destination_url: string
+          id: string
+          short_id: string
+          title: string
+          type: string
+          user_id: string
+          vcard_data: Json | null
+        }
+        Insert: {
+          clicks?: number
+          color?: string
+          created_at?: string
+          destination_url: string
+          id?: string
+          short_id: string
+          title: string
+          type: string
+          user_id: string
+          vcard_data?: Json | null
+        }
+        Update: {
+          clicks?: number
+          color?: string
+          created_at?: string
+          destination_url?: string
+          id?: string
+          short_id?: string
+          title?: string
+          type?: string
+          user_id?: string
+          vcard_data?: Json | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      resolve_qr: {
+        Args: { p_short_id: string }
+        Returns: {
+          destination_url: string
+          title: string
+          type: string
+          vcard_data: Json
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never
