@@ -16,6 +16,7 @@ export type Database = {
     Tables: {
       qr_links: {
         Row: {
+          active: boolean
           clicks: number
           color: string
           created_at: string
@@ -28,6 +29,7 @@ export type Database = {
           vcard_data: Json | null
         }
         Insert: {
+          active?: boolean
           clicks?: number
           color?: string
           created_at?: string
@@ -40,6 +42,7 @@ export type Database = {
           vcard_data?: Json | null
         }
         Update: {
+          active?: boolean
           clicks?: number
           color?: string
           created_at?: string
@@ -61,6 +64,7 @@ export type Database = {
       resolve_qr: {
         Args: { p_short_id: string }
         Returns: {
+          active: boolean
           destination_url: string
           title: string
           type: string
