@@ -1,0 +1,314 @@
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMemo, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
+import {
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+} from "@/components/ui/table";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  Copy, Pencil, Trash2, QrCode as QrIcon, Plus, MousePointerClick,
+  ExternalLink, Search,
+} from "lucide-react";
+import { toast } from "sonner";
+import { QRCodePreview } from "@/components/QRCodePreview";
+import { buildQrUrl, QR_TYPE_LABELS } from "@/lib/qr";
+
+export const Route = createFileRoute("/_authenticated/dashboard")({
+  head: () => ({ meta: [{ title: "Dashboard — QRFlow" }] }),
+  component: Dashboard,
+});
+
+type Row = {
+  id: string;
+  title: string;
+  type: string;
+  short_id: string;
+  destination_url: string;
+  color: string;
+  clicks: number;
+  created_at: string;
+  active: boolean;
+};
+
+type SortKey = "recent" | "scans";
+type StatusFilter = "all" | "active" | "inactive";
+
+function Dashboard() {
+  const qc = useQueryClient();
+  const { data, isLoading } = useQuery({
+    queryKey: ["qr_links"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("qr_links")
+        .select("id,title,type,short_id,destination_url,color,clicks,created_at,active")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data as Row[];
+    },
+  });
+
+  const [previewRow, setPreviewRow] = useState<Row | null>(null);
+  const [editRow, setEditRow] = useState<Row | null>(null);
+  const [editTitle, setEditTitle] = useState("");
+  const [editUrl, setEditUrl] = useState("");
+  const [editColor, setEditColor] = useState("#0f172a");
+
+  const [search, setSearch] = useState("");
+  const [typeFilter, setTypeFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+  const [sortKey, setSortKey] = useState<SortKey>("recent");
+
+  const filtered = useMemo(() => {
+    let rows = data ?? [];
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      rows = rows.filter((r) => r.title.toLowerCase().includes(q));
+    }
+    if (typeFilter !== "all") rows = rows.filter((r) => r.type === typeFilter);
+    if (statusFilter !== "all") {
+      rows = rows.filter((r) => (statusFilter === "active" ? r.active : !r.active));
+    }
+    rows = [...rows].sort((a, b) =>
+      sortKey === "scans"
+        ? b.clicks - a.clicks
+        : new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+    );
+    return rows;
+  }, [data, search, typeFilter, statusFilter, sortKey]);
+
+  const total = data?.length ?? 0;
+  const totalClicks = data?.reduce((s, r) => s + r.clicks, 0) ?? 0;
+
+  const availableTypes = useMemo(() => {
+    const set = new Set(data?.map((r) => r.type) ?? []);
+    return Array.from(set);
+  }, [data]);
+
+  const copyLink = (row: Row) => {
+    const v = row.type === "wifi" ? row.destination_url : buildQrUrl(row.short_id);
+    navigator.clipboard.writeText(v);
+    toast.success(row.type === "wifi" ? "Conteúdo WiFi copiado!" : "Link copiado!");
+  };
+
+  const onDelete = async (id: string) => {
+    if (!confirm("Apagar este QR Code?")) return;
+    const { error } = await supabase.from("qr_links").delete().eq("id", id);
+    if (error) return toast.error(error.message);
+    toast.success("Apagado");
+    qc.invalidateQueries({ queryKey: ["qr_links"] });
+  };
+
+  const toggleActive = async (row: Row) => {
+    const { error } = await supabase.from("qr_links").update({ active: !row.active }).eq("id", row.id);
+    if (error) return toast.error(error.message);
+    toast.success(row.active ? "QR pausado" : "QR reativado");
+    qc.invalidateQueries({ queryKey: ["qr_links"] });
+  };
+
+  const openEdit = (row: Row) => {
+    setEditRow(row);
+    setEditTitle(row.title);
+    setEditUrl(row.destination_url);
+    setEditColor(row.color);
+  };
+
+  const saveEdit = async () => {
+    if (!editRow) return;
+    const { error } = await supabase
+      .from("qr_links")
+      .update({ title: editTitle, destination_url: editUrl, color: editColor })
+      .eq("id", editRow.id);
+    if (error) return toast.error(error.message);
+    toast.success("Salvo");
+    setEditRow(null);
+    qc.invalidateQueries({ queryKey: ["qr_links"] });
+  };
+
+  const qrValueFor = (row: Row) => (row.type === "wifi" ? row.destination_url : buildQrUrl(row.short_id));
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
+          <p className="text-sm text-muted-foreground">Gerencie seus QR Codes dinâmicos</p>
+        </div>
+        <Link to="/create">
+          <Button><Plus className="mr-2 h-4 w-4" /> Novo QR Code</Button>
+        </Link>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Metric icon={<QrIcon className="h-5 w-5" />} label="Total de QR Codes" value={total} />
+        <Metric icon={<MousePointerClick className="h-5 w-5" />} label="Total de scans" value={totalClicks} />
+      </div>
+
+      <Card className="overflow-hidden">
+        <div className="flex flex-wrap items-center gap-2 border-b border-border bg-muted/40 p-3">
+          <div className="relative flex-1 min-w-[200px]">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar por nome..." className="pl-9" />
+          </div>
+          <Select value={typeFilter} onChange={setTypeFilter}>
+            <option value="all">Todos os tipos</option>
+            {availableTypes.map((t) => (
+              <option key={t} value={t}>{QR_TYPE_LABELS[t] ?? t}</option>
+            ))}
+          </Select>
+          <Select value={statusFilter} onChange={(v) => setStatusFilter(v as StatusFilter)}>
+            <option value="all">Todos os status</option>
+            <option value="active">Ativos</option>
+            <option value="inactive">Pausados</option>
+          </Select>
+          <Select value={sortKey} onChange={(v) => setSortKey(v as SortKey)}>
+            <option value="recent">Mais recentes</option>
+            <option value="scans">Mais escaneados</option>
+          </Select>
+        </div>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Nome</TableHead>
+              <TableHead>Tipo</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead className="text-right">Cliques</TableHead>
+              <TableHead>Criado</TableHead>
+              <TableHead className="text-right">Ações</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {isLoading && (
+              <TableRow><TableCell colSpan={6} className="py-10 text-center text-muted-foreground">Carregando...</TableCell></TableRow>
+            )}
+            {!isLoading && filtered.length === 0 && total === 0 && (
+              <TableRow><TableCell colSpan={6} className="py-10 text-center text-muted-foreground">
+                Nenhum QR Code ainda. <Link to="/create" className="text-primary underline">Criar o primeiro</Link>.
+              </TableCell></TableRow>
+            )}
+            {!isLoading && filtered.length === 0 && total > 0 && (
+              <TableRow><TableCell colSpan={6} className="py-10 text-center text-muted-foreground">
+                Nenhum resultado para os filtros atuais.
+              </TableCell></TableRow>
+            )}
+            {filtered.map((row) => (
+              <TableRow key={row.id} className={row.active ? "" : "opacity-60"}>
+                <TableCell className="font-medium">{row.title}</TableCell>
+                <TableCell><Badge variant="secondary">{QR_TYPE_LABELS[row.type] ?? row.type}</Badge></TableCell>
+                <TableCell>
+                  <div className="flex items-center gap-2">
+                    <Switch checked={row.active} onCheckedChange={() => toggleActive(row)} />
+                    <span className="text-xs text-muted-foreground">{row.active ? "Ativo" : "Pausado"}</span>
+                  </div>
+                </TableCell>
+                <TableCell className="text-right tabular-nums">{row.clicks}</TableCell>
+                <TableCell className="text-muted-foreground">{new Date(row.created_at).toLocaleDateString()}</TableCell>
+                <TableCell className="text-right">
+                  <div className="flex justify-end gap-1">
+                    <Button size="icon" variant="ghost" title="Copiar link" onClick={() => copyLink(row)}>
+                      <Copy className="h-4 w-4" />
+                    </Button>
+                    {row.type !== "wifi" && (
+                      <a href={buildQrUrl(row.short_id)} target="_blank" rel="noreferrer">
+                        <Button size="icon" variant="ghost" title="Abrir"><ExternalLink className="h-4 w-4" /></Button>
+                      </a>
+                    )}
+                    <Button size="icon" variant="ghost" title="Baixar QR" onClick={() => setPreviewRow(row)}>
+                      <QrIcon className="h-4 w-4" />
+                    </Button>
+                    <Button size="icon" variant="ghost" title="Editar" onClick={() => openEdit(row)}>
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button size="icon" variant="ghost" title="Apagar" onClick={() => onDelete(row.id)}>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </Card>
+
+      <Dialog open={!!previewRow} onOpenChange={(o) => !o && setPreviewRow(null)}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>{previewRow?.title}</DialogTitle></DialogHeader>
+          {previewRow && (
+            <div className="flex flex-col items-center gap-3 py-2">
+              <QRCodePreview value={qrValueFor(previewRow)} color={previewRow.color} name={previewRow.title} />
+              <code className="rounded bg-muted px-2 py-1 text-xs break-all max-w-full">{qrValueFor(previewRow)}</code>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!editRow} onOpenChange={(o) => !o && setEditRow(null)}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Editar QR Code</DialogTitle></DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-title">Nome</Label>
+              <Input id="edit-title" value={editTitle} onChange={(e) => setEditTitle(e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-url">
+                {editRow?.type === "wifi" ? "Conteúdo WiFi (avançado)" : "URL de destino"}
+              </Label>
+              <Input id="edit-url" value={editUrl} onChange={(e) => setEditUrl(e.target.value)} />
+              <p className="text-xs text-muted-foreground">
+                {editRow?.type === "wifi"
+                  ? "WiFi é estático — editar não muda o QR já impresso."
+                  : "O QR Code continua o mesmo — apenas o destino muda."}
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label>Cor</Label>
+              <div className="flex items-center gap-3">
+                <input type="color" value={editColor} onChange={(e) => setEditColor(e.target.value)} className="h-10 w-14 cursor-pointer rounded border border-input bg-background" />
+                <Input value={editColor} onChange={(e) => setEditColor(e.target.value)} className="max-w-[140px]" />
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditRow(null)}>Cancelar</Button>
+            <Button onClick={saveEdit}>Salvar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+function Metric({ icon, label, value }: { icon: React.ReactNode; label: string; value: number }) {
+  return (
+    <Card className="flex items-center gap-4 p-5">
+      <div className="grid h-12 w-12 place-items-center rounded-lg bg-primary/10 text-primary">{icon}</div>
+      <div>
+        <p className="text-sm text-muted-foreground">{label}</p>
+        <p className="text-2xl font-semibold tabular-nums">{value}</p>
+      </div>
+    </Card>
+  );
+}
+
+function Select<T extends string>({
+  value, onChange, children,
+}: { value: T; onChange: (v: T) => void; children: React.ReactNode }) {
+  return (
+    <select
+      value={value}
+      onChange={(e) => onChange(e.target.value as T)}
+      className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+    >
+      {children}
+    </select>
+  );
+}
