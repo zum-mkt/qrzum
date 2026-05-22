@@ -18,8 +18,14 @@ function Redirector() {
         return;
       }
       const row = data[0];
+      if (!row.active) {
+        setError("Este QR Code foi pausado pelo autor.");
+        return;
+      }
       if (row.type === "vcard") {
         window.location.replace(`/vcard/${shortId}`);
+      } else if (row.type === "links") {
+        window.location.replace(`/links/${shortId}`);
       } else {
         window.location.replace(row.destination_url);
       }
