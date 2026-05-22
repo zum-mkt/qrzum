@@ -19,7 +19,9 @@ function VCardPage() {
     (async () => {
       const { data, error } = await supabase.rpc("resolve_qr", { p_short_id: shortId });
       setLoading(false);
-      if (error || !data?.[0]?.vcard_data) return;
+      if (error || !data?.[0]) return;
+      if (!data[0].active) return;
+      if (!data[0].vcard_data) return;
       setData(data[0].vcard_data as unknown as VCardData);
     })();
   }, [shortId]);
