@@ -115,18 +115,17 @@ function Field({
   );
 }
 
-function LinkForm({ onCreated }: { onCreated: (c: Created) => void }) {
+function LinkForm({ style, setStyle, onCreated }: FormCtx) {
   const [title, setTitle] = useState("");
   const [url, setUrl] = useState("");
-  const [color, setColor] = useState("#0f172a");
   const [loading, setLoading] = useState(false);
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
-      const short = await insertRow({ title, type: "link", destination_url: url, color });
-      onCreated({ shortId: short, color, title });
+      const short = await insertRow({ title, type: "link", destination_url: url, style });
+      onCreated({ shortId: short, style, title });
       toast.success("QR Code criado!");
     } catch (err: any) { toast.error(err.message); }
     finally { setLoading(false); }
@@ -136,24 +135,23 @@ function LinkForm({ onCreated }: { onCreated: (c: Created) => void }) {
     <form onSubmit={submit} className="space-y-4">
       <Field label="Nome interno" placeholder="Cardápio Mesa 12" value={title} onChange={setTitle} />
       <Field label="URL de destino" placeholder="https://..." value={url} onChange={setUrl} type="url" />
-      <ColorField value={color} onChange={setColor} />
+      <QRStyleFields style={style} onChange={setStyle} />
       <Button type="submit" disabled={loading}>{loading ? "Criando..." : "Criar QR Code"}</Button>
     </form>
   );
 }
 
-function VideoForm({ onCreated }: { onCreated: (c: Created) => void }) {
+function VideoForm({ style, setStyle, onCreated }: FormCtx) {
   const [title, setTitle] = useState("");
   const [url, setUrl] = useState("");
-  const [color, setColor] = useState("#0f172a");
   const [loading, setLoading] = useState(false);
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
-      const short = await insertRow({ title, type: "video", destination_url: url, color });
-      onCreated({ shortId: short, color, title });
+      const short = await insertRow({ title, type: "video", destination_url: url, style });
+      onCreated({ shortId: short, style, title });
       toast.success("QR Code criado!");
     } catch (err: any) { toast.error(err.message); }
     finally { setLoading(false); }
@@ -163,17 +161,16 @@ function VideoForm({ onCreated }: { onCreated: (c: Created) => void }) {
     <form onSubmit={submit} className="space-y-4">
       <Field label="Nome interno" placeholder="Vídeo institucional" value={title} onChange={setTitle} />
       <Field label="URL do vídeo" placeholder="https://youtube.com/watch?v=..." value={url} onChange={setUrl} type="url" />
-      <ColorField value={color} onChange={setColor} />
+      <QRStyleFields style={style} onChange={setStyle} />
       <Button type="submit" disabled={loading}>{loading ? "Criando..." : "Criar QR Code"}</Button>
     </form>
   );
 }
 
-function WhatsAppForm({ onCreated }: { onCreated: (c: Created) => void }) {
+function WhatsAppForm({ style, setStyle, onCreated }: FormCtx) {
   const [title, setTitle] = useState("");
   const [phone, setPhone] = useState("");
   const [message, setMessage] = useState("");
-  const [color, setColor] = useState("#0f172a");
   const [loading, setLoading] = useState(false);
 
   const submit = async (e: FormEvent) => {
@@ -181,8 +178,8 @@ function WhatsAppForm({ onCreated }: { onCreated: (c: Created) => void }) {
     setLoading(true);
     try {
       const dest = buildWhatsAppUrl(phone, message || undefined);
-      const short = await insertRow({ title, type: "whatsapp", destination_url: dest, color });
-      onCreated({ shortId: short, color, title });
+      const short = await insertRow({ title, type: "whatsapp", destination_url: dest, style });
+      onCreated({ shortId: short, style, title });
       toast.success("QR Code criado!");
     } catch (err: any) { toast.error(err.message); }
     finally { setLoading(false); }
@@ -196,19 +193,18 @@ function WhatsAppForm({ onCreated }: { onCreated: (c: Created) => void }) {
         <Label>Mensagem inicial (opcional)</Label>
         <Textarea value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Olá! Vim pelo QR Code..." rows={3} />
       </div>
-      <ColorField value={color} onChange={setColor} />
+      <QRStyleFields style={style} onChange={setStyle} />
       <Button type="submit" disabled={loading}>{loading ? "Criando..." : "Criar QR Code"}</Button>
     </form>
   );
 }
 
-function WifiForm({ onCreated }: { onCreated: (c: Created) => void }) {
+function WifiForm({ style, setStyle, onCreated }: FormCtx) {
   const [title, setTitle] = useState("");
   const [ssid, setSsid] = useState("");
   const [password, setPassword] = useState("");
   const [auth, setAuth] = useState<WifiAuth>("WPA");
   const [hidden, setHidden] = useState(false);
-  const [color, setColor] = useState("#0f172a");
   const [loading, setLoading] = useState(false);
 
   const submit = async (e: FormEvent) => {
@@ -217,10 +213,10 @@ function WifiForm({ onCreated }: { onCreated: (c: Created) => void }) {
     try {
       const wifi = buildWifiString(ssid, password, auth, hidden);
       const short = await insertRow({
-        title, type: "wifi", destination_url: wifi, color,
+        title, type: "wifi", destination_url: wifi, style,
         vcard_data: { ssid, password, auth, hidden },
       });
-      onCreated({ shortId: short, color, title, qrValue: wifi });
+      onCreated({ shortId: short, style, title, qrValue: wifi });
       toast.success("QR Code criado!");
     } catch (err: any) { toast.error(err.message); }
     finally { setLoading(false); }
@@ -249,7 +245,7 @@ function WifiForm({ onCreated }: { onCreated: (c: Created) => void }) {
         <input type="checkbox" checked={hidden} onChange={(e) => setHidden(e.target.checked)} />
         Rede oculta
       </label>
-      <ColorField value={color} onChange={setColor} />
+      <QRStyleFields style={style} onChange={setStyle} />
       <p className="text-xs text-muted-foreground">
         QR Code estático: o aparelho conecta direto na rede ao escanear (sem redirect).
       </p>
@@ -258,13 +254,12 @@ function WifiForm({ onCreated }: { onCreated: (c: Created) => void }) {
   );
 }
 
-function LinksForm({ onCreated }: { onCreated: (c: Created) => void }) {
+function LinksForm({ style, setStyle, onCreated }: FormCtx) {
   const [title, setTitle] = useState("");
   const [bio, setBio] = useState("");
   const [items, setItems] = useState<{ label: string; url: string }[]>([
     { label: "", url: "" },
   ]);
-  const [color, setColor] = useState("#0f172a");
   const [loading, setLoading] = useState(false);
 
   const update = (i: number, key: "label" | "url", val: string) =>
@@ -281,14 +276,13 @@ function LinksForm({ onCreated }: { onCreated: (c: Created) => void }) {
         title,
         type: "links",
         destination_url: buildInternalUrl(`/links/`),
-        vcard_data: payload,
-        color,
+        vcard_data: payload, style,
       });
       await supabase
         .from("qr_links")
         .update({ destination_url: buildInternalUrl(`/links/${short}`) })
         .eq("short_id", short);
-      onCreated({ shortId: short, color, title });
+      onCreated({ shortId: short, style, title });
       toast.success("Lista de links criada!");
     } catch (err: any) { toast.error(err.message); }
     finally { setLoading(false); }
@@ -318,16 +312,15 @@ function LinksForm({ onCreated }: { onCreated: (c: Created) => void }) {
           <Plus className="mr-1 h-4 w-4" /> Adicionar link
         </Button>
       </div>
-      <ColorField value={color} onChange={setColor} />
+      <QRStyleFields style={style} onChange={setStyle} />
       <Button type="submit" disabled={loading}>{loading ? "Criando..." : "Criar QR Code"}</Button>
     </form>
   );
 }
 
-function FileForm({ onCreated }: { onCreated: (c: Created) => void }) {
+function FileForm({ style, setStyle, onCreated }: FormCtx) {
   const [title, setTitle] = useState("");
   const [file, setFile] = useState<File | null>(null);
-  const [color, setColor] = useState("#0f172a");
   const [loading, setLoading] = useState(false);
 
   const submit = async (e: FormEvent) => {
@@ -342,8 +335,8 @@ function FileForm({ onCreated }: { onCreated: (c: Created) => void }) {
       const { error: upErr } = await supabase.storage.from("qr_files").upload(path, file, { upsert: false });
       if (upErr) throw upErr;
       const { data: pub } = supabase.storage.from("qr_files").getPublicUrl(path);
-      const short = await insertRow({ title, type: "file", destination_url: pub.publicUrl, color });
-      onCreated({ shortId: short, color, title });
+      const short = await insertRow({ title, type: "file", destination_url: pub.publicUrl, style });
+      onCreated({ shortId: short, style, title });
       toast.success("QR Code criado!");
     } catch (err: any) { toast.error(err.message); }
     finally { setLoading(false); }
@@ -356,16 +349,15 @@ function FileForm({ onCreated }: { onCreated: (c: Created) => void }) {
         <Label htmlFor="file">Arquivo (PDF/imagem)</Label>
         <Input id="file" type="file" accept="application/pdf,image/*" onChange={(e) => setFile(e.target.files?.[0] ?? null)} required />
       </div>
-      <ColorField value={color} onChange={setColor} />
+      <QRStyleFields style={style} onChange={setStyle} />
       <Button type="submit" disabled={loading}>{loading ? "Enviando..." : "Criar QR Code"}</Button>
     </form>
   );
 }
 
-function VCardForm({ onCreated }: { onCreated: (c: Created) => void }) {
+function VCardForm({ style, setStyle, onCreated }: FormCtx) {
   const [title, setTitle] = useState("");
   const [v, setV] = useState<VCardData>({ name: "" });
-  const [color, setColor] = useState("#0f172a");
   const [loading, setLoading] = useState(false);
 
   const set = (k: keyof VCardData) => (val: string) => setV((s) => ({ ...s, [k]: val }));
@@ -378,13 +370,12 @@ function VCardForm({ onCreated }: { onCreated: (c: Created) => void }) {
         title,
         type: "vcard",
         destination_url: buildInternalUrl(`/vcard/`),
-        vcard_data: v,
-        color,
+        vcard_data: v, style,
       });
       await supabase.from("qr_links").update({
         destination_url: buildInternalUrl(`/vcard/${short}`),
       }).eq("short_id", short);
-      onCreated({ shortId: short, color, title });
+      onCreated({ shortId: short, style, title });
       toast.success("QR Code vCard criado!");
     } catch (err: any) { toast.error(err.message); }
     finally { setLoading(false); }
@@ -401,7 +392,7 @@ function VCardForm({ onCreated }: { onCreated: (c: Created) => void }) {
         <Field label="Empresa" value={v.company ?? ""} onChange={set("company")} required={false} />
         <Field label="Site" value={v.website ?? ""} onChange={set("website")} required={false} />
       </div>
-      <ColorField value={color} onChange={setColor} />
+      <QRStyleFields style={style} onChange={setStyle} />
       <Button type="submit" disabled={loading}>{loading ? "Criando..." : "Criar QR Code"}</Button>
     </form>
   );
@@ -442,7 +433,7 @@ function Success({ created, reset }: { created: NonNullable<Created>; reset: () 
             </div>
           </div>
           <div className="flex justify-center">
-            <QRCodePreview value={qrValue} color={created.color} name={created.title} size={240} />
+            <QRCodePreview value={qrValue} color={created.style.color} bgColor={created.style.bgColor} logoUrl={created.style.logoUrl} frameStyle={created.style.frameStyle} name={created.title} size={240} />
           </div>
         </div>
       </Card>
