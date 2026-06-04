@@ -20,7 +20,8 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { QRCodePreview } from "@/components/QRCodePreview";
-import { buildQrUrl, QR_TYPE_LABELS } from "@/lib/qr";
+import { QRStyleFields, type QRStyle } from "@/components/QRStyleFields";
+import { buildQrUrl, QR_TYPE_LABELS, type FrameStyle } from "@/lib/qr";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard — QRFlow" }] }),
@@ -34,6 +35,9 @@ type Row = {
   short_id: string;
   destination_url: string;
   color: string;
+  bg_color: string;
+  frame_style: FrameStyle;
+  logo_url: string | null;
   clicks: number;
   created_at: string;
   active: boolean;
@@ -49,7 +53,7 @@ function Dashboard() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("qr_links")
-        .select("id,title,type,short_id,destination_url,color,clicks,created_at,active")
+        .select("id,title,type,short_id,destination_url,color,bg_color,frame_style,logo_url,clicks,created_at,active")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data as Row[];
@@ -60,7 +64,9 @@ function Dashboard() {
   const [editRow, setEditRow] = useState<Row | null>(null);
   const [editTitle, setEditTitle] = useState("");
   const [editUrl, setEditUrl] = useState("");
-  const [editColor, setEditColor] = useState("#0f172a");
+  const [editStyle, setEditStyle] = useState<QRStyle>({
+    color: "#0f172a", bgColor: "#ffffff", frameStyle: "none", logoUrl: null,
+  });
 
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("all");
@@ -118,14 +124,26 @@ function Dashboard() {
     setEditRow(row);
     setEditTitle(row.title);
     setEditUrl(row.destination_url);
-    setEditColor(row.color);
+    setEditStyle({
+      color: row.color,
+      bgColor: row.bg_color ?? "#ffffff",
+      frameStyle: (row.frame_style ?? "none") as FrameStyle,
+      logoUrl: row.logo_url ?? null,
+    });
   };
 
   const saveEdit = async () => {
     if (!editRow) return;
     const { error } = await supabase
       .from("qr_links")
-      .update({ title: editTitle, destination_url: editUrl, color: editColor })
+      .update({
+        title: editTitle,
+        destination_url: editUrl,
+        color: editStyle.color,
+        bg_color: editStyle.bgColor,
+        frame_style: editStyle.frameStyle,
+        logo_url: editStyle.logoUrl,
+      })
       .eq("id", editRow.id);
     if (error) return toast.error(error.message);
     toast.success("Salvo");
@@ -243,7 +261,14 @@ function Dashboard() {
           <DialogHeader><DialogTitle>{previewRow?.title}</DialogTitle></DialogHeader>
           {previewRow && (
             <div className="flex flex-col items-center gap-3 py-2">
-              <QRCodePreview value={qrValueFor(previewRow)} color={previewRow.color} name={previewRow.title} />
+              <QRCodePreview
+                value={qrValueFor(previewRow)}
+                color={previewRow.color}
+                bgColor={previewRow.bg_color ?? "#ffffff"}
+                logoUrl={previewRow.logo_url}
+                frameStyle={(previewRow.frame_style ?? "none") as FrameStyle}
+                name={previewRow.title}
+              />
               <code className="rounded bg-muted px-2 py-1 text-xs break-all max-w-full">{qrValueFor(previewRow)}</code>
             </div>
           )}
@@ -251,7 +276,7 @@ function Dashboard() {
       </Dialog>
 
       <Dialog open={!!editRow} onOpenChange={(o) => !o && setEditRow(null)}>
-        <DialogContent>
+        <DialogContent className="max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle>Editar QR Code</DialogTitle></DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
@@ -269,13 +294,7 @@ function Dashboard() {
                   : "O QR Code continua o mesmo — apenas o destino muda."}
               </p>
             </div>
-            <div className="space-y-2">
-              <Label>Cor</Label>
-              <div className="flex items-center gap-3">
-                <input type="color" value={editColor} onChange={(e) => setEditColor(e.target.value)} className="h-10 w-14 cursor-pointer rounded border border-input bg-background" />
-                <Input value={editColor} onChange={(e) => setEditColor(e.target.value)} className="max-w-[140px]" />
-              </div>
-            </div>
+            <QRStyleFields style={editStyle} onChange={setEditStyle} />
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditRow(null)}>Cancelar</Button>
