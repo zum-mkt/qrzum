@@ -65,3 +65,23 @@ export const QR_TYPE_LABELS: Record<string, string> = {
   video: "Vídeo",
   links: "Lista de Links",
 };
+
+export type FrameStyle = "none" | "rounded" | "scan-me" | "arrow";
+
+export const FRAME_LABELS: Record<FrameStyle, string> = {
+  none: "Sem moldura",
+  rounded: "Arredondada",
+  "scan-me": "Scan Me",
+  arrow: "Com seta",
+};
+
+export type ColorPreset = { name: string; fg: string; bg: string };
+
+export const COLOR_PRESETS: ColorPreset[] = [
+  { name: "Clássico", fg: "#0f172a", bg: "#ffffff" },
+  { name: "Tinta",    fg: "#1e3a8a", bg: "#ffffff" },
+  { name: "Floresta", fg: "#14532d", bg: "#fefce8" },
+  { name: "Vinho",    fg: "#7f1d1d", bg: "#fef3c7" },
+  { name: "Solar",    fg: "#0f172a", bg: "#facc15" },
+  { name: "Inverso",  fg: "#ffffff", bg: "#0f172a" },
+];
