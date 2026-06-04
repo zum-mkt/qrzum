@@ -11,9 +11,10 @@ import { toast } from "sonner";
 import {
   generateShortId, buildQrUrl, buildWhatsAppUrl, buildWifiString,
   buildInternalUrl,
-  type VCardData, type LinksData, type WifiAuth,
+  type VCardData, type LinksData, type WifiAuth, type FrameStyle,
 } from "@/lib/qr";
 import { QRCodePreview } from "@/components/QRCodePreview";
+import { QRStyleFields, defaultStyle, type QRStyle } from "@/components/QRStyleFields";
 import {
   Copy, Link as LinkIcon, FileUp, Contact, ArrowLeft,
   MessageCircle, Wifi, Video, ListOrdered, Plus, Trash2,
@@ -27,14 +28,15 @@ export const Route = createFileRoute("/_authenticated/create")({
 type QrType = "link" | "file" | "vcard" | "whatsapp" | "wifi" | "video" | "links";
 type Created = {
   shortId: string;
-  color: string;
   title: string;
+  style: QRStyle;
   /** valor literal a codificar no QR (definido => QR estático, sem link curto) */
   qrValue?: string;
 } | null;
 
 function Create() {
   const [created, setCreated] = useState<Created>(null);
+  const [style, setStyle] = useState<QRStyle>(defaultStyle());
   if (created) return <Success created={created} reset={() => setCreated(null)} />;
 
   return (
@@ -58,37 +60,27 @@ function Create() {
             <TabsTrigger value="video"><Video className="mr-1.5 h-4 w-4" /> Vídeo</TabsTrigger>
             <TabsTrigger value="wifi"><Wifi className="mr-1.5 h-4 w-4" /> WiFi</TabsTrigger>
           </TabsList>
-          <TabsContent value="link" className="mt-6"><LinkForm onCreated={setCreated} /></TabsContent>
-          <TabsContent value="whatsapp" className="mt-6"><WhatsAppForm onCreated={setCreated} /></TabsContent>
-          <TabsContent value="vcard" className="mt-6"><VCardForm onCreated={setCreated} /></TabsContent>
-          <TabsContent value="file" className="mt-6"><FileForm onCreated={setCreated} /></TabsContent>
-          <TabsContent value="links" className="mt-6"><LinksForm onCreated={setCreated} /></TabsContent>
-          <TabsContent value="video" className="mt-6"><VideoForm onCreated={setCreated} /></TabsContent>
-          <TabsContent value="wifi" className="mt-6"><WifiForm onCreated={setCreated} /></TabsContent>
+          <TabsContent value="link" className="mt-6"><LinkForm style={style} setStyle={setStyle} onCreated={setCreated} /></TabsContent>
+          <TabsContent value="whatsapp" className="mt-6"><WhatsAppForm style={style} setStyle={setStyle} onCreated={setCreated} /></TabsContent>
+          <TabsContent value="vcard" className="mt-6"><VCardForm style={style} setStyle={setStyle} onCreated={setCreated} /></TabsContent>
+          <TabsContent value="file" className="mt-6"><FileForm style={style} setStyle={setStyle} onCreated={setCreated} /></TabsContent>
+          <TabsContent value="links" className="mt-6"><LinksForm style={style} setStyle={setStyle} onCreated={setCreated} /></TabsContent>
+          <TabsContent value="video" className="mt-6"><VideoForm style={style} setStyle={setStyle} onCreated={setCreated} /></TabsContent>
+          <TabsContent value="wifi" className="mt-6"><WifiForm style={style} setStyle={setStyle} onCreated={setCreated} /></TabsContent>
         </Tabs>
       </Card>
     </div>
   );
 }
 
-function ColorField({ value, onChange }: { value: string; onChange: (v: string) => void }) {
-  return (
-    <div className="space-y-2">
-      <Label>Cor do QR Code</Label>
-      <div className="flex items-center gap-3">
-        <input type="color" value={value} onChange={(e) => onChange(e.target.value)} className="h-10 w-14 cursor-pointer rounded border border-input bg-background" />
-        <Input value={value} onChange={(e) => onChange(e.target.value)} className="max-w-[140px]" />
-      </div>
-    </div>
-  );
-}
+type FormCtx = { style: QRStyle; setStyle: (s: QRStyle) => void; onCreated: (c: Created) => void };
 
 async function insertRow(args: {
   title: string;
   type: QrType;
   destination_url: string;
   vcard_data?: VCardData | LinksData | Record<string, unknown>;
-  color: string;
+  style: QRStyle;
 }) {
   const { data: u } = await supabase.auth.getUser();
   if (!u.user) throw new Error("Não autenticado");
@@ -100,7 +92,10 @@ async function insertRow(args: {
     short_id,
     destination_url: args.destination_url,
     vcard_data: (args.vcard_data ?? null) as never,
-    color: args.color,
+    color: args.style.color,
+    bg_color: args.style.bgColor,
+    frame_style: args.style.frameStyle,
+    logo_url: args.style.logoUrl,
   });
   if (error) throw error;
   return short_id;
