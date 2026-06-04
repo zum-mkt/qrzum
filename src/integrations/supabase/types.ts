@@ -17,11 +17,14 @@ export type Database = {
       qr_links: {
         Row: {
           active: boolean
+          bg_color: string
           clicks: number
           color: string
           created_at: string
           destination_url: string
+          frame_style: string
           id: string
+          logo_url: string | null
           short_id: string
           title: string
           type: string
@@ -30,11 +33,14 @@ export type Database = {
         }
         Insert: {
           active?: boolean
+          bg_color?: string
           clicks?: number
           color?: string
           created_at?: string
           destination_url: string
+          frame_style?: string
           id?: string
+          logo_url?: string | null
           short_id: string
           title: string
           type: string
@@ -43,11 +49,14 @@ export type Database = {
         }
         Update: {
           active?: boolean
+          bg_color?: string
           clicks?: number
           color?: string
           created_at?: string
           destination_url?: string
+          frame_style?: string
           id?: string
+          logo_url?: string | null
           short_id?: string
           title?: string
           type?: string
