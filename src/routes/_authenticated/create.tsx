@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import {
   generateShortId, buildQrUrl, buildWhatsAppUrl, buildWifiString,
+  buildInternalUrl,
   type VCardData, type LinksData, type WifiAuth,
 } from "@/lib/qr";
 import { QRCodePreview } from "@/components/QRCodePreview";
@@ -284,13 +285,13 @@ function LinksForm({ onCreated }: { onCreated: (c: Created) => void }) {
       const short = await insertRow({
         title,
         type: "links",
-        destination_url: `${window.location.origin}/links/`,
+        destination_url: buildInternalUrl(`/links/`),
         vcard_data: payload,
         color,
       });
       await supabase
         .from("qr_links")
-        .update({ destination_url: `${window.location.origin}/links/${short}` })
+        .update({ destination_url: buildInternalUrl(`/links/${short}`) })
         .eq("short_id", short);
       onCreated({ shortId: short, color, title });
       toast.success("Lista de links criada!");
@@ -381,12 +382,12 @@ function VCardForm({ onCreated }: { onCreated: (c: Created) => void }) {
       const short = await insertRow({
         title,
         type: "vcard",
-        destination_url: `${window.location.origin}/vcard/`,
+        destination_url: buildInternalUrl(`/vcard/`),
         vcard_data: v,
         color,
       });
       await supabase.from("qr_links").update({
-        destination_url: `${window.location.origin}/vcard/${short}`,
+        destination_url: buildInternalUrl(`/vcard/${short}`),
       }).eq("short_id", short);
       onCreated({ shortId: short, color, title });
       toast.success("QR Code vCard criado!");

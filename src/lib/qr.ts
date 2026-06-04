@@ -3,9 +3,17 @@ import { customAlphabet } from "nanoid";
 const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
 export const generateShortId = customAlphabet(alphabet, 7);
 
+export const PUBLIC_BASE_URL: string =
+  (import.meta.env.VITE_PUBLIC_BASE_URL as string | undefined)?.replace(/\/$/, "") ||
+  "https://qrzum.lovable.app";
+
+export function buildInternalUrl(path: string) {
+  const p = path.startsWith("/") ? path : `/${path}`;
+  return `${PUBLIC_BASE_URL}${p}`;
+}
+
 export function buildQrUrl(shortId: string) {
-  if (typeof window === "undefined") return `/q/${shortId}`;
-  return `${window.location.origin}/q/${shortId}`;
+  return buildInternalUrl(`/q/${shortId}`);
 }
 
 export type VCardData = {

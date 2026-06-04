@@ -1,29 +1,33 @@
-## Objetivo
-Fazer os QRs publicados redirecionarem corretamente usando o domínio público atual, sem exigir domínio customizado.
+## Fase 2 — Blindar a geração de URLs do QR
 
-## Plano
+Hoje o app usa `window.location.origin` ao montar tanto a URL curta (`/q/...`) quanto as URLs internas de vCard e lista de links. Isso significa que um QR criado a partir do preview (`id-preview--...lovable.app`) fica gravado com aquele domínio temporário. Quando o preview muda de URL, o QR impresso quebra. O ideal é sempre usar o domínio público.
 
-1. **Corrigir a função pública de resolução do QR**
-   - Ajustar a função `resolve_qr` no backend para remover a ambiguidade da coluna `active`.
-   - Garantir que ela incremente cliques apenas quando o QR estiver ativo e retorne o registro correto sem erro para acessos públicos.
+### O que mudar
 
-2. **Validar o fluxo público de redirecionamento**
-   - Testar o link real do QR publicado (`/q/$shortId`) após a correção.
-   - Confirmar os comportamentos esperados para:
-     - QR ativo redirecionando ao destino final
-     - QR pausado mostrando mensagem de indisponibilidade
-     - QR inexistente mostrando erro de não encontrado
+1. **Base pública configurável**
+   - Adicionar uma constante `PUBLIC_BASE_URL` lida de `import.meta.env.VITE_PUBLIC_BASE_URL`.
+   - Default seguro: `https://qrzum.lovable.app` (o domínio publicado atual).
+   - Fallback final: `window.location.origin` (só usado se nada estiver definido — não deve ocorrer em produção).
 
-3. **Blindar a geração de links futuros**
-   - Revisar a criação do QR para evitar dependência acidental do ambiente errado ao montar a URL curta.
-   - Se necessário, passar a usar uma base pública configurável/preferencial para que novos QRs apontem sempre para o domínio publicado, e não para links temporários de preview.
+2. **`src/lib/qr.ts`**
+   - Atualizar `buildQrUrl(shortId)` para usar `PUBLIC_BASE_URL` em vez de `window.location.origin`.
+   - Exportar também um helper `buildInternalUrl(path)` para vCard / links.
 
-## Resultado esperado
-- O domínio `qrzum.lovable.app` funciona normalmente como base dos QRs.
-- Não é obrigatório conectar um domínio próprio para resolver esse bug.
-- Um domínio customizado continua sendo opcional e útil apenas para branding e estabilidade de marca.
+3. **`src/routes/_authenticated/create.tsx`**
+   - Substituir os 4 usos de `${window.location.origin}/vcard/...` e `${window.location.origin}/links/...` por `buildInternalUrl(...)`.
+   - Resultado: todo QR novo aponta para `qrzum.lovable.app`, independente de onde foi criado.
 
-## Detalhes técnicos
-- Diagnóstico confirmado no site publicado: a chamada pública para `resolve_qr` retorna erro `400` com código Postgres `42702`.
-- Mensagem exata: `column reference "active" is ambiguous`.
-- Isso indica falha na função SQL/RPC, não problema de hospedagem, rota TanStack ou necessidade de domínio customizado.
+4. **`.env`** (apenas documentação — não vamos editar; é gerado)
+   - No futuro, se você conectar um domínio próprio (ex.: `qr.suamarca.com`), basta definir `VITE_PUBLIC_BASE_URL=https://qr.suamarca.com` para que os novos QRs já usem esse domínio. QRs antigos continuam funcionando porque ainda apontam pro Lovable.
+
+### O que NÃO muda
+
+- O `emailRedirectTo` do signup pode continuar com `window.location.origin` (é correto para auth).
+- QRs já gerados não são reescritos — somente os novos.
+- Nenhuma mudança de banco / RLS / função SQL.
+
+### Resultado esperado
+
+- Criar um QR no preview ou no domínio publicado gera sempre links `https://qrzum.lovable.app/q/...`.
+- O bug "QR gerado no preview não funciona depois" fica eliminado por design.
+- Quando você plugar um domínio customizado, troca-se apenas 1 variável e a fase está completa.
