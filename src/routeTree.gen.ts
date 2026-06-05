@@ -12,10 +12,12 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as VcardShortIdRouteImport } from './routes/vcard.$shortId'
+import { Route as RShortIdRouteImport } from './routes/r.$shortId'
 import { Route as QShortIdRouteImport } from './routes/q.$shortId'
 import { Route as LinksShortIdRouteImport } from './routes/links.$shortId'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedCreateRouteImport } from './routes/_authenticated/create'
+import { Route as ApiPublicScanRouteImport } from './routes/api/public/scan'
 
 const AuthenticatedRoute = AuthenticatedRouteImport.update({
   id: '/_authenticated',
@@ -29,6 +31,11 @@ const IndexRoute = IndexRouteImport.update({
 const VcardShortIdRoute = VcardShortIdRouteImport.update({
   id: '/vcard/$shortId',
   path: '/vcard/$shortId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RShortIdRoute = RShortIdRouteImport.update({
+  id: '/r/$shortId',
+  path: '/r/$shortId',
   getParentRoute: () => rootRouteImport,
 } as any)
 const QShortIdRoute = QShortIdRouteImport.update({
@@ -51,6 +58,11 @@ const AuthenticatedCreateRoute = AuthenticatedCreateRouteImport.update({
   path: '/create',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const ApiPublicScanRoute = ApiPublicScanRouteImport.update({
+  id: '/api/public/scan',
+  path: '/api/public/scan',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -58,7 +70,9 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/links/$shortId': typeof LinksShortIdRoute
   '/q/$shortId': typeof QShortIdRoute
+  '/r/$shortId': typeof RShortIdRoute
   '/vcard/$shortId': typeof VcardShortIdRoute
+  '/api/public/scan': typeof ApiPublicScanRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -66,7 +80,9 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/links/$shortId': typeof LinksShortIdRoute
   '/q/$shortId': typeof QShortIdRoute
+  '/r/$shortId': typeof RShortIdRoute
   '/vcard/$shortId': typeof VcardShortIdRoute
+  '/api/public/scan': typeof ApiPublicScanRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -76,7 +92,9 @@ export interface FileRoutesById {
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/links/$shortId': typeof LinksShortIdRoute
   '/q/$shortId': typeof QShortIdRoute
+  '/r/$shortId': typeof RShortIdRoute
   '/vcard/$shortId': typeof VcardShortIdRoute
+  '/api/public/scan': typeof ApiPublicScanRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -86,7 +104,9 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/links/$shortId'
     | '/q/$shortId'
+    | '/r/$shortId'
     | '/vcard/$shortId'
+    | '/api/public/scan'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -94,7 +114,9 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/links/$shortId'
     | '/q/$shortId'
+    | '/r/$shortId'
     | '/vcard/$shortId'
+    | '/api/public/scan'
   id:
     | '__root__'
     | '/'
@@ -103,7 +125,9 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard'
     | '/links/$shortId'
     | '/q/$shortId'
+    | '/r/$shortId'
     | '/vcard/$shortId'
+    | '/api/public/scan'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -111,7 +135,9 @@ export interface RootRouteChildren {
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   LinksShortIdRoute: typeof LinksShortIdRoute
   QShortIdRoute: typeof QShortIdRoute
+  RShortIdRoute: typeof RShortIdRoute
   VcardShortIdRoute: typeof VcardShortIdRoute
+  ApiPublicScanRoute: typeof ApiPublicScanRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -135,6 +161,13 @@ declare module '@tanstack/react-router' {
       path: '/vcard/$shortId'
       fullPath: '/vcard/$shortId'
       preLoaderRoute: typeof VcardShortIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/r/$shortId': {
+      id: '/r/$shortId'
+      path: '/r/$shortId'
+      fullPath: '/r/$shortId'
+      preLoaderRoute: typeof RShortIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/q/$shortId': {
@@ -165,6 +198,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCreateRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/api/public/scan': {
+      id: '/api/public/scan'
+      path: '/api/public/scan'
+      fullPath: '/api/public/scan'
+      preLoaderRoute: typeof ApiPublicScanRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -187,7 +227,9 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   LinksShortIdRoute: LinksShortIdRoute,
   QShortIdRoute: QShortIdRoute,
+  RShortIdRoute: RShortIdRoute,
   VcardShortIdRoute: VcardShortIdRoute,
+  ApiPublicScanRoute: ApiPublicScanRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

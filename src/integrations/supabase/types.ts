@@ -74,8 +74,17 @@ export type Database = {
         Args: { p_short_id: string }
         Returns: {
           active: boolean
+          add_utm: boolean
           destination_url: string
+          ga4_id: string
+          gtm_id: string
+          id: string
+          linkedin_partner_id: string
+          meta_pixel_id: string
+          pinterest_tag_id: string
+          tiktok_pixel_id: string
           title: string
+          twitter_pixel_id: string
           type: string
           vcard_data: Json
         }[]

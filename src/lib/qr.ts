@@ -13,7 +13,8 @@ export function buildInternalUrl(path: string) {
 }
 
 export function buildQrUrl(shortId: string) {
-  return buildInternalUrl(`/q/${shortId}`);
+  // /r/<id> = pixel-aware redirector (Phase 3). /q/<id> remains as a legacy alias.
+  return buildInternalUrl(`/r/${shortId}`);
 }
 
 export type VCardData = {
@@ -85,3 +86,45 @@ export const COLOR_PRESETS: ColorPreset[] = [
   { name: "Solar",    fg: "#0f172a", bg: "#facc15" },
   { name: "Inverso",  fg: "#ffffff", bg: "#0f172a" },
 ];
+
+// ===== Tracking pixels =====
+
+export interface PixelConfig {
+  ga4Id?: string | null;
+  gtmId?: string | null;
+  metaPixelId?: string | null;
+  tiktokPixelId?: string | null;
+  linkedinPartnerId?: string | null;
+  twitterPixelId?: string | null;
+  pinterestTagId?: string | null;
+  addUtm?: boolean;
+}
+
+export const emptyPixelConfig: PixelConfig = {
+  ga4Id: null, gtmId: null, metaPixelId: null, tiktokPixelId: null,
+  linkedinPartnerId: null, twitterPixelId: null, pinterestTagId: null,
+  addUtm: false,
+};
+
+/** Add UTM params to a URL destination if it parses as a URL. */
+export function injectUtm(url: string, type: string, shortId: string): string {
+  try {
+    const u = new URL(url);
+    if (!u.searchParams.has("utm_source")) u.searchParams.set("utm_source", "qr");
+    if (!u.searchParams.has("utm_medium")) u.searchParams.set("utm_medium", type);
+    if (!u.searchParams.has("utm_campaign")) u.searchParams.set("utm_campaign", shortId);
+    return u.toString();
+  } catch {
+    return url;
+  }
+}
+
+export const PIXEL_PATTERNS: Record<keyof Omit<PixelConfig, "addUtm">, { label: string; regex: RegExp; placeholder: string }> = {
+  ga4Id:             { label: "Google Analytics 4",  regex: /^G-[A-Z0-9]{4,}$/i,            placeholder: "G-XXXXXXXX" },
+  gtmId:             { label: "Google Tag Manager",  regex: /^GTM-[A-Z0-9]{4,}$/i,          placeholder: "GTM-XXXXXX" },
+  metaPixelId:       { label: "Meta / Facebook Pixel", regex: /^\d{10,20}$/,                placeholder: "123456789012345" },
+  tiktokPixelId:     { label: "TikTok Pixel",        regex: /^[A-Z0-9]{15,30}$/i,           placeholder: "CXXXXXXXXXXXXXXX" },
+  linkedinPartnerId: { label: "LinkedIn Insight Tag", regex: /^\d{5,10}$/,                  placeholder: "1234567" },
+  twitterPixelId:    { label: "X / Twitter Pixel",   regex: /^[a-z0-9]{5,15}$/i,            placeholder: "o1abc" },
+  pinterestTagId:    { label: "Pinterest Tag",       regex: /^\d{10,20}$/,                  placeholder: "2612345678901" },
+};
