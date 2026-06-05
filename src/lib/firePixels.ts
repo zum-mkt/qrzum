@@ -113,13 +113,18 @@ export async function firePixels(p: PixelConfig, eventLabel = "qr_scan"): Promis
   if (p.twitterPixelId) {
     if (!has(`tw:base`)) {
       mark(`tw:base`);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (function (e: any, t: Document, n: string, s: string, u: string, a: any, c: any) {
-        e.twq || ((s = e.twq = function () { s.exe ? s.exe.apply(s, arguments) : s.queue.push(arguments); }),
-          (s.version = "1.1"), (s.queue = []), (a = t.createElement(n) as HTMLScriptElement),
-          (a.async = !0), (a.src = "https://static.ads-twitter.com/uwt.js"),
-          (c = t.getElementsByTagName(n)[0]), c.parentNode.insertBefore(a, c));
-      })(w, document, "script", "twq", "twq", null, null);
+      if (!w.twq) {
+        const twq: any = function () {
+          twq.exe ? twq.exe.apply(twq, arguments) : twq.queue.push(arguments);
+        };
+        twq.version = "1.1";
+        twq.queue = [];
+        w.twq = twq;
+        const a = document.createElement("script");
+        a.async = true;
+        a.src = "https://static.ads-twitter.com/uwt.js";
+        document.head.appendChild(a);
+      }
     }
     if (!has(`tw:${p.twitterPixelId}`)) {
       mark(`tw:${p.twitterPixelId}`);
