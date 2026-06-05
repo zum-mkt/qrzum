@@ -140,7 +140,7 @@ function LinkForm({ style, setStyle, pixels, setPixels, onCreated }: FormCtx) {
     e.preventDefault();
     setLoading(true);
     try {
-      const short = await insertRow({ title, type: "link", destination_url: url, style });
+      const short = await insertRow({ title, type: "link", destination_url: url, style, pixels });
       onCreated({ shortId: short, style, title });
       toast.success("QR Code criado!");
     } catch (err: any) { toast.error(err.message); }
@@ -167,7 +167,7 @@ function VideoForm({ style, setStyle, pixels, setPixels, onCreated }: FormCtx) {
     e.preventDefault();
     setLoading(true);
     try {
-      const short = await insertRow({ title, type: "video", destination_url: url, style });
+      const short = await insertRow({ title, type: "video", destination_url: url, style, pixels });
       onCreated({ shortId: short, style, title });
       toast.success("QR Code criado!");
     } catch (err: any) { toast.error(err.message); }
@@ -196,7 +196,7 @@ function WhatsAppForm({ style, setStyle, pixels, setPixels, onCreated }: FormCtx
     setLoading(true);
     try {
       const dest = buildWhatsAppUrl(phone, message || undefined);
-      const short = await insertRow({ title, type: "whatsapp", destination_url: dest, style });
+      const short = await insertRow({ title, type: "whatsapp", destination_url: dest, style, pixels });
       onCreated({ shortId: short, style, title });
       toast.success("QR Code criado!");
     } catch (err: any) { toast.error(err.message); }
@@ -356,7 +356,7 @@ function FileForm({ style, setStyle, pixels, setPixels, onCreated }: FormCtx) {
       const { error: upErr } = await supabase.storage.from("qr_files").upload(path, file, { upsert: false });
       if (upErr) throw upErr;
       const { data: pub } = supabase.storage.from("qr_files").getPublicUrl(path);
-      const short = await insertRow({ title, type: "file", destination_url: pub.publicUrl, style });
+      const short = await insertRow({ title, type: "file", destination_url: pub.publicUrl, style, pixels });
       onCreated({ shortId: short, style, title });
       toast.success("QR Code criado!");
     } catch (err: any) { toast.error(err.message); }
