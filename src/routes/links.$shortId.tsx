@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { ExternalLink } from "lucide-react";
 import type { LinksData } from "@/lib/qr";
+import { firePixels } from "@/lib/firePixels";
 
 export const Route = createFileRoute("/links/$shortId")({
   component: LinksPage,
@@ -30,6 +31,18 @@ function LinksPage() {
       }
       const payload = (row.vcard_data ?? {}) as unknown as LinksData;
       setData({ title: row.title, links: payload });
+      const r = row as any;
+      firePixels({
+        ga4Id: r.ga4_id, gtmId: r.gtm_id, metaPixelId: r.meta_pixel_id,
+        tiktokPixelId: r.tiktok_pixel_id, linkedinPartnerId: r.linkedin_partner_id,
+        twitterPixelId: r.twitter_pixel_id, pinterestTagId: r.pinterest_tag_id,
+      });
+      fetch("/api/public/scan", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ short_id: shortId, referrer: document.referrer || null }),
+        keepalive: true,
+      }).catch(() => {});
     })();
   }, [shortId]);
 

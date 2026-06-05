@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Mail, Phone, Building2, Globe, Briefcase, Download } from "lucide-react";
 import { buildVCard, type VCardData } from "@/lib/qr";
+import { firePixels } from "@/lib/firePixels";
 
 export const Route = createFileRoute("/vcard/$shortId")({
   component: VCardPage,
@@ -23,6 +24,18 @@ function VCardPage() {
       if (!data[0].active) return;
       if (!data[0].vcard_data) return;
       setData(data[0].vcard_data as unknown as VCardData);
+      const r = data[0] as any;
+      firePixels({
+        ga4Id: r.ga4_id, gtmId: r.gtm_id, metaPixelId: r.meta_pixel_id,
+        tiktokPixelId: r.tiktok_pixel_id, linkedinPartnerId: r.linkedin_partner_id,
+        twitterPixelId: r.twitter_pixel_id, pinterestTagId: r.pinterest_tag_id,
+      });
+      fetch("/api/public/scan", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ short_id: shortId, referrer: document.referrer || null }),
+        keepalive: true,
+      }).catch(() => {});
     })();
   }, [shortId]);
 
