@@ -31,13 +31,14 @@ export const Route = createFileRoute("/api/public/scan")({
 
         try {
           const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-          const { data: link } = await supabaseAdmin
+          const admin = supabaseAdmin as any;
+          const { data: link } = await admin
             .from("qr_links")
             .select("id")
             .eq("short_id", shortId)
             .maybeSingle();
           if (link?.id) {
-            await supabaseAdmin.from("qr_scans").insert({
+            await admin.from("qr_scans").insert({
               qr_id: link.id, country, city, device, os, browser, referrer,
             });
           }
