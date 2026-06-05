@@ -13,7 +13,8 @@ export function buildInternalUrl(path: string) {
 }
 
 export function buildQrUrl(shortId: string) {
-  return buildInternalUrl(`/q/${shortId}`);
+  // /r/<id> = pixel-aware redirector (Phase 3). /q/<id> remains as a legacy alias.
+  return buildInternalUrl(`/r/${shortId}`);
 }
 
 export type VCardData = {
