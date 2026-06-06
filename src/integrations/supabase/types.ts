@@ -17,53 +17,121 @@ export type Database = {
       qr_links: {
         Row: {
           active: boolean
+          add_utm: boolean
           bg_color: string
           clicks: number
           color: string
           created_at: string
           destination_url: string
           frame_style: string
+          ga4_id: string | null
+          gtm_id: string | null
           id: string
+          linkedin_partner_id: string | null
           logo_url: string | null
+          meta_pixel_id: string | null
+          pinterest_tag_id: string | null
           short_id: string
+          tiktok_pixel_id: string | null
           title: string
+          twitter_pixel_id: string | null
           type: string
           user_id: string
           vcard_data: Json | null
         }
         Insert: {
           active?: boolean
+          add_utm?: boolean
           bg_color?: string
           clicks?: number
           color?: string
           created_at?: string
           destination_url: string
           frame_style?: string
+          ga4_id?: string | null
+          gtm_id?: string | null
           id?: string
+          linkedin_partner_id?: string | null
           logo_url?: string | null
+          meta_pixel_id?: string | null
+          pinterest_tag_id?: string | null
           short_id: string
+          tiktok_pixel_id?: string | null
           title: string
+          twitter_pixel_id?: string | null
           type: string
           user_id: string
           vcard_data?: Json | null
         }
         Update: {
           active?: boolean
+          add_utm?: boolean
           bg_color?: string
           clicks?: number
           color?: string
           created_at?: string
           destination_url?: string
           frame_style?: string
+          ga4_id?: string | null
+          gtm_id?: string | null
           id?: string
+          linkedin_partner_id?: string | null
           logo_url?: string | null
+          meta_pixel_id?: string | null
+          pinterest_tag_id?: string | null
           short_id?: string
+          tiktok_pixel_id?: string | null
           title?: string
+          twitter_pixel_id?: string | null
           type?: string
           user_id?: string
           vcard_data?: Json | null
         }
         Relationships: []
+      }
+      qr_scans: {
+        Row: {
+          browser: string | null
+          city: string | null
+          country: string | null
+          device: string | null
+          id: string
+          os: string | null
+          qr_id: string
+          referrer: string | null
+          scanned_at: string
+        }
+        Insert: {
+          browser?: string | null
+          city?: string | null
+          country?: string | null
+          device?: string | null
+          id?: string
+          os?: string | null
+          qr_id: string
+          referrer?: string | null
+          scanned_at?: string
+        }
+        Update: {
+          browser?: string | null
+          city?: string | null
+          country?: string | null
+          device?: string | null
+          id?: string
+          os?: string | null
+          qr_id?: string
+          referrer?: string | null
+          scanned_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qr_scans_qr_id_fkey"
+            columns: ["qr_id"]
+            isOneToOne: false
+            referencedRelation: "qr_links"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
