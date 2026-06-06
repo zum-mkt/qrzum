@@ -19,6 +19,7 @@ import { Route as AuthenticatedDashboardRouteImport } from './routes/_authentica
 import { Route as AuthenticatedCreateRouteImport } from './routes/_authenticated/create'
 import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authenticated/analytics'
 import { Route as ApiPublicScanRouteImport } from './routes/api/public/scan'
+import { Route as AuthenticatedAnalyticsQrIdRouteImport } from './routes/_authenticated/analytics.$qrId'
 
 const AuthenticatedRoute = AuthenticatedRouteImport.update({
   id: '/_authenticated',
@@ -69,40 +70,49 @@ const ApiPublicScanRoute = ApiPublicScanRouteImport.update({
   path: '/api/public/scan',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedAnalyticsQrIdRoute =
+  AuthenticatedAnalyticsQrIdRouteImport.update({
+    id: '/$qrId',
+    path: '/$qrId',
+    getParentRoute: () => AuthenticatedAnalyticsRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/analytics': typeof AuthenticatedAnalyticsRoute
+  '/analytics': typeof AuthenticatedAnalyticsRouteWithChildren
   '/create': typeof AuthenticatedCreateRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/links/$shortId': typeof LinksShortIdRoute
   '/q/$shortId': typeof QShortIdRoute
   '/r/$shortId': typeof RShortIdRoute
   '/vcard/$shortId': typeof VcardShortIdRoute
+  '/analytics/$qrId': typeof AuthenticatedAnalyticsQrIdRoute
   '/api/public/scan': typeof ApiPublicScanRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/analytics': typeof AuthenticatedAnalyticsRoute
+  '/analytics': typeof AuthenticatedAnalyticsRouteWithChildren
   '/create': typeof AuthenticatedCreateRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/links/$shortId': typeof LinksShortIdRoute
   '/q/$shortId': typeof QShortIdRoute
   '/r/$shortId': typeof RShortIdRoute
   '/vcard/$shortId': typeof VcardShortIdRoute
+  '/analytics/$qrId': typeof AuthenticatedAnalyticsQrIdRoute
   '/api/public/scan': typeof ApiPublicScanRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
-  '/_authenticated/analytics': typeof AuthenticatedAnalyticsRoute
+  '/_authenticated/analytics': typeof AuthenticatedAnalyticsRouteWithChildren
   '/_authenticated/create': typeof AuthenticatedCreateRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/links/$shortId': typeof LinksShortIdRoute
   '/q/$shortId': typeof QShortIdRoute
   '/r/$shortId': typeof RShortIdRoute
   '/vcard/$shortId': typeof VcardShortIdRoute
+  '/_authenticated/analytics/$qrId': typeof AuthenticatedAnalyticsQrIdRoute
   '/api/public/scan': typeof ApiPublicScanRoute
 }
 export interface FileRouteTypes {
@@ -116,6 +126,7 @@ export interface FileRouteTypes {
     | '/q/$shortId'
     | '/r/$shortId'
     | '/vcard/$shortId'
+    | '/analytics/$qrId'
     | '/api/public/scan'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -127,6 +138,7 @@ export interface FileRouteTypes {
     | '/q/$shortId'
     | '/r/$shortId'
     | '/vcard/$shortId'
+    | '/analytics/$qrId'
     | '/api/public/scan'
   id:
     | '__root__'
@@ -139,6 +151,7 @@ export interface FileRouteTypes {
     | '/q/$shortId'
     | '/r/$shortId'
     | '/vcard/$shortId'
+    | '/_authenticated/analytics/$qrId'
     | '/api/public/scan'
   fileRoutesById: FileRoutesById
 }
@@ -224,17 +237,38 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicScanRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/analytics/$qrId': {
+      id: '/_authenticated/analytics/$qrId'
+      path: '/$qrId'
+      fullPath: '/analytics/$qrId'
+      preLoaderRoute: typeof AuthenticatedAnalyticsQrIdRouteImport
+      parentRoute: typeof AuthenticatedAnalyticsRoute
+    }
   }
 }
 
+interface AuthenticatedAnalyticsRouteChildren {
+  AuthenticatedAnalyticsQrIdRoute: typeof AuthenticatedAnalyticsQrIdRoute
+}
+
+const AuthenticatedAnalyticsRouteChildren: AuthenticatedAnalyticsRouteChildren =
+  {
+    AuthenticatedAnalyticsQrIdRoute: AuthenticatedAnalyticsQrIdRoute,
+  }
+
+const AuthenticatedAnalyticsRouteWithChildren =
+  AuthenticatedAnalyticsRoute._addFileChildren(
+    AuthenticatedAnalyticsRouteChildren,
+  )
+
 interface AuthenticatedRouteChildren {
-  AuthenticatedAnalyticsRoute: typeof AuthenticatedAnalyticsRoute
+  AuthenticatedAnalyticsRoute: typeof AuthenticatedAnalyticsRouteWithChildren
   AuthenticatedCreateRoute: typeof AuthenticatedCreateRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
-  AuthenticatedAnalyticsRoute: AuthenticatedAnalyticsRoute,
+  AuthenticatedAnalyticsRoute: AuthenticatedAnalyticsRouteWithChildren,
   AuthenticatedCreateRoute: AuthenticatedCreateRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
 }
