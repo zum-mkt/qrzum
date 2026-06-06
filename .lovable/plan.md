@@ -1,70 +1,65 @@
-## Fase 3 + Pixels de Tracking (entrega combinada)
+## Diagnóstico (a causa real)
 
-Analytics interno completo + integração de pixels externos por QR, via página intermediária que dispara eventos e adiciona UTMs antes de redirecionar.
+A criação de QR não falha por causa de RLS nem porque pixels são obrigatórios. A migração da Fase 3 só atualizou a função `resolve_qr` e **nunca aplicou as mudanças de schema**. Consequências encontradas no banco agora:
 
-### 1. Banco — duas mudanças
+1. `qr_links` **não tem** as colunas `ga4_id`, `gtm_id`, `meta_pixel_id`, `tiktok_pixel_id`, `linkedin_partner_id`, `twitter_pixel_id`, `pinterest_tag_id`, `add_utm`. O `insert` do `create.tsx` envia esses campos → PostgREST devolve "column does not exist" e o QR não é criado, mesmo deixando tudo em branco.
+2. `qr_links_type_check` ainda só aceita `('link','file','vcard')`. Os tipos `whatsapp`, `wifi`, `video`, `links` falham na inserção independente de pixels.
+3. A tabela `qr_scans` **não existe**, então o endpoint `/api/public/scan` está logando erros silenciosamente e a Fase 3 (analytics) não tem onde gravar.
+4. A função `resolve_qr` referencia colunas inexistentes → qualquer scan que chegue ao `/r/$shortId` quebra a RPC.
 
-**Tabela nova `qr_scans`** (analytics interno):
-- `id uuid PK`, `qr_id uuid FK qr_links(id) ON DELETE CASCADE`
-- `scanned_at timestamptz default now()`
-- `country text`, `city text`, `device text` (mobile/desktop/tablet), `os text`, `browser text`, `referrer text`
-- Índice em `(qr_id, scanned_at DESC)`
-- RLS: SELECT só se o `qr_id` pertence a `auth.uid()`; INSERT via `service_role`
-- GRANTs: `SELECT` para `authenticated`, `ALL` para `service_role`
+Resumo: o problema "não aceita criar sem pixels" é um sintoma; a verdadeira correção é aplicar o schema da Fase 3 e remover a restrição de `type` herdada da Fase 1.
 
-**Colunas novas em `qr_links`** (pixels por QR — todos opcionais, text nullable):
-- `ga4_id` (G-XXXXXX), `gtm_id` (GTM-XXXXX)
-- `meta_pixel_id`, `tiktok_pixel_id`, `linkedin_partner_id`
-- `twitter_pixel_id`, `pinterest_tag_id`
-- `add_utm boolean default false` — quando true, injeta `utm_source=qr&utm_medium=<type>&utm_campaign=<short_id>` em destinos URL
+## O que vou entregar
 
-### 2. Página intermediária `/r/$shortId` (substitui `/q/`, `/links/`, `/vcard/`)
+### 1. Migração única (corrige a Fase 3 e desbloqueia a criação)
 
-Rota SSR pública nova que:
-1. Chama server fn `resolveScan({ shortId })` → retorna destino + pixels + tipo
-2. Dispara pixels client-side via `<Helmet>`/scripts inline (todos os IDs configurados)
-3. Faz `INSERT` em `qr_scans` (fire-and-forget via server fn separado)
-4. Aguarda ~400ms para garantir envio dos eventos
-5. Faz `window.location.replace(destino_final)` (com UTM se aplicável)
+- `ALTER TABLE qr_links ADD COLUMN ... IF NOT EXISTS` para as 7 colunas de pixel (`text NULL`) e `add_utm boolean NOT NULL DEFAULT false`.
+- `DROP CONSTRAINT qr_links_type_check` e recria com `CHECK (type IN ('link','file','vcard','whatsapp','wifi','video','links'))`.
+- `CREATE TABLE public.qr_scans` com `id`, `qr_id` (FK → qr_links ON DELETE CASCADE), `scanned_at`, `country`, `city`, `device`, `os`, `browser`, `referrer`. Index em `(qr_id, scanned_at DESC)`.
+- GRANTs: `SELECT` para `authenticated` (com policy de dono via subquery em qr_links), `ALL` para `service_role`. Sem grant para `anon`.
+- RLS: dono lê seus próprios scans (`EXISTS (SELECT 1 FROM qr_links WHERE qr_links.id = qr_scans.qr_id AND qr_links.user_id = auth.uid())`). `service_role` insere (já bypassa RLS).
+- A função `resolve_qr` já está alinhada com as novas colunas, então só passa a funcionar.
 
-UI: logo do app + spinner + "Redirecionando..." (≤500ms perceptível).
+Sem isso, nenhuma mudança de código resolve.
 
-Rotas antigas (`/q/`, `/links/`, `/vcard/`) viram redirects 301 para `/r/$shortId` (compat).
+### 2. Página `/analytics` (visão geral)
 
-### 3. Configuração de pixels no form `/create` + edição `/dashboard`
+Nova rota `src/routes/_authenticated/analytics.tsx`:
+- 4 cards: scans últimos 30d, scans hoje, top QR (mais escaneado em 30d), variação % vs 30d anteriores.
+- Gráfico de linha (recharts) com scans/dia nos últimos 30 dias.
+- Tabela top 10 QRs por scans com link para o drilldown.
+- Filtro de range (7d / 30d / 90d).
+- Empty state amigável quando ainda não há scans.
 
-Componente novo `<PixelFields />` (collapsible "Tracking & Pixels"):
-- 7 inputs opcionais (GA4, GTM, Meta, TikTok, LinkedIn, X, Pinterest) com validação de formato (regex por plataforma) e helper text "deixe em branco para não rastrear"
-- Switch "Adicionar UTMs ao destino" (só aparece para tipos URL: link, vídeo, etc.)
-- Compartilhado entre `/create` e dialog de edit em `/dashboard`
+### 3. Página `/analytics/$qrId` (drilldown)
 
-### 4. Página `/analytics` (lista geral)
+Nova rota `src/routes/_authenticated/analytics.$qrId.tsx`:
+- Header com título do QR, tipo, short_id, status ativo, total de scans.
+- Gráfico de linha por dia.
+- Dois gráficos pizza/bar: por país e por device/OS.
+- Tabela dos últimos 50 scans (data, país, cidade, device, OS, browser, referrer).
+- Botão "Exportar CSV" (gera no cliente).
 
-- 4 stat cards: scans 30d, scans hoje, top QR, crescimento %
-- Gráfico de linha (recharts) — scans/dia últimos 30 dias
-- Tabela top 10 QRs por scans com filtro de range (7d/30d/90d)
+### 4. Ajustes de navegação e dashboard
 
-### 5. Página `/analytics/$qrId` (drilldown)
+- Adicionar item "Analytics" na sidebar (`BarChart3`).
+- Em cada linha do dashboard, botão "Ver analytics" indo para `/analytics/<qrId>`.
+- Diálogo de edição do dashboard ganha o `<PixelFields />` (já pronto) para editar pixels e o toggle UTM sem precisar recriar o QR.
 
-- Header: título do QR, preview, tipo, total scans
-- Linha temporal por dia
-- Pizza/barras por país, device, OS
-- Tabela últimos 50 scans
-- Botão "Exportar CSV" (client-side)
+### 5. Higiene
 
-### 6. Navegação
+- Tornar o `Field` reutilizável aceitar `required={false}` continua igual; nada nos forms muda.
+- Garantir que `/api/public/scan` continua "fire-and-forget" (não bloqueia o redirect mesmo se o insert falhar).
+- O endpoint já trunca `short_id` e `referrer`; mantém-se.
 
-- Sidebar: novo item "Analytics" (`BarChart3`)
-- Dashboard rows: botão "Ver analytics" → `/analytics/$qrId`
+## O que NÃO entra agora
 
-### Detalhes técnicos
+- Configuração global de pixels por conta (continua só por QR, como você escolheu).
+- Server-side GTM / CAPI / heatmap / eventos pós-scan / filtros de UTM dentro do analytics interno.
+- Edição de pixels via API pública.
 
-- **Captura de metadata** (server fn `recordScan`): UA parser (já disponível em `navigator`-ish via header `user-agent`), país/cidade via headers Cloudflare (`cf-ipcountry`, `cf-ipcity`) com fallback null. Sem IP armazenado (LGPD-friendly).
-- **Pixels**: snippets oficiais de cada plataforma carregados condicionalmente. Evento padrão "qr_scan" em GA4 e custom "QRScan" no Meta. Carregamento via `<script async>` injetado em useEffect.
-- **UTM injection**: helper `injectUtm(url, type, shortId)` — só roda se destino é URL parseável; vCard/WiFi/WhatsApp passam direto.
-- **Sem secrets** — todos os IDs de pixel são públicos por design, ficam em `qr_links` e são servidos ao client.
-- **Server fns**: `resolveScan` (público, usa `supabaseAdmin`), `recordScan` (público, INSERT fire-and-forget), `listScans` / `qrScanStats` (autenticadas via `requireSupabaseAuth`).
-- **resolve_qr existente**: continua incrementando `clicks` para não quebrar dashboards atuais.
+## Ordem de execução
 
-### Fora de escopo
-- Heatmap de scans, eventos pós-scan (conversão), filtros UTM no analytics interno, A/B testing, Server-Side GTM, CAPI do Meta.
+1. Rodar a migração (passo 1) — destrava criação imediatamente.
+2. Adicionar páginas de analytics e navegação (passos 2–4).
+3. Pixels editáveis no dashboard (passo 4).

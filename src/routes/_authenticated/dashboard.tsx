@@ -16,12 +16,13 @@ import {
 } from "@/components/ui/dialog";
 import {
   Copy, Pencil, Trash2, QrCode as QrIcon, Plus, MousePointerClick,
-  ExternalLink, Search,
+  ExternalLink, Search, BarChart3,
 } from "lucide-react";
 import { toast } from "sonner";
 import { QRCodePreview } from "@/components/QRCodePreview";
 import { QRStyleFields, type QRStyle } from "@/components/QRStyleFields";
-import { buildQrUrl, QR_TYPE_LABELS, type FrameStyle } from "@/lib/qr";
+import { PixelFields } from "@/components/PixelFields";
+import { buildQrUrl, QR_TYPE_LABELS, emptyPixelConfig, type FrameStyle, type PixelConfig } from "@/lib/qr";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard — QRFlow" }] }),
@@ -67,6 +68,7 @@ function Dashboard() {
   const [editStyle, setEditStyle] = useState<QRStyle>({
     color: "#0f172a", bgColor: "#ffffff", frameStyle: "none", logoUrl: null,
   });
+  const [editPixels, setEditPixels] = useState<PixelConfig>(emptyPixelConfig);
 
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("all");
@@ -120,7 +122,7 @@ function Dashboard() {
     qc.invalidateQueries({ queryKey: ["qr_links"] });
   };
 
-  const openEdit = (row: Row) => {
+  const openEdit = async (row: Row) => {
     setEditRow(row);
     setEditTitle(row.title);
     setEditUrl(row.destination_url);
@@ -130,12 +132,24 @@ function Dashboard() {
       frameStyle: (row.frame_style ?? "none") as FrameStyle,
       logoUrl: row.logo_url ?? null,
     });
+    setEditPixels(emptyPixelConfig);
+    const { data } = await (supabase.from("qr_links") as any)
+      .select("ga4_id,gtm_id,meta_pixel_id,tiktok_pixel_id,linkedin_partner_id,twitter_pixel_id,pinterest_tag_id,add_utm")
+      .eq("id", row.id)
+      .maybeSingle();
+    if (data) {
+      setEditPixels({
+        ga4Id: data.ga4_id, gtmId: data.gtm_id, metaPixelId: data.meta_pixel_id,
+        tiktokPixelId: data.tiktok_pixel_id, linkedinPartnerId: data.linkedin_partner_id,
+        twitterPixelId: data.twitter_pixel_id, pinterestTagId: data.pinterest_tag_id,
+        addUtm: !!data.add_utm,
+      });
+    }
   };
 
   const saveEdit = async () => {
     if (!editRow) return;
-    const { error } = await supabase
-      .from("qr_links")
+    const { error } = await (supabase.from("qr_links") as any)
       .update({
         title: editTitle,
         destination_url: editUrl,
@@ -143,6 +157,14 @@ function Dashboard() {
         bg_color: editStyle.bgColor,
         frame_style: editStyle.frameStyle,
         logo_url: editStyle.logoUrl,
+        ga4_id: editPixels.ga4Id || null,
+        gtm_id: editPixels.gtmId || null,
+        meta_pixel_id: editPixels.metaPixelId || null,
+        tiktok_pixel_id: editPixels.tiktokPixelId || null,
+        linkedin_partner_id: editPixels.linkedinPartnerId || null,
+        twitter_pixel_id: editPixels.twitterPixelId || null,
+        pinterest_tag_id: editPixels.pinterestTagId || null,
+        add_utm: !!editPixels.addUtm,
       })
       .eq("id", editRow.id);
     if (error) return toast.error(error.message);
@@ -234,6 +256,9 @@ function Dashboard() {
                     <Button size="icon" variant="ghost" title="Copiar link" onClick={() => copyLink(row)}>
                       <Copy className="h-4 w-4" />
                     </Button>
+                    <Link to="/analytics/$qrId" params={{ qrId: row.id }}>
+                      <Button size="icon" variant="ghost" title="Ver analytics"><BarChart3 className="h-4 w-4" /></Button>
+                    </Link>
                     {row.type !== "wifi" && (
                       <a href={buildQrUrl(row.short_id)} target="_blank" rel="noreferrer">
                         <Button size="icon" variant="ghost" title="Abrir"><ExternalLink className="h-4 w-4" /></Button>
@@ -295,6 +320,11 @@ function Dashboard() {
               </p>
             </div>
             <QRStyleFields style={editStyle} onChange={setEditStyle} />
+            <PixelFields
+              pixels={editPixels}
+              onChange={setEditPixels}
+              showUtm={editRow?.type !== "wifi" && editRow?.type !== "vcard" && editRow?.type !== "links"}
+            />
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditRow(null)}>Cancelar</Button>
