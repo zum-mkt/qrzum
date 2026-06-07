@@ -17,9 +17,11 @@ import {
 import { QRCodePreview } from "@/components/QRCodePreview";
 import { QRStyleFields, defaultStyle, type QRStyle } from "@/components/QRStyleFields";
 import { PixelFields } from "@/components/PixelFields";
+import { FolderTagPicker } from "@/components/FolderTagPicker";
+import { setQrTags } from "@/lib/organize";
 import {
   Copy, Link as LinkIcon, FileUp, Contact, ArrowLeft,
-  MessageCircle, Wifi, Video, ListOrdered, Plus, Trash2,
+  MessageCircle, Wifi, Video, ListOrdered, Plus, Trash2, FileText,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/create")({
@@ -27,7 +29,7 @@ export const Route = createFileRoute("/_authenticated/create")({
   component: Create,
 });
 
-type QrType = "link" | "file" | "vcard" | "whatsapp" | "wifi" | "video" | "links";
+type QrType = "link" | "file" | "vcard" | "whatsapp" | "wifi" | "video" | "links" | "pdf";
 type Created = {
   shortId: string;
   title: string;
@@ -40,6 +42,8 @@ function Create() {
   const [created, setCreated] = useState<Created>(null);
   const [style, setStyle] = useState<QRStyle>(defaultStyle());
   const [pixels, setPixels] = useState<PixelConfig>(emptyPixelConfig);
+  const [folderId, setFolderId] = useState<string | null>(null);
+  const [tagIds, setTagIds] = useState<string[]>([]);
   if (created) return <Success created={created} reset={() => setCreated(null)} />;
 
   return (
@@ -54,22 +58,27 @@ function Create() {
 
       <Card className="p-6">
         <Tabs defaultValue="link">
-          <TabsList className="grid w-full grid-cols-4 sm:grid-cols-7">
+          <TabsList className="grid w-full grid-cols-4 sm:grid-cols-8">
             <TabsTrigger value="link"><LinkIcon className="mr-1.5 h-4 w-4" /> Link</TabsTrigger>
             <TabsTrigger value="whatsapp"><MessageCircle className="mr-1.5 h-4 w-4" /> WhatsApp</TabsTrigger>
             <TabsTrigger value="vcard"><Contact className="mr-1.5 h-4 w-4" /> vCard</TabsTrigger>
+            <TabsTrigger value="pdf"><FileText className="mr-1.5 h-4 w-4" /> PDF</TabsTrigger>
             <TabsTrigger value="file"><FileUp className="mr-1.5 h-4 w-4" /> Arquivo</TabsTrigger>
             <TabsTrigger value="links"><ListOrdered className="mr-1.5 h-4 w-4" /> Links</TabsTrigger>
             <TabsTrigger value="video"><Video className="mr-1.5 h-4 w-4" /> Vídeo</TabsTrigger>
             <TabsTrigger value="wifi"><Wifi className="mr-1.5 h-4 w-4" /> WiFi</TabsTrigger>
           </TabsList>
-          <TabsContent value="link" className="mt-6"><LinkForm style={style} setStyle={setStyle} pixels={pixels} setPixels={setPixels} onCreated={setCreated} /></TabsContent>
-          <TabsContent value="whatsapp" className="mt-6"><WhatsAppForm style={style} setStyle={setStyle} pixels={pixels} setPixels={setPixels} onCreated={setCreated} /></TabsContent>
-          <TabsContent value="vcard" className="mt-6"><VCardForm style={style} setStyle={setStyle} pixels={pixels} setPixels={setPixels} onCreated={setCreated} /></TabsContent>
-          <TabsContent value="file" className="mt-6"><FileForm style={style} setStyle={setStyle} pixels={pixels} setPixels={setPixels} onCreated={setCreated} /></TabsContent>
-          <TabsContent value="links" className="mt-6"><LinksForm style={style} setStyle={setStyle} pixels={pixels} setPixels={setPixels} onCreated={setCreated} /></TabsContent>
-          <TabsContent value="video" className="mt-6"><VideoForm style={style} setStyle={setStyle} pixels={pixels} setPixels={setPixels} onCreated={setCreated} /></TabsContent>
-          <TabsContent value="wifi" className="mt-6"><WifiForm style={style} setStyle={setStyle} pixels={pixels} setPixels={setPixels} onCreated={setCreated} /></TabsContent>
+          <div className="mt-6 mb-6">
+            <FolderTagPicker folderId={folderId} onFolderChange={setFolderId} tagIds={tagIds} onTagsChange={setTagIds} />
+          </div>
+          <TabsContent value="link" className="mt-6"><LinkForm style={style} setStyle={setStyle} pixels={pixels} setPixels={setPixels} folderId={folderId} tagIds={tagIds} onCreated={setCreated} /></TabsContent>
+          <TabsContent value="whatsapp" className="mt-6"><WhatsAppForm style={style} setStyle={setStyle} pixels={pixels} setPixels={setPixels} folderId={folderId} tagIds={tagIds} onCreated={setCreated} /></TabsContent>
+          <TabsContent value="vcard" className="mt-6"><VCardForm style={style} setStyle={setStyle} pixels={pixels} setPixels={setPixels} folderId={folderId} tagIds={tagIds} onCreated={setCreated} /></TabsContent>
+          <TabsContent value="pdf" className="mt-6"><FileForm style={style} setStyle={setStyle} pixels={pixels} setPixels={setPixels} folderId={folderId} tagIds={tagIds} onCreated={setCreated} pdfOnly /></TabsContent>
+          <TabsContent value="file" className="mt-6"><FileForm style={style} setStyle={setStyle} pixels={pixels} setPixels={setPixels} folderId={folderId} tagIds={tagIds} onCreated={setCreated} /></TabsContent>
+          <TabsContent value="links" className="mt-6"><LinksForm style={style} setStyle={setStyle} pixels={pixels} setPixels={setPixels} folderId={folderId} tagIds={tagIds} onCreated={setCreated} /></TabsContent>
+          <TabsContent value="video" className="mt-6"><VideoForm style={style} setStyle={setStyle} pixels={pixels} setPixels={setPixels} folderId={folderId} tagIds={tagIds} onCreated={setCreated} /></TabsContent>
+          <TabsContent value="wifi" className="mt-6"><WifiForm style={style} setStyle={setStyle} pixels={pixels} setPixels={setPixels} folderId={folderId} tagIds={tagIds} onCreated={setCreated} /></TabsContent>
         </Tabs>
       </Card>
     </div>
@@ -79,6 +88,8 @@ function Create() {
 type FormCtx = {
   style: QRStyle; setStyle: (s: QRStyle) => void;
   pixels: PixelConfig; setPixels: (p: PixelConfig) => void;
+  folderId: string | null;
+  tagIds: string[];
   onCreated: (c: Created) => void;
 };
 
@@ -89,11 +100,13 @@ async function insertRow(args: {
   vcard_data?: VCardData | LinksData | Record<string, unknown>;
   style: QRStyle;
   pixels: PixelConfig;
+  folderId?: string | null;
+  tagIds?: string[];
 }) {
   const { data: u } = await supabase.auth.getUser();
   if (!u.user) throw new Error("Não autenticado");
   const short_id = generateShortId();
-  const { error } = await (supabase.from("qr_links") as any).insert({
+  const { data: inserted, error } = await (supabase.from("qr_links") as any).insert({
     user_id: u.user.id,
     title: args.title,
     type: args.type,
@@ -104,6 +117,7 @@ async function insertRow(args: {
     bg_color: args.style.bgColor,
     frame_style: args.style.frameStyle,
     logo_url: args.style.logoUrl,
+    folder_id: args.folderId ?? null,
     ga4_id: args.pixels.ga4Id || null,
     gtm_id: args.pixels.gtmId || null,
     meta_pixel_id: args.pixels.metaPixelId || null,
@@ -112,8 +126,11 @@ async function insertRow(args: {
     twitter_pixel_id: args.pixels.twitterPixelId || null,
     pinterest_tag_id: args.pixels.pinterestTagId || null,
     add_utm: !!args.pixels.addUtm,
-  });
+  }).select("id").single();
   if (error) throw error;
+  if (args.tagIds && args.tagIds.length > 0 && inserted?.id) {
+    try { await setQrTags(inserted.id as string, args.tagIds); } catch { /* non-fatal */ }
+  }
   return short_id;
 }
 
