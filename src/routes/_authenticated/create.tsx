@@ -409,7 +409,7 @@ function VCardForm({ style, setStyle, pixels, setPixels, folderId, tagIds, onCre
         title,
         type: "vcard",
         destination_url: buildInternalUrl(`/vcard/`),
-        vcard_data: v, style, pixels,
+        vcard_data: v, style, pixels, folderId, tagIds,
       });
       await supabase.from("qr_links").update({
         destination_url: buildInternalUrl(`/vcard/${short}`),
