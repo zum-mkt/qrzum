@@ -13,6 +13,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
+import { registerSW } from "@/lib/registerSW";
 
 function NotFoundComponent() {
   return (
@@ -88,12 +89,16 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:description", content: "Markdown Reader: Visualize and interact with Markdown files." },
       { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/b96e26ae-1128-4787-9c3c-eecd4dc89d8a/id-preview-9433e35a--2b2ab476-b92f-4e3e-a74f-475f09107eae.lovable.app-1779393401786.png" },
       { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/b96e26ae-1128-4787-9c3c-eecd4dc89d8a/id-preview-9433e35a--2b2ab476-b92f-4e3e-a74f-475f09107eae.lovable.app-1779393401786.png" },
+      { name: "theme-color", content: "#1e1b4b" },
     ],
     links: [
       {
         rel: "stylesheet",
         href: appCss,
       },
+      { rel: "manifest", href: "/manifest.webmanifest" },
+      { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
+      { rel: "icon", type: "image/png", sizes: "192x192", href: "/pwa-192.png" },
     ],
   }),
   shellComponent: RootShell,
@@ -122,6 +127,7 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthSync />
+      <SWRegister />
       <Outlet />
       <Toaster richColors position="top-right" />
     </QueryClientProvider>
@@ -138,5 +144,10 @@ function AuthSync() {
     });
     return () => subscription.unsubscribe();
   }, [router, qc]);
+  return null;
+}
+
+function SWRegister() {
+  useEffect(() => { registerSW(); }, []);
   return null;
 }
