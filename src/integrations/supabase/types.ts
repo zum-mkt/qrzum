@@ -14,6 +14,71 @@ export type Database = {
   }
   public: {
     Tables: {
+      folders: {
+        Row: {
+          color: string
+          created_at: string
+          id: string
+          name: string
+          parent_id: string | null
+          user_id: string
+        }
+        Insert: {
+          color?: string
+          created_at?: string
+          id?: string
+          name: string
+          parent_id?: string | null
+          user_id: string
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          id?: string
+          name?: string
+          parent_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "folders_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "folders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      qr_link_tags: {
+        Row: {
+          qr_id: string
+          tag_id: string
+        }
+        Insert: {
+          qr_id: string
+          tag_id: string
+        }
+        Update: {
+          qr_id?: string
+          tag_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qr_link_tags_qr_id_fkey"
+            columns: ["qr_id"]
+            isOneToOne: false
+            referencedRelation: "qr_links"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "qr_link_tags_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "tags"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       qr_links: {
         Row: {
           active: boolean
@@ -23,7 +88,9 @@ export type Database = {
           color: string
           created_at: string
           destination_url: string
+          folder_id: string | null
           frame_style: string
+          frame_text: string | null
           ga4_id: string | null
           gtm_id: string | null
           id: string
@@ -32,6 +99,7 @@ export type Database = {
           meta_pixel_id: string | null
           pinterest_tag_id: string | null
           short_id: string
+          style: Json
           tiktok_pixel_id: string | null
           title: string
           twitter_pixel_id: string | null
@@ -47,7 +115,9 @@ export type Database = {
           color?: string
           created_at?: string
           destination_url: string
+          folder_id?: string | null
           frame_style?: string
+          frame_text?: string | null
           ga4_id?: string | null
           gtm_id?: string | null
           id?: string
@@ -56,6 +126,7 @@ export type Database = {
           meta_pixel_id?: string | null
           pinterest_tag_id?: string | null
           short_id: string
+          style?: Json
           tiktok_pixel_id?: string | null
           title: string
           twitter_pixel_id?: string | null
@@ -71,7 +142,9 @@ export type Database = {
           color?: string
           created_at?: string
           destination_url?: string
+          folder_id?: string | null
           frame_style?: string
+          frame_text?: string | null
           ga4_id?: string | null
           gtm_id?: string | null
           id?: string
@@ -80,6 +153,7 @@ export type Database = {
           meta_pixel_id?: string | null
           pinterest_tag_id?: string | null
           short_id?: string
+          style?: Json
           tiktok_pixel_id?: string | null
           title?: string
           twitter_pixel_id?: string | null
@@ -87,7 +161,15 @@ export type Database = {
           user_id?: string
           vcard_data?: Json | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "qr_links_folder_id_fkey"
+            columns: ["folder_id"]
+            isOneToOne: false
+            referencedRelation: "folders"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       qr_scans: {
         Row: {
@@ -100,6 +182,7 @@ export type Database = {
           qr_id: string
           referrer: string | null
           scanned_at: string
+          visitor_hash: string | null
         }
         Insert: {
           browser?: string | null
@@ -111,6 +194,7 @@ export type Database = {
           qr_id: string
           referrer?: string | null
           scanned_at?: string
+          visitor_hash?: string | null
         }
         Update: {
           browser?: string | null
@@ -122,6 +206,7 @@ export type Database = {
           qr_id?: string
           referrer?: string | null
           scanned_at?: string
+          visitor_hash?: string | null
         }
         Relationships: [
           {
@@ -133,11 +218,42 @@ export type Database = {
           },
         ]
       }
+      tags: {
+        Row: {
+          color: string
+          created_at: string
+          id: string
+          name: string
+          user_id: string
+        }
+        Insert: {
+          color?: string
+          created_at?: string
+          id?: string
+          name: string
+          user_id: string
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          id?: string
+          name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      qr_unique_visitors: {
+        Args: { p_days: number }
+        Returns: {
+          qr_id: string
+          uniques: number
+        }[]
+      }
       resolve_qr: {
         Args: { p_short_id: string }
         Returns: {
