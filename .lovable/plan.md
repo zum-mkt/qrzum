@@ -1,65 +1,112 @@
-## Diagnóstico (a causa real)
+## Escopo desta rodada
 
-A criação de QR não falha por causa de RLS nem porque pixels são obrigatórios. A migração da Fase 3 só atualizou a função `resolve_qr` e **nunca aplicou as mudanças de schema**. Consequências encontradas no banco agora:
+Conservo tudo que já está pronto (tipos de QR, pixels, analytics interno, dashboard, auth, redirector `/r/$shortId`). Esta rodada **polir a Fase 1** do roadmap e **ativar PWA com offline**. Planos pagos e gates ficam abertos (sem cobrança).
 
-1. `qr_links` **não tem** as colunas `ga4_id`, `gtm_id`, `meta_pixel_id`, `tiktok_pixel_id`, `linkedin_partner_id`, `twitter_pixel_id`, `pinterest_tag_id`, `add_utm`. O `insert` do `create.tsx` envia esses campos → PostgREST devolve "column does not exist" e o QR não é criado, mesmo deixando tudo em branco.
-2. `qr_links_type_check` ainda só aceita `('link','file','vcard')`. Os tipos `whatsapp`, `wifi`, `video`, `links` falham na inserção independente de pixels.
-3. A tabela `qr_scans` **não existe**, então o endpoint `/api/public/scan` está logando erros silenciosamente e a Fase 3 (analytics) não tem onde gravar.
-4. A função `resolve_qr` referencia colunas inexistentes → qualquer scan que chegue ao `/r/$shortId` quebra a RPC.
+Fora do escopo agora: Fase 2 (Flow Builder, webhooks, conectores, API pública), Fase 3 (roteamento contextual, ScanAI, tradução, Proof of Presence), planos/pagamento.
 
-Resumo: o problema "não aceita criar sem pixels" é um sintoma; a verdadeira correção é aplicar o schema da Fase 3 e remover a restrição de `type` herdada da Fase 1.
+---
 
-## O que vou entregar
+## 1. Organização: Pastas e Tags
 
-### 1. Migração única (corrige a Fase 3 e desbloqueia a criação)
+**Banco** (uma migração):
+- `folders` (id, user_id, name, color, parent_id nullable, created_at). RLS dono.
+- `tags` (id, user_id, name, color, unique(user_id,name)). RLS dono.
+- `qr_link_tags` (qr_id, tag_id, PK composto). RLS via subquery em qr_links.
+- `qr_links.folder_id uuid NULL` + FK ON DELETE SET NULL + index.
+- GRANTs autenticated/service_role conforme padrão.
 
-- `ALTER TABLE qr_links ADD COLUMN ... IF NOT EXISTS` para as 7 colunas de pixel (`text NULL`) e `add_utm boolean NOT NULL DEFAULT false`.
-- `DROP CONSTRAINT qr_links_type_check` e recria com `CHECK (type IN ('link','file','vcard','whatsapp','wifi','video','links'))`.
-- `CREATE TABLE public.qr_scans` com `id`, `qr_id` (FK → qr_links ON DELETE CASCADE), `scanned_at`, `country`, `city`, `device`, `os`, `browser`, `referrer`. Index em `(qr_id, scanned_at DESC)`.
-- GRANTs: `SELECT` para `authenticated` (com policy de dono via subquery em qr_links), `ALL` para `service_role`. Sem grant para `anon`.
-- RLS: dono lê seus próprios scans (`EXISTS (SELECT 1 FROM qr_links WHERE qr_links.id = qr_scans.qr_id AND qr_links.user_id = auth.uid())`). `service_role` insere (já bypassa RLS).
-- A função `resolve_qr` já está alinhada com as novas colunas, então só passa a funcionar.
+**UI**:
+- Sidebar do dashboard ganha árvore de pastas (lista simples, sem drag-and-drop nesta rodada — só criar/renomear/excluir e mover QR via dropdown).
+- Filtro por pasta e por tag(s) no topo do dashboard.
+- Dialog de edição/criação do QR ganha selects de pasta e multi-tag (com criação inline).
 
-Sem isso, nenhuma mudança de código resolve.
+---
 
-### 2. Página `/analytics` (visão geral)
+## 2. Bulk Creation (CSV/Excel)
 
-Nova rota `src/routes/_authenticated/analytics.tsx`:
-- 4 cards: scans últimos 30d, scans hoje, top QR (mais escaneado em 30d), variação % vs 30d anteriores.
-- Gráfico de linha (recharts) com scans/dia nos últimos 30 dias.
-- Tabela top 10 QRs por scans com link para o drilldown.
-- Filtro de range (7d / 30d / 90d).
-- Empty state amigável quando ainda não há scans.
+- Nova rota `/_authenticated/bulk` com upload `.csv` (parse client-side via `papaparse`).
+- Template baixável com colunas: `title, type, destination_url, folder, tags, color, bg_color, ga4_id, gtm_id, meta_pixel_id, ...`.
+- Preview tabular com validação por linha (tipo válido, URL bem-formada). Linhas inválidas viram avisos, válidas continuam.
+- Botão "Criar N QRs" insere em lote via `supabase.from('qr_links').insert([...])` (server fn protegida com `requireSupabaseAuth` para gerar `short_id` único e validar). Tags/pastas resolvidas/criadas no servidor.
+- Resultado: tabela com link público de cada QR + botão "Baixar todos como PNG (zip)" (usa `jszip` no cliente).
 
-### 3. Página `/analytics/$qrId` (drilldown)
+---
 
-Nova rota `src/routes/_authenticated/analytics.$qrId.tsx`:
-- Header com título do QR, tipo, short_id, status ativo, total de scans.
-- Gráfico de linha por dia.
-- Dois gráficos pizza/bar: por país e por device/OS.
-- Tabela dos últimos 50 scans (data, país, cidade, device, OS, browser, referrer).
-- Botão "Exportar CSV" (gera no cliente).
+## 3. Tipo PDF nativo
 
-### 4. Ajustes de navegação e dashboard
+- Adicionar `'pdf'` ao `qr_links_type_check`.
+- No `create.tsx`: novo tipo "PDF" → upload no bucket `qr_files` (já existe), `destination_url` aponta para a URL pública do arquivo.
+- Dashboard mostra ícone PDF e permite trocar o arquivo (mantendo o short_id).
+- `resolve_qr` não muda (tipo `pdf` cai no caminho padrão de URL).
 
-- Adicionar item "Analytics" na sidebar (`BarChart3`).
-- Em cada linha do dashboard, botão "Ver analytics" indo para `/analytics/<qrId>`.
-- Diálogo de edição do dashboard ganha o `<PixelFields />` (já pronto) para editar pixels e o toggle UTM sem precisar recriar o QR.
+---
 
-### 5. Higiene
+## 4. Customização visual avançada
 
-- Tornar o `Field` reutilizável aceitar `required={false}` continua igual; nada nos forms muda.
-- Garantir que `/api/public/scan` continua "fire-and-forget" (não bloqueia o redirect mesmo se o insert falhar).
-- O endpoint já trunca `short_id` e `referrer`; mantém-se.
+**Gradientes e transparências**:
+- Adicionar `qr_links.style jsonb DEFAULT '{}'` com forma:
+  ```
+  { fgType: 'solid'|'linear'|'radial', fgColors: ['#..','#..'], fgRotation: number,
+    bgType: 'solid'|'transparent'|'linear', bgColors: [...],
+    dotsStyle: 'square'|'rounded'|'dots'|'classy',
+    cornersSquareStyle, cornersDotStyle, logoBackground: boolean }
+  ```
+- Trocar `qrcode` por `qr-code-styling` (suporta gradientes, formas de pontos, logo nativo). Manter fallback PNG para download.
+- `QRStyleFields.tsx` ganha abas: Cores (solid/linear/radial + pickers), Estilo de pontos, Cantos, Background (sólido/transparente).
 
-## O que NÃO entra agora
+**Molduras inteligentes com CTAs**:
+- `qr_links.frame_style` já existe; expandir para: `none | label-bottom | scan-me | tap-to-pay | url-pill | rounded-card`.
+- `qr_links.frame_text text NULL` (CTA editável). Render no `QRCodePreview.tsx` via wrapper SVG envolvendo o canvas do QR. Download PNG inclui a moldura (render off-screen com `html-to-image`).
 
-- Configuração global de pixels por conta (continua só por QR, como você escolheu).
-- Server-side GTM / CAPI / heatmap / eventos pós-scan / filtros de UTM dentro do analytics interno.
-- Edição de pixels via API pública.
+**Ajuste automático de contraste do logo**:
+- Ao definir logo, calcular brilho médio dos 4 cantos do logo no client; se baixo contraste contra `bg_color`, desenhar automaticamente um "halo" branco/preto circular atrás do logo. Toggle "Ajuste automático" (default ligado).
 
-## Ordem de execução
+---
 
-1. Rodar a migração (passo 1) — destrava criação imediatamente.
-2. Adicionar páginas de analytics e navegação (passos 2–4).
-3. Pixels editáveis no dashboard (passo 4).
+## 5. Scans únicos
+
+- `qr_scans.visitor_hash text NULL` (sha256 de `ip + user-agent + short_id` truncado, calculado no servidor em `/api/public/scan`).
+- Página `/analytics` ganha card "Visitantes únicos (30d)" calculado por `count(distinct visitor_hash)` (RPC `qr_unique_visitors(p_range int)`).
+- Drilldown `/analytics/$qrId` ganha mesma métrica e linha sobreposta no gráfico ("Scans" vs "Únicos").
+
+---
+
+## 6. PWA instalável com offline (segue skill PWA)
+
+- Adicionar `vite-plugin-pwa` com `generateSW`, `registerType: "autoUpdate"`, `injectRegister: null`, `devOptions.enabled: false`.
+- Wrapper de registro `src/lib/registerSW.ts` com guards: refusa em dev, iframe, hostnames `id-preview--*`, `preview--*`, `*.lovableproject.com`, `*.lovableproject-dev.com`, `*.beta.lovable.dev`, e `?sw=off`. Em contextos refusados, faz `unregister()` de `/sw.js`.
+- Manifest em `public/manifest.webmanifest`: nome QRzum, theme/background `#000`/`#fff`, `display: standalone`, ícones 192/512 (gerados via `imagegen`).
+- Head tags em `__root.tsx`: manifest, theme-color, apple-touch-icon.
+- Estratégias do SW: `NetworkFirst` para navegações HTML; `CacheFirst` apenas para assets hashed same-origin; `/~oauth`, `/api/public/scan`, `/r/*` excluídos do fallback.
+- Aviso na UI: "Modo offline funciona apenas no app publicado".
+
+---
+
+## 7. Diagrama de tabelas após migração
+
+```
+qr_links ── folder_id ──> folders
+   │
+   └── qr_link_tags ──> tags
+   └── qr_scans (+ visitor_hash)
+```
+
+---
+
+## 8. Ordem de execução
+
+1. Migração única: `folders`, `tags`, `qr_link_tags`, `qr_links.folder_id`, `qr_links.style`, `qr_links.frame_text`, `qr_scans.visitor_hash`, `qr_links_type_check` += `'pdf'`, RPC `qr_unique_visitors`.
+2. Trocar lib de QR para `qr-code-styling`; refazer `QRStyleFields` e `QRCodePreview` (gradientes, formas, molduras com CTA, ajuste de logo).
+3. Dashboard: árvore de pastas, filtros, tags na edição, novo tipo PDF.
+4. `/bulk` (server fn + UI + zip de PNGs).
+5. Analytics: card "Únicos" + linha no gráfico.
+6. PWA: plugin, manifest, ícones, wrapper guardado, head tags.
+7. Smoke test: criar/editar QR de cada tipo, bulk import 5 linhas, scan via `/r/*` (analytics e únicos), instalar PWA no published.
+
+---
+
+## 9. Dependências novas
+
+`qr-code-styling`, `papaparse`, `@types/papaparse`, `jszip`, `html-to-image`, `vite-plugin-pwa`, `workbox-window`.
+
+Quando aprovar, executo na ordem acima.
