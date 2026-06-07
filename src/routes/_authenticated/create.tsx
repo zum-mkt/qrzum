@@ -157,7 +157,7 @@ function LinkForm({ style, setStyle, pixels, setPixels, onCreated }: FormCtx) {
     e.preventDefault();
     setLoading(true);
     try {
-      const short = await insertRow({ title, type: "link", destination_url: url, style, pixels });
+          const short = await insertRow({ title, type: "link", destination_url: url, style, pixels, folderId, tagIds });
       onCreated({ shortId: short, style, title });
       toast.success("QR Code criado!");
     } catch (err: any) { toast.error(err.message); }
