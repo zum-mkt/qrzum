@@ -148,7 +148,7 @@ function Field({
   );
 }
 
-function LinkForm({ style, setStyle, pixels, setPixels, onCreated }: FormCtx) {
+function LinkForm({ style, setStyle, pixels, setPixels, folderId, tagIds, onCreated }: FormCtx) {
   const [title, setTitle] = useState("");
   const [url, setUrl] = useState("");
   const [loading, setLoading] = useState(false);
@@ -157,7 +157,7 @@ function LinkForm({ style, setStyle, pixels, setPixels, onCreated }: FormCtx) {
     e.preventDefault();
     setLoading(true);
     try {
-          const short = await insertRow({ title, type: "link", destination_url: url, style, pixels, folderId, tagIds });
+      const short = await insertRow({ title, type: "link", destination_url: url, style, pixels, folderId, tagIds });
       onCreated({ shortId: short, style, title });
       toast.success("QR Code criado!");
     } catch (err: any) { toast.error(err.message); }
@@ -175,7 +175,7 @@ function LinkForm({ style, setStyle, pixels, setPixels, onCreated }: FormCtx) {
   );
 }
 
-function VideoForm({ style, setStyle, pixels, setPixels, onCreated }: FormCtx) {
+function VideoForm({ style, setStyle, pixels, setPixels, folderId, tagIds, onCreated }: FormCtx) {
   const [title, setTitle] = useState("");
   const [url, setUrl] = useState("");
   const [loading, setLoading] = useState(false);
@@ -184,7 +184,7 @@ function VideoForm({ style, setStyle, pixels, setPixels, onCreated }: FormCtx) {
     e.preventDefault();
     setLoading(true);
     try {
-      const short = await insertRow({ title, type: "video", destination_url: url, style, pixels });
+      const short = await insertRow({ title, type: "video", destination_url: url, style, pixels, folderId, tagIds });
       onCreated({ shortId: short, style, title });
       toast.success("QR Code criado!");
     } catch (err: any) { toast.error(err.message); }
@@ -202,7 +202,7 @@ function VideoForm({ style, setStyle, pixels, setPixels, onCreated }: FormCtx) {
   );
 }
 
-function WhatsAppForm({ style, setStyle, pixels, setPixels, onCreated }: FormCtx) {
+function WhatsAppForm({ style, setStyle, pixels, setPixels, folderId, tagIds, onCreated }: FormCtx) {
   const [title, setTitle] = useState("");
   const [phone, setPhone] = useState("");
   const [message, setMessage] = useState("");
@@ -213,7 +213,7 @@ function WhatsAppForm({ style, setStyle, pixels, setPixels, onCreated }: FormCtx
     setLoading(true);
     try {
       const dest = buildWhatsAppUrl(phone, message || undefined);
-      const short = await insertRow({ title, type: "whatsapp", destination_url: dest, style, pixels });
+      const short = await insertRow({ title, type: "whatsapp", destination_url: dest, style, pixels, folderId, tagIds });
       onCreated({ shortId: short, style, title });
       toast.success("QR Code criado!");
     } catch (err: any) { toast.error(err.message); }
@@ -235,7 +235,7 @@ function WhatsAppForm({ style, setStyle, pixels, setPixels, onCreated }: FormCtx
   );
 }
 
-function WifiForm({ style, setStyle, pixels, setPixels, onCreated }: FormCtx) {
+function WifiForm({ style, setStyle, pixels, setPixels, folderId, tagIds, onCreated }: FormCtx) {
   const [title, setTitle] = useState("");
   const [ssid, setSsid] = useState("");
   const [password, setPassword] = useState("");
@@ -251,7 +251,7 @@ function WifiForm({ style, setStyle, pixels, setPixels, onCreated }: FormCtx) {
       const short = await insertRow({
         title, type: "wifi", destination_url: wifi, style,
         vcard_data: { ssid, password, auth, hidden },
-        pixels,
+        pixels, folderId, tagIds,
       });
       onCreated({ shortId: short, style, title, qrValue: wifi });
       toast.success("QR Code criado!");
@@ -291,7 +291,7 @@ function WifiForm({ style, setStyle, pixels, setPixels, onCreated }: FormCtx) {
   );
 }
 
-function LinksForm({ style, setStyle, pixels, setPixels, onCreated }: FormCtx) {
+function LinksForm({ style, setStyle, pixels, setPixels, folderId, tagIds, onCreated }: FormCtx) {
   const [title, setTitle] = useState("");
   const [bio, setBio] = useState("");
   const [items, setItems] = useState<{ label: string; url: string }[]>([
@@ -313,7 +313,7 @@ function LinksForm({ style, setStyle, pixels, setPixels, onCreated }: FormCtx) {
         title,
         type: "links",
         destination_url: buildInternalUrl(`/links/`),
-        vcard_data: payload, style, pixels,
+        vcard_data: payload, style, pixels, folderId, tagIds,
       });
       await supabase
         .from("qr_links")
@@ -356,7 +356,7 @@ function LinksForm({ style, setStyle, pixels, setPixels, onCreated }: FormCtx) {
   );
 }
 
-function FileForm({ style, setStyle, pixels, setPixels, onCreated }: FormCtx) {
+function FileForm({ style, setStyle, pixels, setPixels, folderId, tagIds, onCreated, pdfOnly }: FormCtx & { pdfOnly?: boolean }) {
   const [title, setTitle] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
@@ -373,7 +373,7 @@ function FileForm({ style, setStyle, pixels, setPixels, onCreated }: FormCtx) {
       const { error: upErr } = await supabase.storage.from("qr_files").upload(path, file, { upsert: false });
       if (upErr) throw upErr;
       const { data: pub } = supabase.storage.from("qr_files").getPublicUrl(path);
-      const short = await insertRow({ title, type: "file", destination_url: pub.publicUrl, style, pixels });
+      const short = await insertRow({ title, type: pdfOnly ? "pdf" : "file", destination_url: pub.publicUrl, style, pixels, folderId, tagIds });
       onCreated({ shortId: short, style, title });
       toast.success("QR Code criado!");
     } catch (err: any) { toast.error(err.message); }
@@ -384,8 +384,8 @@ function FileForm({ style, setStyle, pixels, setPixels, onCreated }: FormCtx) {
     <form onSubmit={submit} className="space-y-4">
       <Field label="Nome interno" placeholder="Manual do produto" value={title} onChange={setTitle} />
       <div className="space-y-2">
-        <Label htmlFor="file">Arquivo (PDF/imagem)</Label>
-        <Input id="file" type="file" accept="application/pdf,image/*" onChange={(e) => setFile(e.target.files?.[0] ?? null)} required />
+        <Label htmlFor="file">{pdfOnly ? "PDF" : "Arquivo (PDF/imagem)"}</Label>
+        <Input id="file" type="file" accept={pdfOnly ? "application/pdf" : "application/pdf,image/*"} onChange={(e) => setFile(e.target.files?.[0] ?? null)} required />
       </div>
       <QRStyleFields style={style} onChange={setStyle} />
       <PixelFields pixels={pixels} onChange={setPixels} showUtm={false} />
@@ -394,7 +394,7 @@ function FileForm({ style, setStyle, pixels, setPixels, onCreated }: FormCtx) {
   );
 }
 
-function VCardForm({ style, setStyle, pixels, setPixels, onCreated }: FormCtx) {
+function VCardForm({ style, setStyle, pixels, setPixels, folderId, tagIds, onCreated }: FormCtx) {
   const [title, setTitle] = useState("");
   const [v, setV] = useState<VCardData>({ name: "" });
   const [loading, setLoading] = useState(false);
