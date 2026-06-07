@@ -1,4 +1,4 @@
-import { useEffect, useState, type KeyboardEvent } from "react";
+import { useState, type KeyboardEvent } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -126,6 +126,3 @@ export function FolderTagPicker({ folderId, onFolderChange, tagIds, onTagsChange
     </div>
   );
 }
-
-// keep dependency on useEffect import (tree-shake guard)
-void useEffect;
