@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { createHash } from "crypto";
 
 export const Route = createFileRoute("/api/public/scan")({
   server: {
@@ -29,6 +30,18 @@ export const Route = createFileRoute("/api/public/scan")({
         else if (/Firefox\//i.test(ua)) browser = "Firefox";
         else if (/Safari\//i.test(ua) && !/Chrome/i.test(ua)) browser = "Safari";
 
+        // Coarse visitor hash: ip + UA + shortId, rotated by day → "unique visitors" without storing PII.
+        const ipForHash =
+          (request.headers.get("cf-connecting-ip") ||
+            request.headers.get("x-forwarded-for") ||
+            request.headers.get("x-real-ip") ||
+            "anon").split(",")[0].trim();
+        const day = new Date().toISOString().slice(0, 10);
+        const visitorHash = createHash("sha256")
+          .update(`${ipForHash}|${ua}|${shortId}|${day}`)
+          .digest("hex")
+          .slice(0, 32);
+
         try {
           const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
           const admin = supabaseAdmin as any;
@@ -40,6 +53,7 @@ export const Route = createFileRoute("/api/public/scan")({
           if (link?.id) {
             await admin.from("qr_scans").insert({
               qr_id: link.id, country, city, device, os, browser, referrer,
+              visitor_hash: visitorHash,
             });
           }
         } catch {
