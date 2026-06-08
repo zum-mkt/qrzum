@@ -67,14 +67,39 @@ export const QR_TYPE_LABELS: Record<string, string> = {
   links: "Lista de Links",
 };
 
-export type FrameStyle = "none" | "rounded" | "scan-me" | "arrow";
+export type FrameStyle =
+  | "none"
+  | "label-bottom"
+  | "rounded"
+  | "rounded-card"
+  | "scan-me"
+  | "arrow"
+  | "tap-to-pay"
+  | "url-pill";
 
 export const FRAME_LABELS: Record<FrameStyle, string> = {
   none: "Sem moldura",
+  "label-bottom": "Só texto",
   rounded: "Arredondada",
+  "rounded-card": "Cartão arredondado",
   "scan-me": "Scan Me",
   arrow: "Com seta",
+  "tap-to-pay": "Tap to Pay",
+  "url-pill": "Pill (URL)",
 };
+
+export function defaultFrameText(frame: FrameStyle): string {
+  switch (frame) {
+    case "scan-me": return "SCAN ME";
+    case "arrow": return "↑ APONTE A CÂMERA";
+    case "rounded":
+    case "rounded-card":
+    case "label-bottom": return "ESCANEIE";
+    case "tap-to-pay": return "TAP TO PAY";
+    case "url-pill": return "ABRA O LINK";
+    default: return "";
+  }
+}
 
 export type ColorPreset = { name: string; fg: string; bg: string };
 

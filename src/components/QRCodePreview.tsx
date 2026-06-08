@@ -3,7 +3,7 @@ import { QRCodeSVG, QRCodeCanvas } from "qrcode.react";
 import { jsPDF } from "jspdf";
 import { Button } from "@/components/ui/button";
 import { Download, Image as ImageIcon, FileText } from "lucide-react";
-import type { FrameStyle } from "@/lib/qr";
+import { defaultFrameText, type FrameStyle } from "@/lib/qr";
 
 interface Props {
   value: string;
@@ -11,6 +11,7 @@ interface Props {
   bgColor?: string;
   logoUrl?: string | null;
   frameStyle?: FrameStyle;
+  frameText?: string | null;
   name?: string;
   size?: number;
 }
@@ -23,11 +24,10 @@ function frameDims(size: number, frame: FrameStyle) {
   return { w: size + PAD * 2, h: size + PAD * 2 + LABEL_H, qrX: PAD, qrY: PAD };
 }
 
-function frameLabel(frame: FrameStyle): string {
-  if (frame === "scan-me") return "SCAN ME";
-  if (frame === "arrow") return "↑ APONTE A CÂMERA";
-  if (frame === "rounded") return "ESCANEIE";
-  return "";
+function frameLabel(frame: FrameStyle, frameText?: string | null): string {
+  const custom = (frameText ?? "").trim();
+  if (custom) return custom;
+  return defaultFrameText(frame);
 }
 
 export function QRCodePreview({
@@ -36,6 +36,7 @@ export function QRCodePreview({
   bgColor = "#ffffff",
   logoUrl,
   frameStyle = "none",
+  frameText = null,
   name = "qr-code",
   size = 256,
 }: Props) {
@@ -47,7 +48,7 @@ export function QRCodePreview({
     ? { src: logoUrl, height: Math.round(size * 0.2), width: Math.round(size * 0.2), excavate: true }
     : undefined;
 
-  const label = frameLabel(frameStyle);
+  const label = frameLabel(frameStyle, frameText);
 
   const drawFrame = (ctx: CanvasRenderingContext2D, w: number, h: number, scale: number) => {
     // background
@@ -60,40 +61,47 @@ export function QRCodePreview({
     const stroke = 4 * scale;
     const labelY = h - (LABEL_H * scale) / 2;
 
+    const x0 = stroke / 2;
+    const y0 = stroke / 2;
+    const rw = w - stroke;
+    const rh = h - LABEL_H * scale - stroke;
+
     if (frameStyle === "rounded") {
       ctx.lineWidth = stroke;
-      const r = 20 * scale;
-      const x = stroke / 2;
-      const y = stroke / 2;
-      const rw = w - stroke;
-      const rh = h - LABEL_H * scale - stroke;
-      roundRect(ctx, x, y, rw, rh, r);
+      roundRect(ctx, x0, y0, rw, rh, 20 * scale);
+      ctx.stroke();
+    } else if (frameStyle === "rounded-card") {
+      ctx.lineWidth = stroke * 1.6;
+      roundRect(ctx, x0, y0, rw, rh, 28 * scale);
+      ctx.stroke();
+    } else if (frameStyle === "url-pill") {
+      ctx.lineWidth = stroke;
+      roundRect(ctx, x0, y0, rw, rh, Math.min(rw, rh) / 2);
+      ctx.stroke();
+    } else if (frameStyle === "tap-to-pay") {
+      ctx.lineWidth = stroke;
+      roundRect(ctx, x0, y0, rw, rh, 16 * scale);
       ctx.stroke();
     } else if (frameStyle === "scan-me") {
       ctx.lineWidth = stroke;
       const len = 36 * scale;
-      const x0 = stroke;
-      const y0 = stroke;
       const x1 = w - stroke;
       const y1 = h - LABEL_H * scale - stroke;
       ctx.beginPath();
       // tl
-      ctx.moveTo(x0, y0 + len); ctx.lineTo(x0, y0); ctx.lineTo(x0 + len, y0);
+      ctx.moveTo(stroke, stroke + len); ctx.lineTo(stroke, stroke); ctx.lineTo(stroke + len, stroke);
       // tr
-      ctx.moveTo(x1 - len, y0); ctx.lineTo(x1, y0); ctx.lineTo(x1, y0 + len);
+      ctx.moveTo(x1 - len, stroke); ctx.lineTo(x1, stroke); ctx.lineTo(x1, stroke + len);
       // bl
-      ctx.moveTo(x0, y1 - len); ctx.lineTo(x0, y1); ctx.lineTo(x0 + len, y1);
+      ctx.moveTo(stroke, y1 - len); ctx.lineTo(stroke, y1); ctx.lineTo(stroke + len, y1);
       // br
       ctx.moveTo(x1 - len, y1); ctx.lineTo(x1, y1); ctx.lineTo(x1, y1 - len);
       ctx.stroke();
     } else if (frameStyle === "arrow") {
       ctx.lineWidth = stroke;
-      const x = stroke / 2;
-      const y = stroke / 2;
-      const rw = w - stroke;
-      const rh = h - LABEL_H * scale - stroke;
-      ctx.strokeRect(x, y, rw, rh);
+      ctx.strokeRect(x0, y0, rw, rh);
     }
+    // label-bottom: no border, only text below
 
     ctx.fillStyle = color;
     ctx.font = `700 ${22 * scale}px system-ui, -apple-system, sans-serif`;
@@ -229,6 +237,15 @@ function FrameOverlay({
       {frame === "rounded" && (
         <rect x={2} y={2} width={W - 4} height={H - LABEL_H - 4} rx={20} ry={20} fill="none" stroke={color} strokeWidth={4} />
       )}
+      {frame === "rounded-card" && (
+        <rect x={2} y={2} width={W - 4} height={H - LABEL_H - 4} rx={28} ry={28} fill="none" stroke={color} strokeWidth={7} />
+      )}
+      {frame === "tap-to-pay" && (
+        <rect x={2} y={2} width={W - 4} height={H - LABEL_H - 4} rx={16} ry={16} fill="none" stroke={color} strokeWidth={4} />
+      )}
+      {frame === "url-pill" && (
+        <rect x={2} y={2} width={W - 4} height={H - LABEL_H - 4} rx={Math.min(W - 4, H - LABEL_H - 4) / 2} ry={Math.min(W - 4, H - LABEL_H - 4) / 2} fill="none" stroke={color} strokeWidth={4} />
+      )}
       {frame === "scan-me" && (() => {
         const len = 36;
         const x1 = W - 2, y1 = H - LABEL_H - 2;
@@ -257,11 +274,22 @@ function FrameOverlay({
 }
 
 function frameShapeSvg(frame: FrameStyle, W: number, H: number, color: string): string {
+  const w = W - 4, h = H - LABEL_H - 4;
   if (frame === "rounded") {
-    return `<rect x="2" y="2" width="${W - 4}" height="${H - LABEL_H - 4}" rx="20" ry="20" fill="none" stroke="${color}" stroke-width="4"/>`;
+    return `<rect x="2" y="2" width="${w}" height="${h}" rx="20" ry="20" fill="none" stroke="${color}" stroke-width="4"/>`;
+  }
+  if (frame === "rounded-card") {
+    return `<rect x="2" y="2" width="${w}" height="${h}" rx="28" ry="28" fill="none" stroke="${color}" stroke-width="7"/>`;
+  }
+  if (frame === "tap-to-pay") {
+    return `<rect x="2" y="2" width="${w}" height="${h}" rx="16" ry="16" fill="none" stroke="${color}" stroke-width="4"/>`;
+  }
+  if (frame === "url-pill") {
+    const r = Math.min(w, h) / 2;
+    return `<rect x="2" y="2" width="${w}" height="${h}" rx="${r}" ry="${r}" fill="none" stroke="${color}" stroke-width="4"/>`;
   }
   if (frame === "arrow") {
-    return `<rect x="2" y="2" width="${W - 4}" height="${H - LABEL_H - 4}" fill="none" stroke="${color}" stroke-width="4"/>`;
+    return `<rect x="2" y="2" width="${w}" height="${h}" fill="none" stroke="${color}" stroke-width="4"/>`;
   }
   if (frame === "scan-me") {
     const len = 36;

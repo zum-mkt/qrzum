@@ -12,7 +12,7 @@ import {
   ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid,
   BarChart, Bar,
 } from "recharts";
-import { ArrowLeft, Download } from "lucide-react";
+import { ArrowLeft, Download, Users } from "lucide-react";
 import { QR_TYPE_LABELS } from "@/lib/qr";
 
 export const Route = createFileRoute("/_authenticated/analytics/$qrId")({
@@ -24,7 +24,7 @@ type Scan = {
   id: string; scanned_at: string;
   country: string | null; city: string | null;
   device: string | null; os: string | null; browser: string | null;
-  referrer: string | null;
+  referrer: string | null; visitor_hash: string | null;
 };
 
 function QrAnalytics() {
@@ -48,7 +48,7 @@ function QrAnalytics() {
     queryFn: async () => {
       const since = new Date(); since.setDate(since.getDate() - 30);
       const { data, error } = await (supabase.from("qr_scans") as any)
-        .select("id,scanned_at,country,city,device,os,browser,referrer")
+        .select("id,scanned_at,country,city,device,os,browser,referrer,visitor_hash")
         .eq("qr_id", qrId)
         .gte("scanned_at", since.toISOString())
         .order("scanned_at", { ascending: false })
@@ -58,26 +58,33 @@ function QrAnalytics() {
     },
   });
 
-  const { byDay, byCountry, byDevice } = useMemo(() => {
-    const days = new Map<string, number>();
+  const { byDay, byCountry, byDevice, uniquesTotal } = useMemo(() => {
+    const days = new Map<string, { count: number; set: Set<string> }>();
     for (let i = 29; i >= 0; i--) {
       const d = new Date(); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() - i);
-      days.set(d.toISOString().slice(0, 10), 0);
+      days.set(d.toISOString().slice(0, 10), { count: 0, set: new Set() });
     }
     const country = new Map<string, number>();
     const device = new Map<string, number>();
+    const allUniques = new Set<string>();
     (scans ?? []).forEach((s) => {
       const k = s.scanned_at.slice(0, 10);
-      if (days.has(k)) days.set(k, (days.get(k) || 0) + 1);
+      const slot = days.get(k);
+      if (slot) {
+        slot.count += 1;
+        if (s.visitor_hash) slot.set.add(s.visitor_hash);
+      }
+      if (s.visitor_hash) allUniques.add(s.visitor_hash);
       const c = s.country || "Desconhecido";
       country.set(c, (country.get(c) || 0) + 1);
       const d = s.device || "desktop";
       device.set(d, (device.get(d) || 0) + 1);
     });
     return {
-      byDay: Array.from(days.entries()).map(([date, count]) => ({ date: date.slice(5), count })),
+      byDay: Array.from(days.entries()).map(([date, v]) => ({ date: date.slice(5), count: v.count, uniques: v.set.size })),
       byCountry: Array.from(country.entries()).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value).slice(0, 8),
       byDevice: Array.from(device.entries()).map(([name, value]) => ({ name, value })),
+      uniquesTotal: allUniques.size,
     };
   }, [scans]);
 
@@ -117,6 +124,7 @@ function QrAnalytics() {
               </span>
             )}
             <span>· Total: <span className="font-medium text-foreground">{link?.clicks ?? 0}</span></span>
+            <span className="inline-flex items-center gap-1">· <Users className="h-3 w-3" /> Únicos: <span className="font-medium text-foreground">{uniquesTotal}</span></span>
           </div>
         </div>
         <Button variant="outline" size="sm" onClick={exportCsv} disabled={!scans || scans.length === 0}>
@@ -139,7 +147,8 @@ function QrAnalytics() {
                   borderRadius: 8,
                 }}
               />
-              <Line type="monotone" dataKey="count" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} />
+              <Line type="monotone" dataKey="count" name="Scans" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} />
+              <Line type="monotone" dataKey="uniques" name="Únicos" stroke="hsl(var(--muted-foreground))" strokeWidth={2} strokeDasharray="4 4" dot={false} />
             </LineChart>
           </ResponsiveContainer>
         </div>

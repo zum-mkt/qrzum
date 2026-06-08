@@ -116,6 +116,7 @@ async function insertRow(args: {
     color: args.style.color,
     bg_color: args.style.bgColor,
     frame_style: args.style.frameStyle,
+    frame_text: args.style.frameText ?? null,
     logo_url: args.style.logoUrl,
     folder_id: args.folderId ?? null,
     ga4_id: args.pixels.ga4Id || null,
@@ -473,7 +474,7 @@ function Success({ created, reset }: { created: NonNullable<Created>; reset: () 
             </div>
           </div>
           <div className="flex justify-center">
-            <QRCodePreview value={qrValue} color={created.style.color} bgColor={created.style.bgColor} logoUrl={created.style.logoUrl} frameStyle={created.style.frameStyle} name={created.title} size={240} />
+            <QRCodePreview value={qrValue} color={created.style.color} bgColor={created.style.bgColor} logoUrl={created.style.logoUrl} frameStyle={created.style.frameStyle} frameText={created.style.frameText ?? null} name={created.title} size={240} />
           </div>
         </div>
       </Card>
