@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { COLOR_PRESETS, FRAME_LABELS, type FrameStyle } from "@/lib/qr";
+import { COLOR_PRESETS, FRAME_LABELS, defaultFrameText, type FrameStyle } from "@/lib/qr";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Upload, X } from "lucide-react";
@@ -11,11 +11,12 @@ export interface QRStyle {
   color: string;
   bgColor: string;
   frameStyle: FrameStyle;
+  frameText?: string | null;
   logoUrl: string | null;
 }
 
 export function defaultStyle(): QRStyle {
-  return { color: "#0f172a", bgColor: "#ffffff", frameStyle: "none", logoUrl: null };
+  return { color: "#0f172a", bgColor: "#ffffff", frameStyle: "none", frameText: null, logoUrl: null };
 }
 
 export function QRStyleFields({
@@ -106,6 +107,17 @@ export function QRStyleFields({
             </button>
           ))}
         </div>
+        {style.frameStyle !== "none" && (
+          <div className="pt-2">
+            <Label className="text-xs text-muted-foreground">Texto do CTA (opcional)</Label>
+            <Input
+              value={style.frameText ?? ""}
+              placeholder={defaultFrameText(style.frameStyle)}
+              onChange={(e) => set("frameText", e.target.value || null)}
+              maxLength={28}
+            />
+          </div>
+        )}
       </div>
 
       <div className="space-y-2">
