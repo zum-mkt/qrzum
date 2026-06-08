@@ -474,7 +474,7 @@ function Success({ created, reset }: { created: NonNullable<Created>; reset: () 
             </div>
           </div>
           <div className="flex justify-center">
-            <QRCodePreview value={qrValue} color={created.style.color} bgColor={created.style.bgColor} logoUrl={created.style.logoUrl} frameStyle={created.style.frameStyle} name={created.title} size={240} />
+            <QRCodePreview value={qrValue} color={created.style.color} bgColor={created.style.bgColor} logoUrl={created.style.logoUrl} frameStyle={created.style.frameStyle} frameText={created.style.frameText ?? null} name={created.title} size={240} />
           </div>
         </div>
       </Card>
