@@ -10,7 +10,7 @@ import {
 import {
   ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid,
 } from "recharts";
-import { BarChart3, MousePointerClick, TrendingUp, Trophy } from "lucide-react";
+import { BarChart3, MousePointerClick, TrendingUp, Trophy, Users } from "lucide-react";
 import { QR_TYPE_LABELS } from "@/lib/qr";
 
 export const Route = createFileRoute("/_authenticated/analytics")({
@@ -20,7 +20,7 @@ export const Route = createFileRoute("/_authenticated/analytics")({
 
 type Range = 7 | 30 | 90;
 
-type Scan = { qr_id: string; scanned_at: string };
+type Scan = { qr_id: string; scanned_at: string; visitor_hash: string | null };
 type LinkRow = { id: string; title: string; type: string; short_id: string };
 
 function AnalyticsPage() {
@@ -53,11 +53,20 @@ function AnalyticsPage() {
     queryKey: ["qr_scans", range],
     queryFn: async () => {
       const { data, error } = await (supabase.from("qr_scans") as any)
-        .select("qr_id,scanned_at")
+        .select("qr_id,scanned_at,visitor_hash")
         .gte("scanned_at", sincePrev)
         .order("scanned_at", { ascending: true });
       if (error) throw error;
       return (data ?? []) as Scan[];
+    },
+  });
+
+  const { data: uniquesTotal = 0 } = useQuery({
+    queryKey: ["qr_unique_total", range],
+    queryFn: async () => {
+      const { data, error } = await (supabase.rpc as any)("qr_unique_visitors", { p_days: range });
+      if (error) throw error;
+      return (data ?? []).reduce((s: number, r: any) => s + Number(r.uniques || 0), 0);
     },
   });
 
@@ -81,19 +90,24 @@ function AnalyticsPage() {
         if (t >= todayMs) today += 1;
       } else previous.push(s);
     });
-    // group by day for current range
-    const days = new Map<string, number>();
+    // group by day for current range (totais + únicos)
+    const days = new Map<string, { count: number; set: Set<string> }>();
     for (let i = range - 1; i >= 0; i--) {
       const d = new Date(); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() - i);
-      days.set(d.toISOString().slice(0, 10), 0);
+      days.set(d.toISOString().slice(0, 10), { count: 0, set: new Set() });
     }
     current.forEach((s) => {
       const k = s.scanned_at.slice(0, 10);
-      if (days.has(k)) days.set(k, (days.get(k) || 0) + 1);
+      const slot = days.get(k);
+      if (slot) {
+        slot.count += 1;
+        if (s.visitor_hash) slot.set.add(s.visitor_hash);
+      }
     });
-    const byDay = Array.from(days.entries()).map(([date, count]) => ({
+    const byDay = Array.from(days.entries()).map(([date, v]) => ({
       date: date.slice(5),
-      count,
+      count: v.count,
+      uniques: v.set.size,
     }));
     // top QRs
     const counts = new Map<string, number>();
@@ -134,12 +148,16 @@ function AnalyticsPage() {
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Stat icon={<MousePointerClick className="h-5 w-5" />} label={`Scans últimos ${range}d`} value={current.length} />
+        <Stat icon={<Users className="h-5 w-5" />} label={`Visitantes únicos ${range}d`} value={uniquesTotal} />
         <Stat icon={<BarChart3 className="h-5 w-5" />} label="Scans hoje" value={today} />
         <Stat
           icon={<TrendingUp className="h-5 w-5" />}
           label="vs período anterior"
           value={`${growth >= 0 ? "+" : ""}${growth}%`}
         />
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-1">
         <Stat
           icon={<Trophy className="h-5 w-5" />}
           label="Top QR"
@@ -166,8 +184,18 @@ function AnalyticsPage() {
               <Line
                 type="monotone"
                 dataKey="count"
+                name="Scans"
                 stroke="hsl(var(--primary))"
                 strokeWidth={2}
+                dot={false}
+              />
+              <Line
+                type="monotone"
+                dataKey="uniques"
+                name="Únicos"
+                stroke="hsl(var(--muted-foreground))"
+                strokeWidth={2}
+                strokeDasharray="4 4"
                 dot={false}
               />
             </LineChart>
