@@ -15,6 +15,7 @@ import { Route as VcardShortIdRouteImport } from './routes/vcard.$shortId'
 import { Route as RShortIdRouteImport } from './routes/r.$shortId'
 import { Route as QShortIdRouteImport } from './routes/q.$shortId'
 import { Route as LinksShortIdRouteImport } from './routes/links.$shortId'
+import { Route as AiShortIdRouteImport } from './routes/ai.$shortId'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedCreateRouteImport } from './routes/_authenticated/create'
 import { Route as AuthenticatedBulkRouteImport } from './routes/_authenticated/bulk'
@@ -50,6 +51,11 @@ const QShortIdRoute = QShortIdRouteImport.update({
 const LinksShortIdRoute = LinksShortIdRouteImport.update({
   id: '/links/$shortId',
   path: '/links/$shortId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AiShortIdRoute = AiShortIdRouteImport.update({
+  id: '/ai/$shortId',
+  path: '/ai/$shortId',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
@@ -95,6 +101,7 @@ export interface FileRoutesByFullPath {
   '/bulk': typeof AuthenticatedBulkRoute
   '/create': typeof AuthenticatedCreateRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/ai/$shortId': typeof AiShortIdRoute
   '/links/$shortId': typeof LinksShortIdRoute
   '/q/$shortId': typeof QShortIdRoute
   '/r/$shortId': typeof RShortIdRoute
@@ -109,6 +116,7 @@ export interface FileRoutesByTo {
   '/bulk': typeof AuthenticatedBulkRoute
   '/create': typeof AuthenticatedCreateRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/ai/$shortId': typeof AiShortIdRoute
   '/links/$shortId': typeof LinksShortIdRoute
   '/q/$shortId': typeof QShortIdRoute
   '/r/$shortId': typeof RShortIdRoute
@@ -125,6 +133,7 @@ export interface FileRoutesById {
   '/_authenticated/bulk': typeof AuthenticatedBulkRoute
   '/_authenticated/create': typeof AuthenticatedCreateRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/ai/$shortId': typeof AiShortIdRoute
   '/links/$shortId': typeof LinksShortIdRoute
   '/q/$shortId': typeof QShortIdRoute
   '/r/$shortId': typeof RShortIdRoute
@@ -141,6 +150,7 @@ export interface FileRouteTypes {
     | '/bulk'
     | '/create'
     | '/dashboard'
+    | '/ai/$shortId'
     | '/links/$shortId'
     | '/q/$shortId'
     | '/r/$shortId'
@@ -155,6 +165,7 @@ export interface FileRouteTypes {
     | '/bulk'
     | '/create'
     | '/dashboard'
+    | '/ai/$shortId'
     | '/links/$shortId'
     | '/q/$shortId'
     | '/r/$shortId'
@@ -170,6 +181,7 @@ export interface FileRouteTypes {
     | '/_authenticated/bulk'
     | '/_authenticated/create'
     | '/_authenticated/dashboard'
+    | '/ai/$shortId'
     | '/links/$shortId'
     | '/q/$shortId'
     | '/r/$shortId'
@@ -182,6 +194,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
+  AiShortIdRoute: typeof AiShortIdRoute
   LinksShortIdRoute: typeof LinksShortIdRoute
   QShortIdRoute: typeof QShortIdRoute
   RShortIdRoute: typeof RShortIdRoute
@@ -232,6 +245,13 @@ declare module '@tanstack/react-router' {
       path: '/links/$shortId'
       fullPath: '/links/$shortId'
       preLoaderRoute: typeof LinksShortIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ai/$shortId': {
+      id: '/ai/$shortId'
+      path: '/ai/$shortId'
+      fullPath: '/ai/$shortId'
+      preLoaderRoute: typeof AiShortIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/dashboard': {
@@ -321,6 +341,7 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
+  AiShortIdRoute: AiShortIdRoute,
   LinksShortIdRoute: LinksShortIdRoute,
   QShortIdRoute: QShortIdRoute,
   RShortIdRoute: RShortIdRoute,
