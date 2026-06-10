@@ -14,6 +14,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as VcardShortIdRouteImport } from './routes/vcard.$shortId'
 import { Route as RShortIdRouteImport } from './routes/r.$shortId'
 import { Route as QShortIdRouteImport } from './routes/q.$shortId'
+import { Route as ProofIdRouteImport } from './routes/proof.$id'
 import { Route as LinksShortIdRouteImport } from './routes/links.$shortId'
 import { Route as AiShortIdRouteImport } from './routes/ai.$shortId'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
@@ -46,6 +47,11 @@ const RShortIdRoute = RShortIdRouteImport.update({
 const QShortIdRoute = QShortIdRouteImport.update({
   id: '/q/$shortId',
   path: '/q/$shortId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProofIdRoute = ProofIdRouteImport.update({
+  id: '/proof/$id',
+  path: '/proof/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LinksShortIdRoute = LinksShortIdRouteImport.update({
@@ -103,6 +109,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/ai/$shortId': typeof AiShortIdRoute
   '/links/$shortId': typeof LinksShortIdRoute
+  '/proof/$id': typeof ProofIdRoute
   '/q/$shortId': typeof QShortIdRoute
   '/r/$shortId': typeof RShortIdRoute
   '/vcard/$shortId': typeof VcardShortIdRoute
@@ -118,6 +125,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/ai/$shortId': typeof AiShortIdRoute
   '/links/$shortId': typeof LinksShortIdRoute
+  '/proof/$id': typeof ProofIdRoute
   '/q/$shortId': typeof QShortIdRoute
   '/r/$shortId': typeof RShortIdRoute
   '/vcard/$shortId': typeof VcardShortIdRoute
@@ -135,6 +143,7 @@ export interface FileRoutesById {
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/ai/$shortId': typeof AiShortIdRoute
   '/links/$shortId': typeof LinksShortIdRoute
+  '/proof/$id': typeof ProofIdRoute
   '/q/$shortId': typeof QShortIdRoute
   '/r/$shortId': typeof RShortIdRoute
   '/vcard/$shortId': typeof VcardShortIdRoute
@@ -152,6 +161,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/ai/$shortId'
     | '/links/$shortId'
+    | '/proof/$id'
     | '/q/$shortId'
     | '/r/$shortId'
     | '/vcard/$shortId'
@@ -167,6 +177,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/ai/$shortId'
     | '/links/$shortId'
+    | '/proof/$id'
     | '/q/$shortId'
     | '/r/$shortId'
     | '/vcard/$shortId'
@@ -183,6 +194,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard'
     | '/ai/$shortId'
     | '/links/$shortId'
+    | '/proof/$id'
     | '/q/$shortId'
     | '/r/$shortId'
     | '/vcard/$shortId'
@@ -196,6 +208,7 @@ export interface RootRouteChildren {
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   AiShortIdRoute: typeof AiShortIdRoute
   LinksShortIdRoute: typeof LinksShortIdRoute
+  ProofIdRoute: typeof ProofIdRoute
   QShortIdRoute: typeof QShortIdRoute
   RShortIdRoute: typeof RShortIdRoute
   VcardShortIdRoute: typeof VcardShortIdRoute
@@ -238,6 +251,13 @@ declare module '@tanstack/react-router' {
       path: '/q/$shortId'
       fullPath: '/q/$shortId'
       preLoaderRoute: typeof QShortIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/proof/$id': {
+      id: '/proof/$id'
+      path: '/proof/$id'
+      fullPath: '/proof/$id'
+      preLoaderRoute: typeof ProofIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/links/$shortId': {
@@ -343,6 +363,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   AiShortIdRoute: AiShortIdRoute,
   LinksShortIdRoute: LinksShortIdRoute,
+  ProofIdRoute: ProofIdRoute,
   QShortIdRoute: QShortIdRoute,
   RShortIdRoute: RShortIdRoute,
   VcardShortIdRoute: VcardShortIdRoute,
@@ -352,3 +373,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
