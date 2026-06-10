@@ -19,6 +19,7 @@ import { Route as AuthenticatedDashboardRouteImport } from './routes/_authentica
 import { Route as AuthenticatedCreateRouteImport } from './routes/_authenticated/create'
 import { Route as AuthenticatedBulkRouteImport } from './routes/_authenticated/bulk'
 import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authenticated/analytics'
+import { Route as ApiPublicScanaiRouteImport } from './routes/api/public/scanai'
 import { Route as ApiPublicScanRouteImport } from './routes/api/public/scan'
 import { Route as AuthenticatedAnalyticsQrIdRouteImport } from './routes/_authenticated/analytics.$qrId'
 
@@ -71,6 +72,11 @@ const AuthenticatedAnalyticsRoute = AuthenticatedAnalyticsRouteImport.update({
   path: '/analytics',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const ApiPublicScanaiRoute = ApiPublicScanaiRouteImport.update({
+  id: '/api/public/scanai',
+  path: '/api/public/scanai',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicScanRoute = ApiPublicScanRouteImport.update({
   id: '/api/public/scan',
   path: '/api/public/scan',
@@ -95,6 +101,7 @@ export interface FileRoutesByFullPath {
   '/vcard/$shortId': typeof VcardShortIdRoute
   '/analytics/$qrId': typeof AuthenticatedAnalyticsQrIdRoute
   '/api/public/scan': typeof ApiPublicScanRoute
+  '/api/public/scanai': typeof ApiPublicScanaiRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -108,6 +115,7 @@ export interface FileRoutesByTo {
   '/vcard/$shortId': typeof VcardShortIdRoute
   '/analytics/$qrId': typeof AuthenticatedAnalyticsQrIdRoute
   '/api/public/scan': typeof ApiPublicScanRoute
+  '/api/public/scanai': typeof ApiPublicScanaiRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -123,6 +131,7 @@ export interface FileRoutesById {
   '/vcard/$shortId': typeof VcardShortIdRoute
   '/_authenticated/analytics/$qrId': typeof AuthenticatedAnalyticsQrIdRoute
   '/api/public/scan': typeof ApiPublicScanRoute
+  '/api/public/scanai': typeof ApiPublicScanaiRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -138,6 +147,7 @@ export interface FileRouteTypes {
     | '/vcard/$shortId'
     | '/analytics/$qrId'
     | '/api/public/scan'
+    | '/api/public/scanai'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -151,6 +161,7 @@ export interface FileRouteTypes {
     | '/vcard/$shortId'
     | '/analytics/$qrId'
     | '/api/public/scan'
+    | '/api/public/scanai'
   id:
     | '__root__'
     | '/'
@@ -165,6 +176,7 @@ export interface FileRouteTypes {
     | '/vcard/$shortId'
     | '/_authenticated/analytics/$qrId'
     | '/api/public/scan'
+    | '/api/public/scanai'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -175,6 +187,7 @@ export interface RootRouteChildren {
   RShortIdRoute: typeof RShortIdRoute
   VcardShortIdRoute: typeof VcardShortIdRoute
   ApiPublicScanRoute: typeof ApiPublicScanRoute
+  ApiPublicScanaiRoute: typeof ApiPublicScanaiRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -249,6 +262,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAnalyticsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/api/public/scanai': {
+      id: '/api/public/scanai'
+      path: '/api/public/scanai'
+      fullPath: '/api/public/scanai'
+      preLoaderRoute: typeof ApiPublicScanaiRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/scan': {
       id: '/api/public/scan'
       path: '/api/public/scan'
@@ -306,7 +326,18 @@ const rootRouteChildren: RootRouteChildren = {
   RShortIdRoute: RShortIdRoute,
   VcardShortIdRoute: VcardShortIdRoute,
   ApiPublicScanRoute: ApiPublicScanRoute,
+  ApiPublicScanaiRoute: ApiPublicScanaiRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
