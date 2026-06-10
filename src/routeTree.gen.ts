@@ -17,6 +17,7 @@ import { Route as QShortIdRouteImport } from './routes/q.$shortId'
 import { Route as ProofIdRouteImport } from './routes/proof.$id'
 import { Route as LinksShortIdRouteImport } from './routes/links.$shortId'
 import { Route as AiShortIdRouteImport } from './routes/ai.$shortId'
+import { Route as AuthenticatedProofsRouteImport } from './routes/_authenticated/proofs'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedCreateRouteImport } from './routes/_authenticated/create'
 import { Route as AuthenticatedBulkRouteImport } from './routes/_authenticated/bulk'
@@ -64,6 +65,11 @@ const AiShortIdRoute = AiShortIdRouteImport.update({
   path: '/ai/$shortId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedProofsRoute = AuthenticatedProofsRouteImport.update({
+  id: '/proofs',
+  path: '/proofs',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -107,6 +113,7 @@ export interface FileRoutesByFullPath {
   '/bulk': typeof AuthenticatedBulkRoute
   '/create': typeof AuthenticatedCreateRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/proofs': typeof AuthenticatedProofsRoute
   '/ai/$shortId': typeof AiShortIdRoute
   '/links/$shortId': typeof LinksShortIdRoute
   '/proof/$id': typeof ProofIdRoute
@@ -123,6 +130,7 @@ export interface FileRoutesByTo {
   '/bulk': typeof AuthenticatedBulkRoute
   '/create': typeof AuthenticatedCreateRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/proofs': typeof AuthenticatedProofsRoute
   '/ai/$shortId': typeof AiShortIdRoute
   '/links/$shortId': typeof LinksShortIdRoute
   '/proof/$id': typeof ProofIdRoute
@@ -141,6 +149,7 @@ export interface FileRoutesById {
   '/_authenticated/bulk': typeof AuthenticatedBulkRoute
   '/_authenticated/create': typeof AuthenticatedCreateRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/proofs': typeof AuthenticatedProofsRoute
   '/ai/$shortId': typeof AiShortIdRoute
   '/links/$shortId': typeof LinksShortIdRoute
   '/proof/$id': typeof ProofIdRoute
@@ -159,6 +168,7 @@ export interface FileRouteTypes {
     | '/bulk'
     | '/create'
     | '/dashboard'
+    | '/proofs'
     | '/ai/$shortId'
     | '/links/$shortId'
     | '/proof/$id'
@@ -175,6 +185,7 @@ export interface FileRouteTypes {
     | '/bulk'
     | '/create'
     | '/dashboard'
+    | '/proofs'
     | '/ai/$shortId'
     | '/links/$shortId'
     | '/proof/$id'
@@ -192,6 +203,7 @@ export interface FileRouteTypes {
     | '/_authenticated/bulk'
     | '/_authenticated/create'
     | '/_authenticated/dashboard'
+    | '/_authenticated/proofs'
     | '/ai/$shortId'
     | '/links/$shortId'
     | '/proof/$id'
@@ -274,6 +286,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AiShortIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/proofs': {
+      id: '/_authenticated/proofs'
+      path: '/proofs'
+      fullPath: '/proofs'
+      preLoaderRoute: typeof AuthenticatedProofsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/dashboard': {
       id: '/_authenticated/dashboard'
       path: '/dashboard'
@@ -345,6 +364,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedBulkRoute: typeof AuthenticatedBulkRoute
   AuthenticatedCreateRoute: typeof AuthenticatedCreateRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedProofsRoute: typeof AuthenticatedProofsRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
@@ -352,6 +372,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedBulkRoute: AuthenticatedBulkRoute,
   AuthenticatedCreateRoute: AuthenticatedCreateRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedProofsRoute: AuthenticatedProofsRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
