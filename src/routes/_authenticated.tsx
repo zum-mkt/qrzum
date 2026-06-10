@@ -2,7 +2,7 @@ import { createFileRoute, Outlet, redirect, Link, useNavigate, useRouterState } 
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { QrCode, LayoutDashboard, Plus, LogOut, BarChart3, Upload } from "lucide-react";
+import { QrCode, LayoutDashboard, Plus, LogOut, BarChart3, Upload, ShieldCheck } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated")({
   beforeLoad: async () => {
@@ -56,6 +56,7 @@ function AuthLayout() {
           <NavItem to="/create" icon={Plus} label="Criar QR Code" />
           <NavItem to="/bulk" icon={Upload} label="Criar em lote" />
           <NavItem to="/analytics" icon={BarChart3} label="Analytics" />
+          <NavItem to="/proofs" icon={ShieldCheck} label="Provas de Presença" />
         </nav>
         <div className="mt-auto space-y-2 border-t border-border pt-4">
           <p className="truncate px-2 text-xs text-muted-foreground">{email}</p>

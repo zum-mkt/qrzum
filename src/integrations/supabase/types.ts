@@ -49,6 +49,91 @@ export type Database = {
           },
         ]
       }
+      presence_proofs: {
+        Row: {
+          accuracy_m: number
+          device_fp: string
+          id: string
+          lat: number
+          lng: number
+          nonce: string
+          payload_hash: string
+          qr_id: string
+          scanned_at: string
+          signature: string
+          user_id: string | null
+        }
+        Insert: {
+          accuracy_m: number
+          device_fp: string
+          id?: string
+          lat: number
+          lng: number
+          nonce: string
+          payload_hash: string
+          qr_id: string
+          scanned_at?: string
+          signature: string
+          user_id?: string | null
+        }
+        Update: {
+          accuracy_m?: number
+          device_fp?: string
+          id?: string
+          lat?: number
+          lng?: number
+          nonce?: string
+          payload_hash?: string
+          qr_id?: string
+          scanned_at?: string
+          signature?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "presence_proofs_qr_id_fkey"
+            columns: ["qr_id"]
+            isOneToOne: false
+            referencedRelation: "qr_links"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      qr_knowledge: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          qr_id: string
+          source_url: string | null
+          title: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          qr_id: string
+          source_url?: string | null
+          title: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          qr_id?: string
+          source_url?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qr_knowledge_qr_id_fkey"
+            columns: ["qr_id"]
+            isOneToOne: false
+            referencedRelation: "qr_links"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       qr_link_tags: {
         Row: {
           qr_id: string
@@ -98,6 +183,8 @@ export type Database = {
           logo_url: string | null
           meta_pixel_id: string | null
           pinterest_tag_id: string | null
+          proof_anchor: Json | null
+          proof_enabled: boolean
           short_id: string
           style: Json
           tiktok_pixel_id: string | null
@@ -125,6 +212,8 @@ export type Database = {
           logo_url?: string | null
           meta_pixel_id?: string | null
           pinterest_tag_id?: string | null
+          proof_anchor?: Json | null
+          proof_enabled?: boolean
           short_id: string
           style?: Json
           tiktok_pixel_id?: string | null
@@ -152,6 +241,8 @@ export type Database = {
           logo_url?: string | null
           meta_pixel_id?: string | null
           pinterest_tag_id?: string | null
+          proof_anchor?: Json | null
+          proof_enabled?: boolean
           short_id?: string
           style?: Json
           tiktok_pixel_id?: string | null
@@ -167,6 +258,50 @@ export type Database = {
             columns: ["folder_id"]
             isOneToOne: false
             referencedRelation: "folders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      qr_routing_rules: {
+        Row: {
+          action: string
+          config: Json
+          created_at: string
+          destination_url: string | null
+          enabled: boolean
+          id: string
+          kind: string
+          priority: number
+          qr_id: string
+        }
+        Insert: {
+          action?: string
+          config?: Json
+          created_at?: string
+          destination_url?: string | null
+          enabled?: boolean
+          id?: string
+          kind: string
+          priority?: number
+          qr_id: string
+        }
+        Update: {
+          action?: string
+          config?: Json
+          created_at?: string
+          destination_url?: string | null
+          enabled?: boolean
+          id?: string
+          kind?: string
+          priority?: number
+          qr_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qr_routing_rules_qr_id_fkey"
+            columns: ["qr_id"]
+            isOneToOne: false
+            referencedRelation: "qr_links"
             referencedColumns: ["id"]
           },
         ]
@@ -218,6 +353,41 @@ export type Database = {
           },
         ]
       }
+      scanai_messages: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          qr_id: string
+          role: string
+          session_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          qr_id: string
+          role: string
+          session_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          qr_id?: string
+          role?: string
+          session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scanai_messages_qr_id_fkey"
+            columns: ["qr_id"]
+            isOneToOne: false
+            referencedRelation: "qr_links"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tags: {
         Row: {
           color: string
@@ -242,11 +412,39 @@ export type Database = {
         }
         Relationships: []
       }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
       qr_unique_visitors: {
         Args: { p_days: number }
         Returns: {
@@ -275,7 +473,7 @@ export type Database = {
       }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "moderator" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -402,6 +600,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "moderator", "user"],
+    },
   },
 } as const

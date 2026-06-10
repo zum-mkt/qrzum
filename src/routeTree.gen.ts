@@ -14,11 +14,15 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as VcardShortIdRouteImport } from './routes/vcard.$shortId'
 import { Route as RShortIdRouteImport } from './routes/r.$shortId'
 import { Route as QShortIdRouteImport } from './routes/q.$shortId'
+import { Route as ProofIdRouteImport } from './routes/proof.$id'
 import { Route as LinksShortIdRouteImport } from './routes/links.$shortId'
+import { Route as AiShortIdRouteImport } from './routes/ai.$shortId'
+import { Route as AuthenticatedProofsRouteImport } from './routes/_authenticated/proofs'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedCreateRouteImport } from './routes/_authenticated/create'
 import { Route as AuthenticatedBulkRouteImport } from './routes/_authenticated/bulk'
 import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authenticated/analytics'
+import { Route as ApiPublicScanaiRouteImport } from './routes/api/public/scanai'
 import { Route as ApiPublicScanRouteImport } from './routes/api/public/scan'
 import { Route as AuthenticatedAnalyticsQrIdRouteImport } from './routes/_authenticated/analytics.$qrId'
 
@@ -46,10 +50,25 @@ const QShortIdRoute = QShortIdRouteImport.update({
   path: '/q/$shortId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProofIdRoute = ProofIdRouteImport.update({
+  id: '/proof/$id',
+  path: '/proof/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LinksShortIdRoute = LinksShortIdRouteImport.update({
   id: '/links/$shortId',
   path: '/links/$shortId',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AiShortIdRoute = AiShortIdRouteImport.update({
+  id: '/ai/$shortId',
+  path: '/ai/$shortId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedProofsRoute = AuthenticatedProofsRouteImport.update({
+  id: '/proofs',
+  path: '/proofs',
+  getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
@@ -71,6 +90,11 @@ const AuthenticatedAnalyticsRoute = AuthenticatedAnalyticsRouteImport.update({
   path: '/analytics',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const ApiPublicScanaiRoute = ApiPublicScanaiRouteImport.update({
+  id: '/api/public/scanai',
+  path: '/api/public/scanai',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicScanRoute = ApiPublicScanRouteImport.update({
   id: '/api/public/scan',
   path: '/api/public/scan',
@@ -89,12 +113,16 @@ export interface FileRoutesByFullPath {
   '/bulk': typeof AuthenticatedBulkRoute
   '/create': typeof AuthenticatedCreateRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/proofs': typeof AuthenticatedProofsRoute
+  '/ai/$shortId': typeof AiShortIdRoute
   '/links/$shortId': typeof LinksShortIdRoute
+  '/proof/$id': typeof ProofIdRoute
   '/q/$shortId': typeof QShortIdRoute
   '/r/$shortId': typeof RShortIdRoute
   '/vcard/$shortId': typeof VcardShortIdRoute
   '/analytics/$qrId': typeof AuthenticatedAnalyticsQrIdRoute
   '/api/public/scan': typeof ApiPublicScanRoute
+  '/api/public/scanai': typeof ApiPublicScanaiRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -102,12 +130,16 @@ export interface FileRoutesByTo {
   '/bulk': typeof AuthenticatedBulkRoute
   '/create': typeof AuthenticatedCreateRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/proofs': typeof AuthenticatedProofsRoute
+  '/ai/$shortId': typeof AiShortIdRoute
   '/links/$shortId': typeof LinksShortIdRoute
+  '/proof/$id': typeof ProofIdRoute
   '/q/$shortId': typeof QShortIdRoute
   '/r/$shortId': typeof RShortIdRoute
   '/vcard/$shortId': typeof VcardShortIdRoute
   '/analytics/$qrId': typeof AuthenticatedAnalyticsQrIdRoute
   '/api/public/scan': typeof ApiPublicScanRoute
+  '/api/public/scanai': typeof ApiPublicScanaiRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -117,12 +149,16 @@ export interface FileRoutesById {
   '/_authenticated/bulk': typeof AuthenticatedBulkRoute
   '/_authenticated/create': typeof AuthenticatedCreateRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/proofs': typeof AuthenticatedProofsRoute
+  '/ai/$shortId': typeof AiShortIdRoute
   '/links/$shortId': typeof LinksShortIdRoute
+  '/proof/$id': typeof ProofIdRoute
   '/q/$shortId': typeof QShortIdRoute
   '/r/$shortId': typeof RShortIdRoute
   '/vcard/$shortId': typeof VcardShortIdRoute
   '/_authenticated/analytics/$qrId': typeof AuthenticatedAnalyticsQrIdRoute
   '/api/public/scan': typeof ApiPublicScanRoute
+  '/api/public/scanai': typeof ApiPublicScanaiRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -132,12 +168,16 @@ export interface FileRouteTypes {
     | '/bulk'
     | '/create'
     | '/dashboard'
+    | '/proofs'
+    | '/ai/$shortId'
     | '/links/$shortId'
+    | '/proof/$id'
     | '/q/$shortId'
     | '/r/$shortId'
     | '/vcard/$shortId'
     | '/analytics/$qrId'
     | '/api/public/scan'
+    | '/api/public/scanai'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -145,12 +185,16 @@ export interface FileRouteTypes {
     | '/bulk'
     | '/create'
     | '/dashboard'
+    | '/proofs'
+    | '/ai/$shortId'
     | '/links/$shortId'
+    | '/proof/$id'
     | '/q/$shortId'
     | '/r/$shortId'
     | '/vcard/$shortId'
     | '/analytics/$qrId'
     | '/api/public/scan'
+    | '/api/public/scanai'
   id:
     | '__root__'
     | '/'
@@ -159,22 +203,29 @@ export interface FileRouteTypes {
     | '/_authenticated/bulk'
     | '/_authenticated/create'
     | '/_authenticated/dashboard'
+    | '/_authenticated/proofs'
+    | '/ai/$shortId'
     | '/links/$shortId'
+    | '/proof/$id'
     | '/q/$shortId'
     | '/r/$shortId'
     | '/vcard/$shortId'
     | '/_authenticated/analytics/$qrId'
     | '/api/public/scan'
+    | '/api/public/scanai'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
+  AiShortIdRoute: typeof AiShortIdRoute
   LinksShortIdRoute: typeof LinksShortIdRoute
+  ProofIdRoute: typeof ProofIdRoute
   QShortIdRoute: typeof QShortIdRoute
   RShortIdRoute: typeof RShortIdRoute
   VcardShortIdRoute: typeof VcardShortIdRoute
   ApiPublicScanRoute: typeof ApiPublicScanRoute
+  ApiPublicScanaiRoute: typeof ApiPublicScanaiRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -214,12 +265,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof QShortIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/proof/$id': {
+      id: '/proof/$id'
+      path: '/proof/$id'
+      fullPath: '/proof/$id'
+      preLoaderRoute: typeof ProofIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/links/$shortId': {
       id: '/links/$shortId'
       path: '/links/$shortId'
       fullPath: '/links/$shortId'
       preLoaderRoute: typeof LinksShortIdRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/ai/$shortId': {
+      id: '/ai/$shortId'
+      path: '/ai/$shortId'
+      fullPath: '/ai/$shortId'
+      preLoaderRoute: typeof AiShortIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/proofs': {
+      id: '/_authenticated/proofs'
+      path: '/proofs'
+      fullPath: '/proofs'
+      preLoaderRoute: typeof AuthenticatedProofsRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/dashboard': {
       id: '/_authenticated/dashboard'
@@ -248,6 +320,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/analytics'
       preLoaderRoute: typeof AuthenticatedAnalyticsRouteImport
       parentRoute: typeof AuthenticatedRoute
+    }
+    '/api/public/scanai': {
+      id: '/api/public/scanai'
+      path: '/api/public/scanai'
+      fullPath: '/api/public/scanai'
+      preLoaderRoute: typeof ApiPublicScanaiRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/api/public/scan': {
       id: '/api/public/scan'
@@ -285,6 +364,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedBulkRoute: typeof AuthenticatedBulkRoute
   AuthenticatedCreateRoute: typeof AuthenticatedCreateRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedProofsRoute: typeof AuthenticatedProofsRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
@@ -292,6 +372,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedBulkRoute: AuthenticatedBulkRoute,
   AuthenticatedCreateRoute: AuthenticatedCreateRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedProofsRoute: AuthenticatedProofsRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
@@ -301,22 +382,15 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
+  AiShortIdRoute: AiShortIdRoute,
   LinksShortIdRoute: LinksShortIdRoute,
+  ProofIdRoute: ProofIdRoute,
   QShortIdRoute: QShortIdRoute,
   RShortIdRoute: RShortIdRoute,
   VcardShortIdRoute: VcardShortIdRoute,
   ApiPublicScanRoute: ApiPublicScanRoute,
+  ApiPublicScanaiRoute: ApiPublicScanaiRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
