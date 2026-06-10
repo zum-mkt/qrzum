@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { firePixels } from "@/lib/firePixels";
 import { injectUtm, type PixelConfig } from "@/lib/qr";
 import { QrCode } from "lucide-react";
+import { resolveRoutingForShort } from "@/lib/routing.functions";
 
 export const Route = createFileRoute("/r/$shortId")({
   component: Redirector,
@@ -29,6 +30,33 @@ function Redirector() {
         return;
       }
       setTitle(row.title);
+
+      // Contextual routing: evaluate server-side rules (schedule/geofence)
+      let geo: { lat: number; lng: number } | null = null;
+      try {
+        geo = await new Promise<{ lat: number; lng: number } | null>((resolve) => {
+          if (!navigator.geolocation) return resolve(null);
+          const timer = setTimeout(() => resolve(null), 3000);
+          navigator.geolocation.getCurrentPosition(
+            (p) => { clearTimeout(timer); resolve({ lat: p.coords.latitude, lng: p.coords.longitude }); },
+            () => { clearTimeout(timer); resolve(null); },
+            { maximumAge: 60000, timeout: 3000 },
+          );
+        });
+      } catch { /* ignore */ }
+      try {
+        const ruled = await resolveRoutingForShort({
+          data: { shortId, lat: geo?.lat ?? null, lng: geo?.lng ?? null, nowIso: new Date().toISOString() },
+        });
+        if (ruled.action === "block") {
+          setError("Acesso bloqueado por regra contextual.");
+          return;
+        }
+        if (ruled.action === "redirect" && ruled.destination_url) {
+          window.location.replace(ruled.destination_url);
+          return;
+        }
+      } catch { /* fall through to default behavior */ }
 
       const pixels: PixelConfig = {
         ga4Id: row.ga4_id, gtmId: row.gtm_id, metaPixelId: row.meta_pixel_id,
