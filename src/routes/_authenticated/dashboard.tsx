@@ -1,6 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { RoutingRulesEditor } from "@/components/RoutingRulesEditor";
+import { KnowledgeEditor } from "@/components/KnowledgeEditor";
+import { ProofConfigEditor } from "@/components/ProofConfigEditor";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -84,6 +88,7 @@ function Dashboard() {
   const [editPixels, setEditPixels] = useState<PixelConfig>(emptyPixelConfig);
   const [editFolderId, setEditFolderId] = useState<string | null>(null);
   const [editTagIds, setEditTagIds] = useState<string[]>([]);
+  const [editTab, setEditTab] = useState("geral");
 
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("all");
@@ -204,6 +209,7 @@ function Dashboard() {
   };
 
   const openEdit = async (row: Row) => {
+    setEditTab("geral");
     setEditRow(row);
     setEditTitle(row.title);
     setEditUrl(row.destination_url);
@@ -484,41 +490,69 @@ function Dashboard() {
       </Dialog>
 
       <Dialog open={!!editRow} onOpenChange={(o) => !o && setEditRow(null)}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
           <DialogHeader><DialogTitle>Editar QR Code</DialogTitle></DialogHeader>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="edit-title">Nome</Label>
-              <Input id="edit-title" value={editTitle} onChange={(e) => setEditTitle(e.target.value)} />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit-url">
-                {editRow?.type === "wifi" ? "Conteúdo WiFi (avançado)" : "URL de destino"}
-              </Label>
-              <Input id="edit-url" value={editUrl} onChange={(e) => setEditUrl(e.target.value)} />
-              <p className="text-xs text-muted-foreground">
-                {editRow?.type === "wifi"
-                  ? "WiFi é estático — editar não muda o QR já impresso."
-                  : "O QR Code continua o mesmo — apenas o destino muda."}
-              </p>
-            </div>
-            <FolderTagPicker
-              folderId={editFolderId}
-              onFolderChange={setEditFolderId}
-              tagIds={editTagIds}
-              onTagsChange={setEditTagIds}
-            />
-            <QRStyleFields style={editStyle} onChange={setEditStyle} />
-            <PixelFields
-              pixels={editPixels}
-              onChange={setEditPixels}
-              showUtm={editRow?.type !== "wifi" && editRow?.type !== "vcard" && editRow?.type !== "links"}
-            />
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setEditRow(null)}>Cancelar</Button>
-            <Button onClick={saveEdit}>Salvar</Button>
-          </DialogFooter>
+          <Tabs value={editTab} onValueChange={setEditTab} className="w-full">
+            <TabsList className="w-full">
+              <TabsTrigger value="geral" className="flex-1">Geral</TabsTrigger>
+              <TabsTrigger value="visual" className="flex-1">Visual</TabsTrigger>
+              <TabsTrigger value="routing" className="flex-1">Roteamento</TabsTrigger>
+              <TabsTrigger value="knowledge" className="flex-1">Knowledge</TabsTrigger>
+              <TabsTrigger value="presenca" className="flex-1">Presença</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="geral" className="space-y-4 pt-2">
+              <div className="space-y-2">
+                <Label htmlFor="edit-title">Nome</Label>
+                <Input id="edit-title" value={editTitle} onChange={(e) => setEditTitle(e.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-url">
+                  {editRow?.type === "wifi" ? "Conteúdo WiFi (avançado)" : "URL de destino"}
+                </Label>
+                <Input id="edit-url" value={editUrl} onChange={(e) => setEditUrl(e.target.value)} />
+                <p className="text-xs text-muted-foreground">
+                  {editRow?.type === "wifi"
+                    ? "WiFi é estático — editar não muda o QR já impresso."
+                    : "O QR Code continua o mesmo — apenas o destino muda."}
+                </p>
+              </div>
+              <FolderTagPicker
+                folderId={editFolderId}
+                onFolderChange={setEditFolderId}
+                tagIds={editTagIds}
+                onTagsChange={setEditTagIds}
+              />
+            </TabsContent>
+
+            <TabsContent value="visual" className="space-y-4 pt-2">
+              <QRStyleFields style={editStyle} onChange={setEditStyle} />
+              <PixelFields
+                pixels={editPixels}
+                onChange={setEditPixels}
+                showUtm={editRow?.type !== "wifi" && editRow?.type !== "vcard" && editRow?.type !== "links"}
+              />
+            </TabsContent>
+
+            <TabsContent value="routing" className="pt-2">
+              {editRow && <RoutingRulesEditor qrId={editRow.id} />}
+            </TabsContent>
+
+            <TabsContent value="knowledge" className="pt-2">
+              {editRow && <KnowledgeEditor qrId={editRow.id} />}
+            </TabsContent>
+
+            <TabsContent value="presenca" className="pt-2">
+              {editRow && <ProofConfigEditor qrId={editRow.id} />}
+            </TabsContent>
+          </Tabs>
+
+          {(editTab === "geral" || editTab === "visual") && (
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setEditRow(null)}>Cancelar</Button>
+              <Button onClick={saveEdit}>Salvar</Button>
+            </DialogFooter>
+          )}
         </DialogContent>
       </Dialog>
     </div>
