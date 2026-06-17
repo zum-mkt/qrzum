@@ -67,7 +67,94 @@ export const QR_TYPE_LABELS: Record<string, string> = {
   links: "Lista de Links",
   flow: "Fluxo Operacional",
   pdf: "PDF",
+  pix: "PIX",
+  calendar: "Evento / Calendário",
 };
+
+// ===== PIX (Brazilian instant payment) =====
+
+function pixCrc16(str: string): string {
+  let crc = 0xffff;
+  for (let i = 0; i < str.length; i++) {
+    crc ^= str.charCodeAt(i) << 8;
+    for (let j = 0; j < 8; j++) {
+      crc = crc & 0x8000 ? ((crc << 1) ^ 0x1021) & 0xffff : (crc << 1) & 0xffff;
+    }
+  }
+  return crc.toString(16).toUpperCase().padStart(4, "0");
+}
+
+function emvField(id: string, value: string): string {
+  return `${id}${String(value.length).padStart(2, "0")}${value}`;
+}
+
+export type PixKeyType = "cpf" | "cnpj" | "phone" | "email" | "evp";
+
+export interface PixData {
+  key: string;
+  keyType: PixKeyType;
+  name: string;
+  city: string;
+  amount?: number;
+  txId?: string;
+}
+
+export function buildPixString(d: PixData): string {
+  const key = d.key.trim();
+  const name = d.name.trim().slice(0, 25).toUpperCase();
+  const city = d.city.trim().slice(0, 15).toUpperCase();
+  const txId = (d.txId?.replace(/[^a-zA-Z0-9]/g, "") || "***").slice(0, 25);
+
+  const merchantAccount =
+    emvField("00", "br.gov.bcb.pix") + emvField("01", key);
+
+  let payload = emvField("00", "01");
+  payload += emvField("26", merchantAccount);
+  payload += emvField("52", "0000");
+  payload += emvField("53", "986");
+  if (d.amount && d.amount > 0) payload += emvField("54", d.amount.toFixed(2));
+  payload += emvField("58", "BR");
+  payload += emvField("59", name);
+  payload += emvField("60", city);
+  payload += emvField("62", emvField("05", txId));
+  payload += "6304";
+  return payload + pixCrc16(payload);
+}
+
+// ===== iCalendar (.ics) =====
+
+export interface CalendarData {
+  title: string;
+  start: string;  // "YYYY-MM-DDTHH:MM" local time
+  end: string;
+  location?: string;
+  description?: string;
+}
+
+function icsDateTime(localStr: string): string {
+  return localStr.replace(/[-:]/g, "").replace("T", "T") + "00";
+}
+
+export function buildIcsString(d: CalendarData): string {
+  const uid = `${Date.now()}-${Math.random().toString(36).slice(2)}@zum`;
+  const lines = [
+    "BEGIN:VCALENDAR",
+    "VERSION:2.0",
+    "PRODID:-//zum//QR Calendar//PT",
+    "CALSCALE:GREGORIAN",
+    "METHOD:PUBLISH",
+    "BEGIN:VEVENT",
+    `DTSTART:${icsDateTime(d.start)}`,
+    `DTEND:${icsDateTime(d.end)}`,
+    `SUMMARY:${d.title}`,
+    d.location ? `LOCATION:${d.location}` : "",
+    d.description ? `DESCRIPTION:${d.description.replace(/\n/g, "\\n")}` : "",
+    `UID:${uid}`,
+    "END:VEVENT",
+    "END:VCALENDAR",
+  ].filter(Boolean);
+  return lines.join("\r\n");
+}
 
 export type FrameStyle =
   | "none"

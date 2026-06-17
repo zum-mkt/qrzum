@@ -58,14 +58,17 @@ function QrAnalytics() {
     },
   });
 
-  const { byDay, byCountry, byDevice, uniquesTotal } = useMemo(() => {
+  const { byDay, byCountry, byCity, byDevice, byOs, byReferrer, uniquesTotal } = useMemo(() => {
     const days = new Map<string, { count: number; set: Set<string> }>();
     for (let i = 29; i >= 0; i--) {
       const d = new Date(); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() - i);
       days.set(d.toISOString().slice(0, 10), { count: 0, set: new Set() });
     }
     const country = new Map<string, number>();
+    const city = new Map<string, number>();
     const device = new Map<string, number>();
+    const os = new Map<string, number>();
+    const referrer = new Map<string, number>();
     const allUniques = new Set<string>();
     (scans ?? []).forEach((s) => {
       const k = s.scanned_at.slice(0, 10);
@@ -77,13 +80,25 @@ function QrAnalytics() {
       if (s.visitor_hash) allUniques.add(s.visitor_hash);
       const c = s.country || "Desconhecido";
       country.set(c, (country.get(c) || 0) + 1);
-      const d = s.device || "desktop";
-      device.set(d, (device.get(d) || 0) + 1);
+      const ct = s.city || "Desconhecida";
+      city.set(ct, (city.get(ct) || 0) + 1);
+      const dv = s.device || "desktop";
+      device.set(dv, (device.get(dv) || 0) + 1);
+      const osKey = s.os || "Desconhecido";
+      os.set(osKey, (os.get(osKey) || 0) + 1);
+      if (s.referrer) {
+        let ref = s.referrer;
+        try { ref = new URL(s.referrer).hostname; } catch {}
+        referrer.set(ref, (referrer.get(ref) || 0) + 1);
+      }
     });
     return {
       byDay: Array.from(days.entries()).map(([date, v]) => ({ date: date.slice(5), count: v.count, uniques: v.set.size })),
       byCountry: Array.from(country.entries()).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value).slice(0, 8),
+      byCity: Array.from(city.entries()).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value).slice(0, 8),
       byDevice: Array.from(device.entries()).map(([name, value]) => ({ name, value })),
+      byOs: Array.from(os.entries()).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value),
+      byReferrer: Array.from(referrer.entries()).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value).slice(0, 10),
       uniquesTotal: allUniques.size,
     };
   }, [scans]);
@@ -163,31 +178,77 @@ function QrAnalytics() {
                 <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
                 <XAxis type="number" allowDecimals={false} className="text-xs" />
                 <YAxis type="category" dataKey="name" width={80} className="text-xs" />
-                <Tooltip
-                  contentStyle={{ background: "hsl(var(--background))", border: "1px solid hsl(var(--border))", borderRadius: 8 }}
-                />
+                <Tooltip contentStyle={{ background: "hsl(var(--background))", border: "1px solid hsl(var(--border))", borderRadius: 8 }} />
                 <Bar dataKey="value" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
         </Card>
         <Card className="p-5">
-          <h2 className="mb-4 text-sm font-medium">Dispositivos</h2>
+          <h2 className="mb-4 text-sm font-medium">Top cidades</h2>
           <div className="h-56 w-full">
+            <ResponsiveContainer>
+              <BarChart data={byCity} layout="vertical">
+                <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                <XAxis type="number" allowDecimals={false} className="text-xs" />
+                <YAxis type="category" dataKey="name" width={90} className="text-xs" />
+                <Tooltip contentStyle={{ background: "hsl(var(--background))", border: "1px solid hsl(var(--border))", borderRadius: 8 }} />
+                <Bar dataKey="value" fill="hsl(var(--chart-2))" radius={[0, 4, 4, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </Card>
+        <Card className="p-5">
+          <h2 className="mb-4 text-sm font-medium">Dispositivos</h2>
+          <div className="h-48 w-full">
             <ResponsiveContainer>
               <BarChart data={byDevice}>
                 <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
                 <XAxis dataKey="name" className="text-xs" />
                 <YAxis allowDecimals={false} className="text-xs" />
-                <Tooltip
-                  contentStyle={{ background: "hsl(var(--background))", border: "1px solid hsl(var(--border))", borderRadius: 8 }}
-                />
+                <Tooltip contentStyle={{ background: "hsl(var(--background))", border: "1px solid hsl(var(--border))", borderRadius: 8 }} />
                 <Bar dataKey="value" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
         </Card>
+        <Card className="p-5">
+          <h2 className="mb-4 text-sm font-medium">Sistemas operacionais</h2>
+          <div className="h-48 w-full">
+            <ResponsiveContainer>
+              <BarChart data={byOs}>
+                <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                <XAxis dataKey="name" className="text-xs" />
+                <YAxis allowDecimals={false} className="text-xs" />
+                <Tooltip contentStyle={{ background: "hsl(var(--background))", border: "1px solid hsl(var(--border))", borderRadius: 8 }} />
+                <Bar dataKey="value" fill="hsl(var(--chart-3))" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </Card>
       </div>
+
+      {byReferrer.length > 0 && (
+        <Card className="overflow-hidden">
+          <div className="border-b border-border bg-muted/40 p-3 text-sm font-medium">Origens de tráfego</div>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Origem</TableHead>
+                <TableHead className="text-right">Scans</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {byReferrer.map((r) => (
+                <TableRow key={r.name}>
+                  <TableCell className="text-sm">{r.name}</TableCell>
+                  <TableCell className="text-right font-medium">{r.value}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </Card>
+      )}
 
       <Card className="overflow-hidden">
         <div className="border-b border-border bg-muted/40 p-3 text-sm font-medium">Últimos scans</div>

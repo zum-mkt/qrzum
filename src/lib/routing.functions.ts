@@ -5,7 +5,7 @@ import { z } from "zod";
 const RuleSchema = z.object({
   id: z.string().uuid().optional(),
   priority: z.number().int(),
-  kind: z.enum(["identity", "schedule", "geofence"]),
+  kind: z.enum(["identity", "schedule", "geofence", "scan_threshold"]),
   config: z.record(z.string(), z.any()),
   action: z.enum(["redirect", "block"]),
   destination_url: z.string().nullable().optional(),
@@ -56,7 +56,7 @@ export const resolveRoutingForShort = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: link } = await supabaseAdmin.from("qr_links")
-      .select("id, user_id, destination_url, type").eq("short_id", data.shortId).maybeSingle();
+      .select("id, user_id, destination_url, type, clicks").eq("short_id", data.shortId).maybeSingle();
     if (!link) return { action: "redirect" as const, destination_url: null, qrId: null };
     const { data: rules } = await supabaseAdmin.from("qr_routing_rules")
       .select("*").eq("qr_id", link.id).eq("enabled", true).order("priority");
@@ -83,6 +83,11 @@ export const resolveRoutingForShort = createServerFn({ method: "POST" })
       } else if (r.kind === "identity") {
         // identity rules need an authenticated caller; skip for anon
         continue;
+      } else if (r.kind === "scan_threshold") {
+        const cfg = r.config as { threshold: number; comparison: "above" | "below" };
+        const clicks = (link as any).clicks ?? 0;
+        const matches = cfg.comparison === "above" ? clicks > cfg.threshold : clicks < cfg.threshold;
+        if (!matches) continue;
       }
       return { action: r.action as "redirect" | "block", destination_url: r.destination_url, qrId: link.id };
     }

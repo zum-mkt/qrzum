@@ -10,7 +10,7 @@ import { Card } from "@/components/ui/card";
 import { Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
-type RuleKind = "schedule" | "geofence" | "identity";
+type RuleKind = "schedule" | "geofence" | "identity" | "scan_threshold";
 type RuleAction = "redirect" | "block";
 
 type Rule = {
@@ -27,6 +27,7 @@ const DAYS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 function defaultConfig(kind: RuleKind): Record<string, any> {
   if (kind === "schedule") return { days: [1, 2, 3, 4, 5], start: "08:00", end: "18:00" };
   if (kind === "geofence") return { lat: 0, lng: 0, radius_m: 100, mode: "allow" };
+  if (kind === "scan_threshold") return { threshold: 100, comparison: "above" };
   return { role: "user" };
 }
 
@@ -104,6 +105,7 @@ export function RoutingRulesEditor({ qrId }: { qrId: string }) {
             <NativeSelect value={rule.kind} onChange={(v) => update(i, { kind: v as RuleKind, config: defaultConfig(v as RuleKind) })}>
               <option value="schedule">Agendamento</option>
               <option value="geofence">Geofence</option>
+              <option value="scan_threshold">Contagem de scans</option>
               <option value="identity">Identidade</option>
             </NativeSelect>
 
@@ -200,6 +202,35 @@ export function RoutingRulesEditor({ qrId }: { qrId: string }) {
                   <option value="block">Bloquear dentro</option>
                 </NativeSelect>
               </div>
+            </div>
+          )}
+
+          {rule.kind === "scan_threshold" && (
+            <div className="grid grid-cols-2 gap-3 pl-6">
+              <div className="space-y-1">
+                <Label className="text-xs">Limite de scans</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  value={rule.config.threshold ?? 100}
+                  onChange={(e) => updateConfig(i, { threshold: parseInt(e.target.value) || 0 })}
+                  className="h-8 text-xs"
+                />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Condição</Label>
+                <NativeSelect
+                  value={rule.config.comparison ?? "above"}
+                  onChange={(v) => updateConfig(i, { comparison: v })}
+                  className="w-full"
+                >
+                  <option value="above">Acima do limite</option>
+                  <option value="below">Abaixo do limite</option>
+                </NativeSelect>
+              </div>
+              <p className="col-span-2 text-xs text-muted-foreground">
+                Ativa quando o total de scans do QR {rule.config.comparison === "below" ? "for menor que" : "ultrapassar"} {rule.config.threshold ?? 100}.
+              </p>
             </div>
           )}
 
