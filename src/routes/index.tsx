@@ -13,7 +13,7 @@ import { QrCode, Sparkles } from "lucide-react";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "QRFlow — Gerador e Gerenciador de QR Codes Dinâmicos" },
+      { title: "zum — Gerador e Gerenciador de QR Codes Dinâmicos" },
       { name: "description", content: "Crie, gerencie e rastreie QR Codes dinâmicos para links, arquivos e vCards. Editável a qualquer momento, com analytics de cliques." },
     ],
   }),
@@ -36,11 +36,11 @@ function Index() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary">
       <header className="mx-auto flex max-w-6xl items-center justify-between px-6 py-6">
-        <Link to="/" className="flex items-center gap-2 font-semibold">
+        <Link to="/" className="flex items-center gap-2">
           <span className="grid h-9 w-9 place-items-center rounded-lg bg-primary text-primary-foreground">
             <QrCode className="h-5 w-5" />
           </span>
-          QRFlow
+          <span className="text-xl font-bold tracking-tight text-primary">zum</span>
         </Link>
       </header>
       <main className="mx-auto grid max-w-6xl gap-12 px-6 py-12 lg:grid-cols-2 lg:py-20">

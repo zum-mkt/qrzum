@@ -14,7 +14,7 @@ import { BarChart3, MousePointerClick, TrendingUp, Trophy, Users } from "lucide-
 import { QR_TYPE_LABELS } from "@/lib/qr";
 
 export const Route = createFileRoute("/_authenticated/analytics")({
-  head: () => ({ meta: [{ title: "Analytics — QRFlow" }] }),
+  head: () => ({ meta: [{ title: "Analytics — zum" }] }),
   component: AnalyticsPage,
 });
 

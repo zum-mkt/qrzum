@@ -25,7 +25,7 @@ import {
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/create")({
-  head: () => ({ meta: [{ title: "Criar QR Code — QRFlow" }] }),
+  head: () => ({ meta: [{ title: "Criar QR Code — zum" }] }),
   component: Create,
 });
 

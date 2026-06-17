@@ -6,7 +6,7 @@ import { FlowBuilder } from "@/components/flow/FlowBuilder";
 import { buildQrUrl } from "@/lib/qr";
 
 export const Route = createFileRoute("/_authenticated/flow-builder/$qrId")({
-  head: () => ({ meta: [{ title: "Flow Builder — QRFlow" }] }),
+  head: () => ({ meta: [{ title: "Flow Builder — zum" }] }),
   component: FlowBuilderPage,
 });
 

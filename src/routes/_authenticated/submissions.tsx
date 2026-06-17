@@ -15,7 +15,7 @@ import {
 import { ClipboardList, Download, Search, MapPin, ExternalLink } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/submissions")({
-  head: () => ({ meta: [{ title: "Respostas — QRFlow" }] }),
+  head: () => ({ meta: [{ title: "Respostas — zum" }] }),
   component: SubmissionsPage,
 });
 

@@ -24,7 +24,7 @@ function FlowPage() {
         <span className="grid h-7 w-7 place-items-center rounded-md bg-primary text-primary-foreground">
           <QrCode className="h-4 w-4" />
         </span>
-        <span className="text-sm font-semibold">{data?.title ?? "QRFlow"}</span>
+        <span className="text-sm font-semibold">{data?.title ?? "zum"}</span>
       </header>
 
       <main className="mx-auto w-full max-w-lg flex-1 p-6">
