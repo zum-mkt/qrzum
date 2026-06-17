@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -21,7 +21,7 @@ import { FolderTagPicker } from "@/components/FolderTagPicker";
 import { setQrTags } from "@/lib/organize";
 import {
   Copy, Link as LinkIcon, FileUp, Contact, ArrowLeft,
-  MessageCircle, Wifi, Video, ListOrdered, Plus, Trash2, FileText,
+  MessageCircle, Wifi, Video, ListOrdered, Plus, Trash2, FileText, Workflow,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/create")({
@@ -29,7 +29,7 @@ export const Route = createFileRoute("/_authenticated/create")({
   component: Create,
 });
 
-type QrType = "link" | "file" | "vcard" | "whatsapp" | "wifi" | "video" | "links" | "pdf";
+type QrType = "link" | "file" | "vcard" | "whatsapp" | "wifi" | "video" | "links" | "pdf" | "flow";
 type Created = {
   shortId: string;
   title: string;
@@ -58,7 +58,7 @@ function Create() {
 
       <Card className="p-6">
         <Tabs defaultValue="link">
-          <TabsList className="grid w-full grid-cols-4 sm:grid-cols-8">
+          <TabsList className="grid w-full grid-cols-5 sm:grid-cols-9">
             <TabsTrigger value="link"><LinkIcon className="mr-1.5 h-4 w-4" /> Link</TabsTrigger>
             <TabsTrigger value="whatsapp"><MessageCircle className="mr-1.5 h-4 w-4" /> WhatsApp</TabsTrigger>
             <TabsTrigger value="vcard"><Contact className="mr-1.5 h-4 w-4" /> vCard</TabsTrigger>
@@ -67,6 +67,7 @@ function Create() {
             <TabsTrigger value="links"><ListOrdered className="mr-1.5 h-4 w-4" /> Links</TabsTrigger>
             <TabsTrigger value="video"><Video className="mr-1.5 h-4 w-4" /> Vídeo</TabsTrigger>
             <TabsTrigger value="wifi"><Wifi className="mr-1.5 h-4 w-4" /> WiFi</TabsTrigger>
+            <TabsTrigger value="flow"><Workflow className="mr-1.5 h-4 w-4" /> Fluxo</TabsTrigger>
           </TabsList>
           <div className="mt-6 mb-6">
             <FolderTagPicker folderId={folderId} onFolderChange={setFolderId} tagIds={tagIds} onTagsChange={setTagIds} />
@@ -79,6 +80,7 @@ function Create() {
           <TabsContent value="links" className="mt-6"><LinksForm style={style} setStyle={setStyle} pixels={pixels} setPixels={setPixels} folderId={folderId} tagIds={tagIds} onCreated={setCreated} /></TabsContent>
           <TabsContent value="video" className="mt-6"><VideoForm style={style} setStyle={setStyle} pixels={pixels} setPixels={setPixels} folderId={folderId} tagIds={tagIds} onCreated={setCreated} /></TabsContent>
           <TabsContent value="wifi" className="mt-6"><WifiForm style={style} setStyle={setStyle} pixels={pixels} setPixels={setPixels} folderId={folderId} tagIds={tagIds} onCreated={setCreated} /></TabsContent>
+          <TabsContent value="flow" className="mt-6"><FlowForm folderId={folderId} tagIds={tagIds} /></TabsContent>
         </Tabs>
       </Card>
     </div>
@@ -435,6 +437,58 @@ function VCardForm({ style, setStyle, pixels, setPixels, folderId, tagIds, onCre
       <QRStyleFields style={style} onChange={setStyle} />
       <PixelFields pixels={pixels} onChange={setPixels} showUtm={false} />
       <Button type="submit" disabled={loading}>{loading ? "Criando..." : "Criar QR Code"}</Button>
+    </form>
+  );
+}
+
+function FlowForm({ folderId, tagIds }: { folderId: string | null; tagIds: string[] }) {
+  const navigate = useNavigate();
+  const [title, setTitle] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const submit = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!title.trim()) return toast.error("Digite um nome para o fluxo");
+    setLoading(true);
+    try {
+      const { data: u } = await supabase.auth.getUser();
+      if (!u.user) throw new Error("Não autenticado");
+      const short_id = generateShortId();
+      const { data: inserted, error } = await (supabase.from("qr_links") as any).insert({
+        user_id: u.user.id,
+        title: title.trim(),
+        type: "flow",
+        short_id,
+        destination_url: buildInternalUrl(`/f/${short_id}`),
+        folder_id: folderId ?? null,
+      }).select("id").single();
+      if (error) throw error;
+      if (tagIds.length > 0 && inserted?.id) {
+        try { await setQrTags(inserted.id as string, tagIds); } catch { /* non-fatal */ }
+      }
+      toast.success("Fluxo criado! Configure os blocos abaixo.");
+      navigate({ to: "/flow-builder/$qrId", params: { qrId: inserted.id as string } });
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <form onSubmit={submit} className="space-y-6 max-w-md">
+      <div className="rounded-lg border border-border bg-muted/40 p-4 text-sm text-muted-foreground space-y-1">
+        <p className="font-medium text-foreground">O que é um Fluxo Operacional?</p>
+        <p>Um QR Code que, ao ser escaneado, executa uma sequência de blocos configuráveis: validação de GPS, senha, formulário e mensagem final.</p>
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="flow-title">Nome do fluxo</Label>
+        <Input id="flow-title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Ex: Checklist de Inspeção" required />
+      </div>
+      <Button type="submit" disabled={loading}>
+        <Workflow className="mr-2 h-4 w-4" />
+        {loading ? "Criando…" : "Criar fluxo e abrir editor"}
+      </Button>
     </form>
   );
 }

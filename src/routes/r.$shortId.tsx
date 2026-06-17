@@ -78,6 +78,7 @@ function Redirector() {
       let dest: string;
       if (row.type === "vcard") dest = `/vcard/${shortId}`;
       else if (row.type === "links") dest = `/links/${shortId}`;
+      else if (row.type === "flow") dest = `/f/${shortId}`;
       else dest = row.add_utm ? injectUtm(row.destination_url, row.type, shortId) : row.destination_url;
 
       await firing;

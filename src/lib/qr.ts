@@ -65,6 +65,8 @@ export const QR_TYPE_LABELS: Record<string, string> = {
   wifi: "WiFi",
   video: "Vídeo",
   links: "Lista de Links",
+  flow: "Fluxo Operacional",
+  pdf: "PDF",
 };
 
 export type FrameStyle =
