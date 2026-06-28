@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState, ReactNode } from "react
 import { supabase } from "@/integrations/supabase/client";
 
 const STARTER_PLAN_ID = "11111111-0000-0000-0000-000000000001";
+const ADMIN_EMAIL = "zum@agenciazum.com.br";
 
 type PlanInfo = { id: string; name: string; slug: string };
 
@@ -33,11 +34,18 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
   const [plan, setPlan] = useState<PlanInfo | null>(null);
   const [features, setFeatures] = useState<FeatureMap>({});
   const [isLoading, setIsLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     async function load() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) { setIsLoading(false); return; }
+
+      if (session.user.email === ADMIN_EMAIL) {
+        setIsAdmin(true);
+        setIsLoading(false);
+        return;
+      }
 
       // Try to find active subscription
       const { data: sub } = await supabase
@@ -82,9 +90,9 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
     load();
   }, []);
 
-  const hasFeature = (key: string) => features[key]?.available ?? false;
-  const getFeatureValue = (key: string) => features[key]?.value ?? "";
-  const getQrLimit = () => parseLimit(getFeatureValue("qr_limit"));
+  const hasFeature = (key: string) => isAdmin || (features[key]?.available ?? false);
+  const getFeatureValue = (key: string) => isAdmin ? "ilimitado" : (features[key]?.value ?? "");
+  const getQrLimit = () => isAdmin ? Infinity : parseLimit(getFeatureValue("qr_limit"));
 
   return (
     <SubscriptionContext.Provider value={{ plan, isLoading, hasFeature, getFeatureValue, getQrLimit }}>
