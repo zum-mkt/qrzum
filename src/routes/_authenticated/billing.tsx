@@ -101,7 +101,7 @@ function SubscriptionCard({ subscription }: { subscription: Subscription }) {
           )}
         </div>
         <div className="flex gap-2">
-          <Link to={`/checkout/${subscription.plan.slug}`}>
+          <Link to="/checkout/$planSlug" params={{ planSlug: subscription.plan.slug }}>
             <Button variant="outline" size="sm">
               <CreditCard className="mr-1.5 h-3.5 w-3.5" /> Trocar plano
             </Button>

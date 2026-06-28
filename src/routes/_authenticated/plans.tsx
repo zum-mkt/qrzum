@@ -161,7 +161,7 @@ function PlansPage() {
               </p>
 
               {price != null ? (
-                <Link to={`/checkout/${plan.slug}`} search={{ period }}>
+                <Link to="/checkout/$planSlug" params={{ planSlug: plan.slug }} search={{ period }}>
                   <Button
                     className="w-full"
                     variant={plan.highlighted ? "secondary" : "default"}
@@ -244,7 +244,7 @@ function PlansPage() {
                   return (
                     <td key={plan.id} className="px-5 py-4 text-center">
                       {price != null ? (
-                        <Link to={`/checkout/${plan.slug}`} search={{ period }}>
+                        <Link to="/checkout/$planSlug" params={{ planSlug: plan.slug }} search={{ period }}>
                           <Button size="sm" variant={plan.highlighted ? "default" : "outline"} className="w-full max-w-36">
                             {plan.cta_label}
                           </Button>
