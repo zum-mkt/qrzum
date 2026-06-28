@@ -2,7 +2,7 @@ import { createFileRoute, Outlet, redirect, Link, useNavigate, useRouterState } 
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { QrCode, LayoutDashboard, Plus, LogOut, BarChart3, Upload, ShieldCheck, ClipboardList, Settings, CreditCard } from "lucide-react";
+import { QrCode, LayoutDashboard, Plus, LogOut, BarChart3, Upload, ShieldCheck, ClipboardList, Settings, CreditCard, Layers } from "lucide-react";
 
 const ADMIN_EMAIL = "zum@agenciazum.com.br";
 
@@ -60,6 +60,7 @@ function AuthLayout() {
           <NavItem to="/submissions" icon={ClipboardList} label="Respostas" />
           <NavItem to="/proofs" icon={ShieldCheck} label="Provas de Presença" />
           <NavItem to="/billing" icon={CreditCard} label="Assinatura" />
+          <NavItem to="/plans" icon={Layers} label="Planos" />
           {isAdmin && (
             <NavItem to="/admin/plans" icon={Settings} label="Admin · Planos" />
           )}

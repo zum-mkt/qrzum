@@ -9,6 +9,9 @@ import { toast } from "sonner";
 import { CheckCircle, Lock, ShieldCheck, ArrowLeft, Star } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/checkout/$planSlug")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    period: (search.period as "monthly" | "annual" | undefined) ?? "monthly",
+  }),
   component: CheckoutPage,
 });
 
@@ -47,10 +50,11 @@ function formatBRL(cents: number) {
 
 function CheckoutPage() {
   const { planSlug } = Route.useParams();
+  const { period: initialPeriod } = Route.useSearch();
   const navigate = useNavigate();
 
   const [plan, setPlan] = useState<Plan | null>(null);
-  const [period, setPeriod] = useState<"monthly" | "annual">("monthly");
+  const [period, setPeriod] = useState<"monthly" | "annual">(initialPeriod);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);

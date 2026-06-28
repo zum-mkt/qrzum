@@ -153,9 +153,9 @@ function NoSubscriptionCard() {
       <p className="mt-2 text-sm text-muted-foreground">
         Escolha um plano para desbloquear todas as funcionalidades da plataforma.
       </p>
-      <a href="/#planos">
+      <Link to="/plans">
         <Button className="mt-6">Ver planos</Button>
-      </a>
+      </Link>
     </div>
   );
 }
