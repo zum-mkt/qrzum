@@ -29,6 +29,7 @@ import { Route as ApiPublicScanaiRouteImport } from './routes/api/public/scanai'
 import { Route as ApiPublicScanRouteImport } from './routes/api/public/scan'
 import { Route as AuthenticatedFlowBuilderQrIdRouteImport } from './routes/_authenticated/flow-builder.$qrId'
 import { Route as AuthenticatedAnalyticsQrIdRouteImport } from './routes/_authenticated/analytics.$qrId'
+import { Route as AuthenticatedAdminPlansRouteImport } from './routes/_authenticated/admin.plans'
 
 const AuthenticatedRoute = AuthenticatedRouteImport.update({
   id: '/_authenticated',
@@ -132,6 +133,11 @@ const AuthenticatedAnalyticsQrIdRoute =
     path: '/$qrId',
     getParentRoute: () => AuthenticatedAnalyticsRoute,
   } as any)
+const AuthenticatedAdminPlansRoute = AuthenticatedAdminPlansRouteImport.update({
+  id: '/admin/plans',
+  path: '/admin/plans',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -148,6 +154,7 @@ export interface FileRoutesByFullPath {
   '/q/$shortId': typeof QShortIdRoute
   '/r/$shortId': typeof RShortIdRoute
   '/vcard/$shortId': typeof VcardShortIdRoute
+  '/admin/plans': typeof AuthenticatedAdminPlansRoute
   '/analytics/$qrId': typeof AuthenticatedAnalyticsQrIdRoute
   '/flow-builder/$qrId': typeof AuthenticatedFlowBuilderQrIdRoute
   '/api/public/scan': typeof ApiPublicScanRoute
@@ -169,6 +176,7 @@ export interface FileRoutesByTo {
   '/q/$shortId': typeof QShortIdRoute
   '/r/$shortId': typeof RShortIdRoute
   '/vcard/$shortId': typeof VcardShortIdRoute
+  '/admin/plans': typeof AuthenticatedAdminPlansRoute
   '/analytics/$qrId': typeof AuthenticatedAnalyticsQrIdRoute
   '/flow-builder/$qrId': typeof AuthenticatedFlowBuilderQrIdRoute
   '/api/public/scan': typeof ApiPublicScanRoute
@@ -192,6 +200,7 @@ export interface FileRoutesById {
   '/q/$shortId': typeof QShortIdRoute
   '/r/$shortId': typeof RShortIdRoute
   '/vcard/$shortId': typeof VcardShortIdRoute
+  '/_authenticated/admin/plans': typeof AuthenticatedAdminPlansRoute
   '/_authenticated/analytics/$qrId': typeof AuthenticatedAnalyticsQrIdRoute
   '/_authenticated/flow-builder/$qrId': typeof AuthenticatedFlowBuilderQrIdRoute
   '/api/public/scan': typeof ApiPublicScanRoute
@@ -215,6 +224,7 @@ export interface FileRouteTypes {
     | '/q/$shortId'
     | '/r/$shortId'
     | '/vcard/$shortId'
+    | '/admin/plans'
     | '/analytics/$qrId'
     | '/flow-builder/$qrId'
     | '/api/public/scan'
@@ -236,6 +246,7 @@ export interface FileRouteTypes {
     | '/q/$shortId'
     | '/r/$shortId'
     | '/vcard/$shortId'
+    | '/admin/plans'
     | '/analytics/$qrId'
     | '/flow-builder/$qrId'
     | '/api/public/scan'
@@ -258,6 +269,7 @@ export interface FileRouteTypes {
     | '/q/$shortId'
     | '/r/$shortId'
     | '/vcard/$shortId'
+    | '/_authenticated/admin/plans'
     | '/_authenticated/analytics/$qrId'
     | '/_authenticated/flow-builder/$qrId'
     | '/api/public/scan'
@@ -422,6 +434,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAnalyticsQrIdRouteImport
       parentRoute: typeof AuthenticatedAnalyticsRoute
     }
+    '/_authenticated/admin/plans': {
+      id: '/_authenticated/admin/plans'
+      path: '/admin/plans'
+      fullPath: '/admin/plans'
+      preLoaderRoute: typeof AuthenticatedAdminPlansRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
   }
 }
 
@@ -446,6 +465,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedProofsRoute: typeof AuthenticatedProofsRoute
   AuthenticatedSubmissionsRoute: typeof AuthenticatedSubmissionsRoute
+  AuthenticatedAdminPlansRoute: typeof AuthenticatedAdminPlansRoute
   AuthenticatedFlowBuilderQrIdRoute: typeof AuthenticatedFlowBuilderQrIdRoute
 }
 
@@ -456,6 +476,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedProofsRoute: AuthenticatedProofsRoute,
   AuthenticatedSubmissionsRoute: AuthenticatedSubmissionsRoute,
+  AuthenticatedAdminPlansRoute: AuthenticatedAdminPlansRoute,
   AuthenticatedFlowBuilderQrIdRoute: AuthenticatedFlowBuilderQrIdRoute,
 }
 
