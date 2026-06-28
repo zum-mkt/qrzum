@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { convertToModelMessages, streamText, type UIMessage } from "ai";
-import { createLovableAiGatewayProvider } from "@/lib/ai-gateway.server";
+import { createOpenRouterProvider } from "@/lib/ai-gateway.server";
 
 export const Route = createFileRoute("/api/public/scanai")({
   server: {
@@ -15,8 +15,8 @@ export const Route = createFileRoute("/api/public/scanai")({
         if (!body.shortId || !body.sessionId || !Array.isArray(body.messages)) {
           return new Response("Bad request", { status: 400 });
         }
-        const key = process.env.LOVABLE_API_KEY;
-        if (!key) return new Response("Missing LOVABLE_API_KEY", { status: 500 });
+        const key = process.env.OPENROUTER_API_KEY;
+        if (!key) return new Response("Missing OPENROUTER_API_KEY", { status: 500 });
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         const { data: link } = await supabaseAdmin.from("qr_links")
@@ -41,9 +41,9 @@ export const Route = createFileRoute("/api/public/scanai")({
           });
         }
 
-        const gateway = createLovableAiGatewayProvider(key);
+        const gateway = createOpenRouterProvider(key);
         const result = streamText({
-          model: gateway("google/gemini-3-flash-preview"),
+          model: gateway("google/gemini-2.0-flash-exp:free"),
           system,
           messages: await convertToModelMessages(body.messages),
         });
