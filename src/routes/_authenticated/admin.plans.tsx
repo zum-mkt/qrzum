@@ -43,6 +43,8 @@ type Plan = {
   cta_label: string;
   highlighted: boolean;
   sort_order: number;
+  price_monthly: number | null;
+  price_annual: number | null;
 };
 
 type Feature = {
@@ -131,6 +133,7 @@ function PlansTab({ plans, onRefresh }: { plans: Plan[]; onRefresh: () => void }
   const blank: Plan = {
     id: "", name: "", slug: "", tagline: "", price_label: null,
     cta_label: "Falar com vendas", highlighted: false, sort_order: plans.length + 1,
+    price_monthly: null, price_annual: null,
   };
 
   const save = async (plan: Plan) => {
@@ -284,6 +287,20 @@ function PlanDialog({
             onChange={(v) => set("price_label", v || null)}
           />
           <Field label="Texto do botão CTA" value={form.cta_label} onChange={(v) => set("cta_label", v)} />
+          <div className="grid grid-cols-2 gap-4">
+            <Field
+              label="Preço mensal (centavos, ex: 9990 = R$ 99,90)"
+              type="number"
+              value={form.price_monthly != null ? String(form.price_monthly) : ""}
+              onChange={(v) => set("price_monthly", v ? Number(v) : null)}
+            />
+            <Field
+              label="Preço anual (centavos, ex: 99900 = R$ 999,00)"
+              type="number"
+              value={form.price_annual != null ? String(form.price_annual) : ""}
+              onChange={(v) => set("price_annual", v ? Number(v) : null)}
+            />
+          </div>
           <Field
             label="Ordem de exibição"
             type="number"

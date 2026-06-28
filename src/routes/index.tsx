@@ -722,7 +722,7 @@ function PricingSection() {
                   <p className={`mb-6 text-sm flex-1 ${plan.highlighted ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
                     {plan.tagline}
                   </p>
-                  <a href="#entrar">
+                  <a href={plan.price_monthly || plan.price_annual ? `/checkout/${plan.slug}` : "#entrar"}>
                     <Button
                       className="w-full"
                       variant={plan.highlighted ? "secondary" : "default"}
@@ -792,7 +792,7 @@ function PricingSection() {
                       <td className="px-5 py-4" />
                       {plans.map((plan) => (
                         <td key={plan.id} className="px-5 py-4 text-center">
-                          <a href="#entrar">
+                          <a href={plan.price_monthly || plan.price_annual ? `/checkout/${plan.slug}` : "#entrar"}>
                             <Button
                               size="sm"
                               variant={plan.highlighted ? "default" : "outline"}

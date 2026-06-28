@@ -443,6 +443,8 @@ export type Database = {
           cta_label: string
           highlighted: boolean
           sort_order: number
+          price_monthly: number | null
+          price_annual: number | null
           created_at: string
         }
         Insert: {
@@ -454,6 +456,8 @@ export type Database = {
           cta_label?: string
           highlighted?: boolean
           sort_order?: number
+          price_monthly?: number | null
+          price_annual?: number | null
           created_at?: string
         }
         Update: {
@@ -465,6 +469,80 @@ export type Database = {
           cta_label?: string
           highlighted?: boolean
           sort_order?: number
+          price_monthly?: number | null
+          price_annual?: number | null
+          created_at?: string
+        }
+        Relationships: []
+      }
+      user_subscriptions: {
+        Row: {
+          id: string
+          user_id: string
+          plan_id: string
+          period: string
+          status: string
+          mp_subscription_id: string | null
+          mp_payer_email: string | null
+          current_period_end: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          plan_id: string
+          period: string
+          status?: string
+          mp_subscription_id?: string | null
+          mp_payer_email?: string | null
+          current_period_end?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          plan_id?: string
+          period?: string
+          status?: string
+          mp_subscription_id?: string | null
+          mp_payer_email?: string | null
+          current_period_end?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      subscription_payments: {
+        Row: {
+          id: string
+          subscription_id: string | null
+          user_id: string | null
+          mp_payment_id: string | null
+          amount: number
+          status: string
+          paid_at: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          subscription_id?: string | null
+          user_id?: string | null
+          mp_payment_id?: string | null
+          amount: number
+          status: string
+          paid_at?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          subscription_id?: string | null
+          user_id?: string | null
+          mp_payment_id?: string | null
+          amount?: number
+          status?: string
+          paid_at?: string | null
           created_at?: string
         }
         Relationships: []
