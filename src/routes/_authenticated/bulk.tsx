@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
+import { FeatureGate } from "@/components/FeatureGate";
 import Papa from "papaparse";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -14,8 +15,16 @@ import { generateShortId, buildQrUrl, buildWhatsAppUrl, buildWifiString } from "
 
 export const Route = createFileRoute("/_authenticated/bulk")({
   head: () => ({ meta: [{ title: "Criar em lote — QRzum" }] }),
-  component: BulkPage,
+  component: BulkPageGated,
 });
+
+function BulkPageGated() {
+  return (
+    <FeatureGate featureKey="bulk_create" featureLabel="Criação em lote via CSV" requiredPlan="Pro">
+      <BulkPage />
+    </FeatureGate>
+  );
+}
 
 const TYPES = ["link", "whatsapp", "wifi", "video"] as const;
 type BulkType = typeof TYPES[number];

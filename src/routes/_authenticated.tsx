@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { QrCode, LayoutDashboard, Plus, LogOut, BarChart3, Upload, ShieldCheck, ClipboardList, Settings, CreditCard, Layers } from "lucide-react";
+import { SubscriptionProvider } from "@/contexts/SubscriptionContext";
 
 const ADMIN_EMAIL = "zum@agenciazum.com.br";
 
@@ -47,6 +48,7 @@ function AuthLayout() {
   };
 
   return (
+    <SubscriptionProvider>
     <div className="flex min-h-screen bg-secondary/40">
       <aside className="hidden w-64 shrink-0 border-r border-border bg-card p-4 md:flex md:flex-col">
         <Link to="/dashboard" className="mb-8 px-2">
@@ -87,5 +89,6 @@ function AuthLayout() {
         </main>
       </div>
     </div>
+    </SubscriptionProvider>
   );
 }

@@ -3,12 +3,21 @@ import { useQuery } from "@tanstack/react-query";
 import { listMyPresenceProofs } from "@/lib/presence.functions";
 import { Card } from "@/components/ui/card";
 import { ShieldCheck } from "lucide-react";
+import { FeatureGate } from "@/components/FeatureGate";
 
 export const Route = createFileRoute("/_authenticated/proofs")({
   component: ProofsList,
 });
 
 function ProofsList() {
+  return (
+    <FeatureGate featureKey="proof_of_presence" featureLabel="Prova de Presença" requiredPlan="Enterprise">
+      <ProofsContent />
+    </FeatureGate>
+  );
+}
+
+function ProofsContent() {
   const { data, isLoading } = useQuery({
     queryKey: ["my-proofs"],
     queryFn: () => listMyPresenceProofs(),

@@ -4,11 +4,20 @@ import { ArrowLeft, ExternalLink } from "lucide-react";
 import { getFlowForBuilder } from "@/lib/flow.functions";
 import { FlowBuilder } from "@/components/flow/FlowBuilder";
 import { buildQrUrl } from "@/lib/qr";
+import { FeatureGate } from "@/components/FeatureGate";
 
 export const Route = createFileRoute("/_authenticated/flow-builder/$qrId")({
   head: () => ({ meta: [{ title: "Flow Builder — zum" }] }),
-  component: FlowBuilderPage,
+  component: FlowBuilderPageGated,
 });
+
+function FlowBuilderPageGated() {
+  return (
+    <FeatureGate featureKey="operational_flow" featureLabel="Fluxo Operacional" requiredPlan="Pro">
+      <FlowBuilderPage />
+    </FeatureGate>
+  );
+}
 
 function FlowBuilderPage() {
   const { qrId } = Route.useParams();

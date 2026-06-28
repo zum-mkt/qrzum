@@ -22,8 +22,10 @@ import { setQrTags } from "@/lib/organize";
 import {
   Copy, Link as LinkIcon, FileUp, Contact, ArrowLeft,
   MessageCircle, Wifi, Video, ListOrdered, Plus, Trash2,
-  FileText, Workflow, QrCode, Calendar,
+  FileText, Workflow, QrCode, Calendar, Lock,
 } from "lucide-react";
+import { useSubscription } from "@/contexts/SubscriptionContext";
+import { FeatureGate } from "@/components/FeatureGate";
 
 export const Route = createFileRoute("/_authenticated/create")({
   head: () => ({ meta: [{ title: "Criar QR Code — zum" }] }),
@@ -47,6 +49,9 @@ function Create() {
   const [folderId, setFolderId] = useState<string | null>(null);
   const [tagIds, setTagIds] = useState<string[]>([]);
   const [previewValue, setPreviewValue] = useState(PREVIEW_PLACEHOLDER);
+  const { hasFeature, isLoading: subLoading } = useSubscription();
+  const hasAdvanced = !subLoading && hasFeature("qr_advanced_types");
+  const hasFlow = !subLoading && hasFeature("operational_flow");
 
   if (created) return <Success created={created} reset={() => setCreated(null)} />;
 
@@ -69,14 +74,14 @@ function Create() {
                 <TabsTrigger value="link" className="gap-1 whitespace-nowrap"><LinkIcon className="h-3.5 w-3.5" /> Link</TabsTrigger>
                 <TabsTrigger value="whatsapp" className="gap-1 whitespace-nowrap"><MessageCircle className="h-3.5 w-3.5" /> WhatsApp</TabsTrigger>
                 <TabsTrigger value="vcard" className="gap-1 whitespace-nowrap"><Contact className="h-3.5 w-3.5" /> vCard</TabsTrigger>
-                <TabsTrigger value="pdf" className="gap-1 whitespace-nowrap"><FileText className="h-3.5 w-3.5" /> PDF</TabsTrigger>
-                <TabsTrigger value="file" className="gap-1 whitespace-nowrap"><FileUp className="h-3.5 w-3.5" /> Arquivo</TabsTrigger>
-                <TabsTrigger value="links" className="gap-1 whitespace-nowrap"><ListOrdered className="h-3.5 w-3.5" /> Links</TabsTrigger>
-                <TabsTrigger value="video" className="gap-1 whitespace-nowrap"><Video className="h-3.5 w-3.5" /> Vídeo</TabsTrigger>
                 <TabsTrigger value="wifi" className="gap-1 whitespace-nowrap"><Wifi className="h-3.5 w-3.5" /> WiFi</TabsTrigger>
-                <TabsTrigger value="pix" className="gap-1 whitespace-nowrap"><QrCode className="h-3.5 w-3.5" /> PIX</TabsTrigger>
-                <TabsTrigger value="calendar" className="gap-1 whitespace-nowrap"><Calendar className="h-3.5 w-3.5" /> Evento</TabsTrigger>
-                <TabsTrigger value="flow" className="gap-1 whitespace-nowrap"><Workflow className="h-3.5 w-3.5" /> Fluxo</TabsTrigger>
+                <TabsTrigger value="pdf" className="gap-1 whitespace-nowrap">{!hasAdvanced && <Lock className="h-3 w-3 opacity-50" />}<FileText className="h-3.5 w-3.5" /> PDF</TabsTrigger>
+                <TabsTrigger value="file" className="gap-1 whitespace-nowrap">{!hasAdvanced && <Lock className="h-3 w-3 opacity-50" />}<FileUp className="h-3.5 w-3.5" /> Arquivo</TabsTrigger>
+                <TabsTrigger value="links" className="gap-1 whitespace-nowrap">{!hasAdvanced && <Lock className="h-3 w-3 opacity-50" />}<ListOrdered className="h-3.5 w-3.5" /> Links</TabsTrigger>
+                <TabsTrigger value="video" className="gap-1 whitespace-nowrap">{!hasAdvanced && <Lock className="h-3 w-3 opacity-50" />}<Video className="h-3.5 w-3.5" /> Vídeo</TabsTrigger>
+                <TabsTrigger value="pix" className="gap-1 whitespace-nowrap">{!hasAdvanced && <Lock className="h-3 w-3 opacity-50" />}<QrCode className="h-3.5 w-3.5" /> PIX</TabsTrigger>
+                <TabsTrigger value="calendar" className="gap-1 whitespace-nowrap">{!hasAdvanced && <Lock className="h-3 w-3 opacity-50" />}<Calendar className="h-3.5 w-3.5" /> Evento</TabsTrigger>
+                <TabsTrigger value="flow" className="gap-1 whitespace-nowrap">{!hasFlow && <Lock className="h-3 w-3 opacity-50" />}<Workflow className="h-3.5 w-3.5" /> Fluxo</TabsTrigger>
               </TabsList>
             </div>
             <div className="mb-6 mt-4">
@@ -85,14 +90,14 @@ function Create() {
             <TabsContent value="link"><LinkForm style={style} setStyle={setStyle} pixels={pixels} setPixels={setPixels} folderId={folderId} tagIds={tagIds} onCreated={setCreated} onPreviewChange={setPreviewValue} /></TabsContent>
             <TabsContent value="whatsapp"><WhatsAppForm style={style} setStyle={setStyle} pixels={pixels} setPixels={setPixels} folderId={folderId} tagIds={tagIds} onCreated={setCreated} onPreviewChange={setPreviewValue} /></TabsContent>
             <TabsContent value="vcard"><VCardForm style={style} setStyle={setStyle} pixels={pixels} setPixels={setPixels} folderId={folderId} tagIds={tagIds} onCreated={setCreated} onPreviewChange={setPreviewValue} /></TabsContent>
-            <TabsContent value="pdf"><FileForm style={style} setStyle={setStyle} pixels={pixels} setPixels={setPixels} folderId={folderId} tagIds={tagIds} onCreated={setCreated} onPreviewChange={setPreviewValue} pdfOnly /></TabsContent>
-            <TabsContent value="file"><FileForm style={style} setStyle={setStyle} pixels={pixels} setPixels={setPixels} folderId={folderId} tagIds={tagIds} onCreated={setCreated} onPreviewChange={setPreviewValue} /></TabsContent>
-            <TabsContent value="links"><LinksForm style={style} setStyle={setStyle} pixels={pixels} setPixels={setPixels} folderId={folderId} tagIds={tagIds} onCreated={setCreated} onPreviewChange={setPreviewValue} /></TabsContent>
-            <TabsContent value="video"><VideoForm style={style} setStyle={setStyle} pixels={pixels} setPixels={setPixels} folderId={folderId} tagIds={tagIds} onCreated={setCreated} onPreviewChange={setPreviewValue} /></TabsContent>
+            <TabsContent value="pdf"><FeatureGate featureKey="qr_advanced_types" featureLabel="Tipos avançados de QR Code" requiredPlan="Pro"><FileForm style={style} setStyle={setStyle} pixels={pixels} setPixels={setPixels} folderId={folderId} tagIds={tagIds} onCreated={setCreated} onPreviewChange={setPreviewValue} pdfOnly /></FeatureGate></TabsContent>
+            <TabsContent value="file"><FeatureGate featureKey="qr_advanced_types" featureLabel="Tipos avançados de QR Code" requiredPlan="Pro"><FileForm style={style} setStyle={setStyle} pixels={pixels} setPixels={setPixels} folderId={folderId} tagIds={tagIds} onCreated={setCreated} onPreviewChange={setPreviewValue} /></FeatureGate></TabsContent>
+            <TabsContent value="links"><FeatureGate featureKey="qr_advanced_types" featureLabel="Tipos avançados de QR Code" requiredPlan="Pro"><LinksForm style={style} setStyle={setStyle} pixels={pixels} setPixels={setPixels} folderId={folderId} tagIds={tagIds} onCreated={setCreated} onPreviewChange={setPreviewValue} /></FeatureGate></TabsContent>
+            <TabsContent value="video"><FeatureGate featureKey="qr_advanced_types" featureLabel="Tipos avançados de QR Code" requiredPlan="Pro"><VideoForm style={style} setStyle={setStyle} pixels={pixels} setPixels={setPixels} folderId={folderId} tagIds={tagIds} onCreated={setCreated} onPreviewChange={setPreviewValue} /></FeatureGate></TabsContent>
             <TabsContent value="wifi"><WifiForm style={style} setStyle={setStyle} pixels={pixels} setPixels={setPixels} folderId={folderId} tagIds={tagIds} onCreated={setCreated} onPreviewChange={setPreviewValue} /></TabsContent>
-            <TabsContent value="pix"><PixForm style={style} setStyle={setStyle} pixels={pixels} setPixels={setPixels} folderId={folderId} tagIds={tagIds} onCreated={setCreated} onPreviewChange={setPreviewValue} /></TabsContent>
-            <TabsContent value="calendar"><CalendarForm style={style} setStyle={setStyle} pixels={pixels} setPixels={setPixels} folderId={folderId} tagIds={tagIds} onCreated={setCreated} onPreviewChange={setPreviewValue} /></TabsContent>
-            <TabsContent value="flow"><FlowForm folderId={folderId} tagIds={tagIds} /></TabsContent>
+            <TabsContent value="pix"><FeatureGate featureKey="qr_advanced_types" featureLabel="Tipos avançados de QR Code" requiredPlan="Pro"><PixForm style={style} setStyle={setStyle} pixels={pixels} setPixels={setPixels} folderId={folderId} tagIds={tagIds} onCreated={setCreated} onPreviewChange={setPreviewValue} /></FeatureGate></TabsContent>
+            <TabsContent value="calendar"><FeatureGate featureKey="qr_advanced_types" featureLabel="Tipos avançados de QR Code" requiredPlan="Pro"><CalendarForm style={style} setStyle={setStyle} pixels={pixels} setPixels={setPixels} folderId={folderId} tagIds={tagIds} onCreated={setCreated} onPreviewChange={setPreviewValue} /></FeatureGate></TabsContent>
+            <TabsContent value="flow"><FeatureGate featureKey="operational_flow" featureLabel="Fluxo Operacional" requiredPlan="Pro"><FlowForm folderId={folderId} tagIds={tagIds} /></FeatureGate></TabsContent>
           </Tabs>
         </Card>
 

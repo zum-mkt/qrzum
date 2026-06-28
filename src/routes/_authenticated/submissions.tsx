@@ -13,11 +13,20 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import { ClipboardList, Download, Search, MapPin, ExternalLink } from "lucide-react";
+import { FeatureGate } from "@/components/FeatureGate";
 
 export const Route = createFileRoute("/_authenticated/submissions")({
   head: () => ({ meta: [{ title: "Respostas — zum" }] }),
-  component: SubmissionsPage,
+  component: SubmissionsPageGated,
 });
+
+function SubmissionsPageGated() {
+  return (
+    <FeatureGate featureKey="operational_flow" featureLabel="Fluxo Operacional e Respostas" requiredPlan="Pro">
+      <SubmissionsPage />
+    </FeatureGate>
+  );
+}
 
 function SubmissionsPage() {
   const { data, isLoading } = useQuery({
