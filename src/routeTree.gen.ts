@@ -16,14 +16,18 @@ import { Route as RShortIdRouteImport } from './routes/r.$shortId'
 import { Route as QShortIdRouteImport } from './routes/q.$shortId'
 import { Route as ProofIdRouteImport } from './routes/proof.$id'
 import { Route as LinksShortIdRouteImport } from './routes/links.$shortId'
+import { Route as FShortIdRouteImport } from './routes/f.$shortId'
 import { Route as AiShortIdRouteImport } from './routes/ai.$shortId'
+import { Route as AuthenticatedSubmissionsRouteImport } from './routes/_authenticated/submissions'
 import { Route as AuthenticatedProofsRouteImport } from './routes/_authenticated/proofs'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedCreateRouteImport } from './routes/_authenticated/create'
 import { Route as AuthenticatedBulkRouteImport } from './routes/_authenticated/bulk'
 import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authenticated/analytics'
+import { Route as ApiPublicSubmitRouteImport } from './routes/api/public/submit'
 import { Route as ApiPublicScanaiRouteImport } from './routes/api/public/scanai'
 import { Route as ApiPublicScanRouteImport } from './routes/api/public/scan'
+import { Route as AuthenticatedFlowBuilderQrIdRouteImport } from './routes/_authenticated/flow-builder.$qrId'
 import { Route as AuthenticatedAnalyticsQrIdRouteImport } from './routes/_authenticated/analytics.$qrId'
 
 const AuthenticatedRoute = AuthenticatedRouteImport.update({
@@ -60,11 +64,22 @@ const LinksShortIdRoute = LinksShortIdRouteImport.update({
   path: '/links/$shortId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const FShortIdRoute = FShortIdRouteImport.update({
+  id: '/f/$shortId',
+  path: '/f/$shortId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AiShortIdRoute = AiShortIdRouteImport.update({
   id: '/ai/$shortId',
   path: '/ai/$shortId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedSubmissionsRoute =
+  AuthenticatedSubmissionsRouteImport.update({
+    id: '/submissions',
+    path: '/submissions',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedProofsRoute = AuthenticatedProofsRouteImport.update({
   id: '/proofs',
   path: '/proofs',
@@ -90,6 +105,11 @@ const AuthenticatedAnalyticsRoute = AuthenticatedAnalyticsRouteImport.update({
   path: '/analytics',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const ApiPublicSubmitRoute = ApiPublicSubmitRouteImport.update({
+  id: '/api/public/submit',
+  path: '/api/public/submit',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicScanaiRoute = ApiPublicScanaiRouteImport.update({
   id: '/api/public/scanai',
   path: '/api/public/scanai',
@@ -100,6 +120,12 @@ const ApiPublicScanRoute = ApiPublicScanRouteImport.update({
   path: '/api/public/scan',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedFlowBuilderQrIdRoute =
+  AuthenticatedFlowBuilderQrIdRouteImport.update({
+    id: '/flow-builder/$qrId',
+    path: '/flow-builder/$qrId',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedAnalyticsQrIdRoute =
   AuthenticatedAnalyticsQrIdRouteImport.update({
     id: '/$qrId',
@@ -114,15 +140,19 @@ export interface FileRoutesByFullPath {
   '/create': typeof AuthenticatedCreateRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/proofs': typeof AuthenticatedProofsRoute
+  '/submissions': typeof AuthenticatedSubmissionsRoute
   '/ai/$shortId': typeof AiShortIdRoute
+  '/f/$shortId': typeof FShortIdRoute
   '/links/$shortId': typeof LinksShortIdRoute
   '/proof/$id': typeof ProofIdRoute
   '/q/$shortId': typeof QShortIdRoute
   '/r/$shortId': typeof RShortIdRoute
   '/vcard/$shortId': typeof VcardShortIdRoute
   '/analytics/$qrId': typeof AuthenticatedAnalyticsQrIdRoute
+  '/flow-builder/$qrId': typeof AuthenticatedFlowBuilderQrIdRoute
   '/api/public/scan': typeof ApiPublicScanRoute
   '/api/public/scanai': typeof ApiPublicScanaiRoute
+  '/api/public/submit': typeof ApiPublicSubmitRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -131,15 +161,19 @@ export interface FileRoutesByTo {
   '/create': typeof AuthenticatedCreateRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/proofs': typeof AuthenticatedProofsRoute
+  '/submissions': typeof AuthenticatedSubmissionsRoute
   '/ai/$shortId': typeof AiShortIdRoute
+  '/f/$shortId': typeof FShortIdRoute
   '/links/$shortId': typeof LinksShortIdRoute
   '/proof/$id': typeof ProofIdRoute
   '/q/$shortId': typeof QShortIdRoute
   '/r/$shortId': typeof RShortIdRoute
   '/vcard/$shortId': typeof VcardShortIdRoute
   '/analytics/$qrId': typeof AuthenticatedAnalyticsQrIdRoute
+  '/flow-builder/$qrId': typeof AuthenticatedFlowBuilderQrIdRoute
   '/api/public/scan': typeof ApiPublicScanRoute
   '/api/public/scanai': typeof ApiPublicScanaiRoute
+  '/api/public/submit': typeof ApiPublicSubmitRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -150,15 +184,19 @@ export interface FileRoutesById {
   '/_authenticated/create': typeof AuthenticatedCreateRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/proofs': typeof AuthenticatedProofsRoute
+  '/_authenticated/submissions': typeof AuthenticatedSubmissionsRoute
   '/ai/$shortId': typeof AiShortIdRoute
+  '/f/$shortId': typeof FShortIdRoute
   '/links/$shortId': typeof LinksShortIdRoute
   '/proof/$id': typeof ProofIdRoute
   '/q/$shortId': typeof QShortIdRoute
   '/r/$shortId': typeof RShortIdRoute
   '/vcard/$shortId': typeof VcardShortIdRoute
   '/_authenticated/analytics/$qrId': typeof AuthenticatedAnalyticsQrIdRoute
+  '/_authenticated/flow-builder/$qrId': typeof AuthenticatedFlowBuilderQrIdRoute
   '/api/public/scan': typeof ApiPublicScanRoute
   '/api/public/scanai': typeof ApiPublicScanaiRoute
+  '/api/public/submit': typeof ApiPublicSubmitRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -169,15 +207,19 @@ export interface FileRouteTypes {
     | '/create'
     | '/dashboard'
     | '/proofs'
+    | '/submissions'
     | '/ai/$shortId'
+    | '/f/$shortId'
     | '/links/$shortId'
     | '/proof/$id'
     | '/q/$shortId'
     | '/r/$shortId'
     | '/vcard/$shortId'
     | '/analytics/$qrId'
+    | '/flow-builder/$qrId'
     | '/api/public/scan'
     | '/api/public/scanai'
+    | '/api/public/submit'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -186,15 +228,19 @@ export interface FileRouteTypes {
     | '/create'
     | '/dashboard'
     | '/proofs'
+    | '/submissions'
     | '/ai/$shortId'
+    | '/f/$shortId'
     | '/links/$shortId'
     | '/proof/$id'
     | '/q/$shortId'
     | '/r/$shortId'
     | '/vcard/$shortId'
     | '/analytics/$qrId'
+    | '/flow-builder/$qrId'
     | '/api/public/scan'
     | '/api/public/scanai'
+    | '/api/public/submit'
   id:
     | '__root__'
     | '/'
@@ -204,21 +250,26 @@ export interface FileRouteTypes {
     | '/_authenticated/create'
     | '/_authenticated/dashboard'
     | '/_authenticated/proofs'
+    | '/_authenticated/submissions'
     | '/ai/$shortId'
+    | '/f/$shortId'
     | '/links/$shortId'
     | '/proof/$id'
     | '/q/$shortId'
     | '/r/$shortId'
     | '/vcard/$shortId'
     | '/_authenticated/analytics/$qrId'
+    | '/_authenticated/flow-builder/$qrId'
     | '/api/public/scan'
     | '/api/public/scanai'
+    | '/api/public/submit'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   AiShortIdRoute: typeof AiShortIdRoute
+  FShortIdRoute: typeof FShortIdRoute
   LinksShortIdRoute: typeof LinksShortIdRoute
   ProofIdRoute: typeof ProofIdRoute
   QShortIdRoute: typeof QShortIdRoute
@@ -226,6 +277,7 @@ export interface RootRouteChildren {
   VcardShortIdRoute: typeof VcardShortIdRoute
   ApiPublicScanRoute: typeof ApiPublicScanRoute
   ApiPublicScanaiRoute: typeof ApiPublicScanaiRoute
+  ApiPublicSubmitRoute: typeof ApiPublicSubmitRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -279,12 +331,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LinksShortIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/f/$shortId': {
+      id: '/f/$shortId'
+      path: '/f/$shortId'
+      fullPath: '/f/$shortId'
+      preLoaderRoute: typeof FShortIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/ai/$shortId': {
       id: '/ai/$shortId'
       path: '/ai/$shortId'
       fullPath: '/ai/$shortId'
       preLoaderRoute: typeof AiShortIdRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/submissions': {
+      id: '/_authenticated/submissions'
+      path: '/submissions'
+      fullPath: '/submissions'
+      preLoaderRoute: typeof AuthenticatedSubmissionsRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/proofs': {
       id: '/_authenticated/proofs'
@@ -321,6 +387,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAnalyticsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/api/public/submit': {
+      id: '/api/public/submit'
+      path: '/api/public/submit'
+      fullPath: '/api/public/submit'
+      preLoaderRoute: typeof ApiPublicSubmitRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/scanai': {
       id: '/api/public/scanai'
       path: '/api/public/scanai'
@@ -334,6 +407,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/api/public/scan'
       preLoaderRoute: typeof ApiPublicScanRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/flow-builder/$qrId': {
+      id: '/_authenticated/flow-builder/$qrId'
+      path: '/flow-builder/$qrId'
+      fullPath: '/flow-builder/$qrId'
+      preLoaderRoute: typeof AuthenticatedFlowBuilderQrIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/analytics/$qrId': {
       id: '/_authenticated/analytics/$qrId'
@@ -365,6 +445,8 @@ interface AuthenticatedRouteChildren {
   AuthenticatedCreateRoute: typeof AuthenticatedCreateRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedProofsRoute: typeof AuthenticatedProofsRoute
+  AuthenticatedSubmissionsRoute: typeof AuthenticatedSubmissionsRoute
+  AuthenticatedFlowBuilderQrIdRoute: typeof AuthenticatedFlowBuilderQrIdRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
@@ -373,6 +455,8 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedCreateRoute: AuthenticatedCreateRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedProofsRoute: AuthenticatedProofsRoute,
+  AuthenticatedSubmissionsRoute: AuthenticatedSubmissionsRoute,
+  AuthenticatedFlowBuilderQrIdRoute: AuthenticatedFlowBuilderQrIdRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
@@ -383,6 +467,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   AiShortIdRoute: AiShortIdRoute,
+  FShortIdRoute: FShortIdRoute,
   LinksShortIdRoute: LinksShortIdRoute,
   ProofIdRoute: ProofIdRoute,
   QShortIdRoute: QShortIdRoute,
@@ -390,7 +475,18 @@ const rootRouteChildren: RootRouteChildren = {
   VcardShortIdRoute: VcardShortIdRoute,
   ApiPublicScanRoute: ApiPublicScanRoute,
   ApiPublicScanaiRoute: ApiPublicScanaiRoute,
+  ApiPublicSubmitRoute: ApiPublicSubmitRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
