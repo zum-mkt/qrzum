@@ -2,8 +2,9 @@ import { createFileRoute, Outlet, redirect, Link, useNavigate, useRouterState } 
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { QrCode, LayoutDashboard, Plus, LogOut, BarChart3, Upload, ShieldCheck, ClipboardList, Settings, CreditCard, Layers } from "lucide-react";
+import { QrCode, LayoutDashboard, Plus, LogOut, BarChart3, Upload, ShieldCheck, ClipboardList, Settings, CreditCard, Layers, Sparkles, X, Bot } from "lucide-react";
 import { SubscriptionProvider } from "@/contexts/SubscriptionContext";
+import { AiChatPanel } from "@/components/AiChatPanel";
 
 const ADMIN_EMAIL = "zum@agenciazum.com.br";
 
@@ -21,6 +22,7 @@ function AuthLayout() {
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [email, setEmail] = useState<string>("");
+  const [showAssistant, setShowAssistant] = useState(false);
 
   const isAdmin = email === ADMIN_EMAIL;
 
@@ -66,6 +68,9 @@ function AuthLayout() {
           {isAdmin && (
             <NavItem to="/admin/plans" icon={Settings} label="Admin · Planos" />
           )}
+          {isAdmin && (
+            <NavItem to="/admin/ai" icon={Bot} label="Admin · IAs" />
+          )}
         </nav>
         <div className="mt-auto space-y-2 border-t border-border pt-4">
           <p className="truncate px-2 text-xs text-muted-foreground">{email}</p>
@@ -87,6 +92,27 @@ function AuthLayout() {
         <main className="mx-auto max-w-6xl p-6">
           <Outlet />
         </main>
+
+        {/* Floating AI assistant */}
+        <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3">
+          {showAssistant && (
+            <AiChatPanel
+              agentSlug="dashboard_assistant"
+              agentName="Assistente QRzum"
+              onClose={() => setShowAssistant(false)}
+              className="w-80 h-[480px] md:w-96"
+            />
+          )}
+          <button
+            onClick={() => setShowAssistant(v => !v)}
+            className={`flex h-12 w-12 items-center justify-center rounded-full shadow-lg transition-all ${
+              showAssistant ? "bg-secondary text-foreground" : "bg-primary text-primary-foreground"
+            }`}
+            title="Assistente IA"
+          >
+            {showAssistant ? <X className="h-5 w-5" /> : <Sparkles className="h-5 w-5" />}
+          </button>
+        </div>
       </div>
     </div>
     </SubscriptionProvider>

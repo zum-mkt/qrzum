@@ -12,8 +12,9 @@ import {
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
-import { ClipboardList, Download, Search, MapPin, ExternalLink } from "lucide-react";
+import { ClipboardList, Download, Search, MapPin, Sparkles, X } from "lucide-react";
 import { FeatureGate } from "@/components/FeatureGate";
+import { AiChatPanel } from "@/components/AiChatPanel";
 
 export const Route = createFileRoute("/_authenticated/submissions")({
   head: () => ({ meta: [{ title: "Respostas — zum" }] }),
@@ -37,6 +38,7 @@ function SubmissionsPage() {
 
   const [search, setSearch] = useState("");
   const [detail, setDetail] = useState<(typeof rows)[number] | null>(null);
+  const [showAi, setShowAi] = useState(false);
 
   const rows = data ?? [];
 
@@ -79,6 +81,13 @@ function SubmissionsPage() {
     URL.revokeObjectURL(url);
   };
 
+  const aiContext = useMemo(() => {
+    if (rows.length === 0) return undefined;
+    return `Total de respostas: ${rows.length}\n\n` + rows.slice(0, 50).map((r, i) =>
+      `[${i + 1}] QR: ${r.qr_links?.title ?? "?"} | Data: ${new Date(r.submitted_at).toLocaleString()} | GPS: ${r.lat != null ? `${Number(r.lat).toFixed(4)},${Number(r.lng).toFixed(4)}` : "—"} | Respostas: ${JSON.stringify(r.answers ?? {})}`
+    ).join("\n");
+  }, [rows]);
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -86,10 +95,25 @@ function SubmissionsPage() {
           <h1 className="text-2xl font-semibold tracking-tight">Respostas</h1>
           <p className="text-sm text-muted-foreground">Submissões recebidas nos fluxos de formulário</p>
         </div>
-        <Button variant="outline" size="sm" onClick={exportCsv} disabled={rows.length === 0}>
-          <Download className="mr-2 h-4 w-4" /> Exportar CSV
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={() => setShowAi(v => !v)} disabled={rows.length === 0}>
+            <Sparkles className="mr-2 h-4 w-4" /> Analisar com IA
+          </Button>
+          <Button variant="outline" size="sm" onClick={exportCsv} disabled={rows.length === 0}>
+            <Download className="mr-2 h-4 w-4" /> Exportar CSV
+          </Button>
+        </div>
       </div>
+
+      {showAi && (
+        <AiChatPanel
+          agentSlug="submissions_analyst"
+          agentName="Analista de Respostas"
+          contextData={aiContext}
+          onClose={() => setShowAi(false)}
+          className="h-96"
+        />
+      )}
 
       <Card className="overflow-hidden">
         <div className="flex items-center gap-2 border-b border-border bg-muted/40 p-3">
