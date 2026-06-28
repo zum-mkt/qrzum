@@ -433,6 +433,99 @@ export type Database = {
         }
         Relationships: []
       }
+      pricing_plans: {
+        Row: {
+          id: string
+          name: string
+          slug: string
+          tagline: string
+          price_label: string | null
+          cta_label: string
+          highlighted: boolean
+          sort_order: number
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          slug: string
+          tagline?: string
+          price_label?: string | null
+          cta_label?: string
+          highlighted?: boolean
+          sort_order?: number
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          slug?: string
+          tagline?: string
+          price_label?: string | null
+          cta_label?: string
+          highlighted?: boolean
+          sort_order?: number
+          created_at?: string
+        }
+        Relationships: []
+      }
+      pricing_features: {
+        Row: {
+          id: string
+          category: string
+          label: string
+          sort_order: number
+        }
+        Insert: {
+          id?: string
+          category?: string
+          label: string
+          sort_order?: number
+        }
+        Update: {
+          id?: string
+          category?: string
+          label?: string
+          sort_order?: number
+        }
+        Relationships: []
+      }
+      pricing_plan_features: {
+        Row: {
+          plan_id: string
+          feature_id: string
+          value: string
+          available: boolean
+        }
+        Insert: {
+          plan_id: string
+          feature_id: string
+          value?: string
+          available?: boolean
+        }
+        Update: {
+          plan_id?: string
+          feature_id?: string
+          value?: string
+          available?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pricing_plan_features_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "pricing_plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pricing_plan_features_feature_id_fkey"
+            columns: ["feature_id"]
+            isOneToOne: false
+            referencedRelation: "pricing_features"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

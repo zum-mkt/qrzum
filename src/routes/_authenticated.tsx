@@ -2,7 +2,9 @@ import { createFileRoute, Outlet, redirect, Link, useNavigate, useRouterState } 
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { QrCode, LayoutDashboard, Plus, LogOut, BarChart3, Upload, ShieldCheck, ClipboardList } from "lucide-react";
+import { QrCode, LayoutDashboard, Plus, LogOut, BarChart3, Upload, ShieldCheck, ClipboardList, Settings } from "lucide-react";
+
+const ADMIN_EMAIL = "zum@agenciazum.com.br";
 
 export const Route = createFileRoute("/_authenticated")({
   beforeLoad: async () => {
@@ -18,6 +20,8 @@ function AuthLayout() {
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [email, setEmail] = useState<string>("");
+
+  const isAdmin = email === ADMIN_EMAIL;
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setEmail(data.user?.email ?? ""));
@@ -55,6 +59,9 @@ function AuthLayout() {
           <NavItem to="/analytics" icon={BarChart3} label="Analytics" />
           <NavItem to="/submissions" icon={ClipboardList} label="Respostas" />
           <NavItem to="/proofs" icon={ShieldCheck} label="Provas de Presença" />
+          {isAdmin && (
+            <NavItem to="/admin/plans" icon={Settings} label="Admin · Planos" />
+          )}
         </nav>
         <div className="mt-auto space-y-2 border-t border-border pt-4">
           <p className="truncate px-2 text-xs text-muted-foreground">{email}</p>

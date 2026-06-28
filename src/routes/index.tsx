@@ -11,7 +11,7 @@ import {
   QrCode, MapPin, Lock, FileText, MessageSquare, Shield, Brain,
   BarChart3, CheckCircle, ArrowRight, Building2, Factory, Users,
   Globe, Clock, Download, TrendingUp, RefreshCw, Wifi, Phone,
-  Layers, Zap, Star, Workflow, Link2, ChevronRight,
+  Layers, Zap, Star, Workflow, Link2, ChevronRight, Check, X,
 } from "lucide-react";
 
 export const Route = createFileRoute("/")({
@@ -52,6 +52,7 @@ function Index() {
       <AiSection />
       <AnalyticsSection />
       <UseCasesSection />
+      <PricingSection />
       <AuthSection />
       <Footer />
     </div>
@@ -71,6 +72,7 @@ function Nav() {
           <a href="#presenca" className="transition-colors hover:text-foreground">Presença Certificada</a>
           <a href="#ia" className="transition-colors hover:text-foreground">IA</a>
           <a href="#analytics" className="transition-colors hover:text-foreground">Analytics</a>
+          <a href="#planos" className="transition-colors hover:text-foreground">Planos</a>
         </nav>
         <div className="flex gap-2">
           <a href="#entrar">
@@ -619,6 +621,205 @@ function UseCasesSection() {
       </div>
     </section>
   );
+}
+
+/* ─────────────── Pricing Section ─────────────── */
+
+type PricingPlan = {
+  id: string;
+  name: string;
+  slug: string;
+  tagline: string;
+  price_label: string | null;
+  cta_label: string;
+  highlighted: boolean;
+  sort_order: number;
+};
+
+type PricingFeature = {
+  id: string;
+  category: string;
+  label: string;
+  sort_order: number;
+};
+
+type PricingValue = {
+  plan_id: string;
+  feature_id: string;
+  value: string;
+  available: boolean;
+};
+
+function PricingSection() {
+  const [plans, setPlans] = useState<PricingPlan[]>([]);
+  const [features, setFeatures] = useState<PricingFeature[]>([]);
+  const [values, setValues] = useState<PricingValue[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    Promise.all([
+      supabase.from("pricing_plans").select("*").order("sort_order"),
+      supabase.from("pricing_features").select("*").order("sort_order"),
+      supabase.from("pricing_plan_features").select("*"),
+    ]).then(([{ data: p }, { data: f }, { data: v }]) => {
+      setPlans((p as PricingPlan[]) ?? []);
+      setFeatures((f as PricingFeature[]) ?? []);
+      setValues((v as PricingValue[]) ?? []);
+      setLoading(false);
+    });
+  }, []);
+
+  const getValue = (planId: string, featureId: string) =>
+    values.find((v) => v.plan_id === planId && v.feature_id === featureId);
+
+  const categories = [...new Set(features.map((f) => f.category))];
+
+  return (
+    <section id="planos" className="bg-background py-20">
+      <div className="mx-auto max-w-6xl px-6">
+        <div className="mb-12 text-center">
+          <span className="text-xs font-semibold uppercase tracking-widest text-primary">
+            Planos
+          </span>
+          <h2 className="mt-3 text-4xl font-bold text-foreground">
+            Escolha o plano ideal para sua operação
+          </h2>
+          <p className="mx-auto mt-3 max-w-lg text-muted-foreground">
+            Do autônomo à grande indústria — a mesma plataforma, na medida certa para o seu negócio.
+          </p>
+        </div>
+
+        {loading ? (
+          <div className="flex justify-center py-16 text-muted-foreground">
+            Carregando planos...
+          </div>
+        ) : (
+          <>
+            {/* Plan cards */}
+            <div className={`grid gap-6 mb-12 ${plans.length === 3 ? "md:grid-cols-3" : "md:grid-cols-2 lg:grid-cols-4"}`}>
+              {plans.map((plan) => (
+                <div
+                  key={plan.id}
+                  className={`relative flex flex-col rounded-2xl border p-6 ${
+                    plan.highlighted
+                      ? "border-primary bg-primary text-primary-foreground shadow-lg"
+                      : "border-border bg-card text-foreground"
+                  }`}
+                >
+                  {plan.highlighted && (
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-foreground px-3 py-1 text-xs font-semibold text-background">
+                        <Star className="h-3 w-3" /> Mais popular
+                      </span>
+                    </div>
+                  )}
+                  <div className="mb-1 text-lg font-bold">{plan.name}</div>
+                  <div className={`mb-4 text-2xl font-extrabold ${plan.highlighted ? "text-primary-foreground" : "text-foreground"}`}>
+                    {plan.price_label ?? (
+                      <span className="text-base font-medium">Sob consulta</span>
+                    )}
+                  </div>
+                  <p className={`mb-6 text-sm flex-1 ${plan.highlighted ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
+                    {plan.tagline}
+                  </p>
+                  <a href="#entrar">
+                    <Button
+                      className="w-full"
+                      variant={plan.highlighted ? "secondary" : "default"}
+                    >
+                      {plan.cta_label}
+                    </Button>
+                  </a>
+                </div>
+              ))}
+            </div>
+
+            {/* Comparison table */}
+            {features.length > 0 && (
+              <div className="overflow-x-auto rounded-2xl border border-border">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-border bg-secondary/50">
+                      <th className="px-5 py-4 text-left font-medium text-muted-foreground min-w-52">
+                        Funcionalidade
+                      </th>
+                      {plans.map((plan) => (
+                        <th
+                          key={plan.id}
+                          className={`px-5 py-4 text-center font-semibold min-w-32 ${
+                            plan.highlighted ? "text-primary" : "text-foreground"
+                          }`}
+                        >
+                          {plan.name}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {categories.map((cat) => (
+                      <>
+                        <tr key={`cat-${cat}`}>
+                          <td
+                            colSpan={plans.length + 1}
+                            className="bg-secondary/30 px-5 py-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground"
+                          >
+                            {cat}
+                          </td>
+                        </tr>
+                        {features
+                          .filter((f) => f.category === cat)
+                          .map((feat, i, arr) => (
+                            <tr
+                              key={feat.id}
+                              className={`border-t border-border ${i === arr.length - 1 ? "" : ""}`}
+                            >
+                              <td className="px-5 py-3.5 text-foreground">{feat.label}</td>
+                              {plans.map((plan) => {
+                                const cell = getValue(plan.id, feat.id);
+                                return (
+                                  <td key={plan.id} className={`px-5 py-3.5 text-center ${plan.highlighted ? "bg-primary/3" : ""}`}>
+                                    <PricingCellDisplay cell={cell} />
+                                  </td>
+                                );
+                              })}
+                            </tr>
+                          ))}
+                      </>
+                    ))}
+                  </tbody>
+                  <tfoot>
+                    <tr className="border-t border-border bg-secondary/20">
+                      <td className="px-5 py-4" />
+                      {plans.map((plan) => (
+                        <td key={plan.id} className="px-5 py-4 text-center">
+                          <a href="#entrar">
+                            <Button
+                              size="sm"
+                              variant={plan.highlighted ? "default" : "outline"}
+                              className="w-full max-w-36"
+                            >
+                              {plan.cta_label}
+                            </Button>
+                          </a>
+                        </td>
+                      ))}
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function PricingCellDisplay({ cell }: { cell?: PricingValue }) {
+  if (!cell) return <span className="text-muted-foreground/40">—</span>;
+  if (cell.value === "Sim") return <Check className="mx-auto h-4 w-4 text-primary" />;
+  if (cell.value === "Não" || !cell.available) return <X className="mx-auto h-4 w-4 text-muted-foreground/30" />;
+  return <span className="text-foreground font-medium">{cell.value}</span>;
 }
 
 /* ─────────────── Auth / CTA Section ─────────────── */
