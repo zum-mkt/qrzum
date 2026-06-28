@@ -1,6 +1,30 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { createHmac } from "crypto";
 
 const MP_API = "https://api.mercadopago.com";
+
+async function validateMpSignature(request: Request, rawBody: string): Promise<boolean> {
+  const secret = process.env.MP_WEBHOOK_SECRET;
+  if (!secret) return true; // skip validation if secret not configured
+
+  const xSignature = request.headers.get("x-signature") || "";
+  const xRequestId = request.headers.get("x-request-id") || "";
+
+  // Parse ts and v1 from "ts=xxx,v1=yyy"
+  const parts = Object.fromEntries(xSignature.split(",").map((p) => p.split("=")));
+  const ts = parts["ts"];
+  const v1 = parts["v1"];
+  if (!ts || !v1) return false;
+
+  // Extract data.id from body
+  let dataId = "";
+  try { dataId = (JSON.parse(rawBody) as { data?: { id?: string } }).data?.id ?? ""; } catch { /* ignore */ }
+
+  const manifest = `id:${dataId};request-id:${xRequestId};ts:${ts};`;
+  const expectedHash = createHmac("sha256", secret).update(manifest).digest("hex");
+
+  return expectedHash === v1;
+}
 
 export const Route = createFileRoute("/api/mp/webhook")({
   server: {
@@ -9,8 +33,17 @@ export const Route = createFileRoute("/api/mp/webhook")({
         const accessToken = process.env.MP_ACCESS_TOKEN;
         if (!accessToken) return new Response("ok", { status: 200 });
 
+        const rawBody = await request.text();
+
+        // Validate MP signature
+        const valid = await validateMpSignature(request, rawBody);
+        if (!valid) {
+          console.warn("[mp/webhook] invalid signature");
+          return new Response("unauthorized", { status: 401 });
+        }
+
         let body: { type?: string; data?: { id?: string } } = {};
-        try { body = await request.json(); } catch { /* ignore */ }
+        try { body = JSON.parse(rawBody); } catch { /* ignore */ }
 
         // MP sends type=payment or type=subscription_preapproval
         const eventType = body.type;
