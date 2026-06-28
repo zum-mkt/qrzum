@@ -122,7 +122,7 @@ function Hero() {
             <Button
               size="lg"
               variant="outline"
-              className="gap-2 border-background/20 text-background hover:bg-background/10"
+              className="gap-2 border-background/20 text-[#045575] bg-background hover:bg-background/90"
             >
               Ver como funciona <ChevronRight className="h-4 w-4" />
             </Button>
