@@ -13,6 +13,7 @@ import {
   Globe, Clock, Download, TrendingUp, RefreshCw, Wifi, Phone,
   Layers, Zap, Star, Workflow, Link2, ChevronRight, Check, X,
 } from "lucide-react";
+import { HeroAnimation } from "@/components/HeroAnimation";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -90,57 +91,74 @@ function Nav() {
 /* ─────────────── Hero ─────────────── */
 function Hero() {
   return (
-    <section className="relative overflow-hidden bg-[#045575] py-24 text-background lg:py-36">
+    <section
+      className="relative overflow-hidden py-24 text-background lg:py-36"
+      style={{ background: "linear-gradient(155deg, #045575 0%, #033a52 50%, #022b3b 100%)" }}
+    >
+      {/* QR-like square texture that fades with the gradient */}
       <div
-        className="absolute inset-0 opacity-[0.04]"
+        className="absolute inset-0"
         style={{
           backgroundImage:
-            "radial-gradient(circle at 30px 30px, currentColor 1.5px, transparent 0)",
-          backgroundSize: "60px 60px",
+            "url(\"data:image/svg+xml,%3Csvg width='13' height='13' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='8' height='8' x='2.5' y='2.5' fill='white' fill-opacity='0.10' rx='1'/%3E%3C/svg%3E\")",
+          backgroundSize: "13px 13px",
+          backgroundRepeat: "repeat",
+          maskImage: "linear-gradient(155deg, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.5) 55%, rgba(0,0,0,0.1) 100%)",
+          WebkitMaskImage: "linear-gradient(155deg, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.5) 55%, rgba(0,0,0,0.1) 100%)",
         }}
       />
       <div className="relative mx-auto max-w-6xl px-6">
-        <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
-          <Zap className="h-3 w-3" /> Automação empresarial e industrial
-        </div>
-        <h1 className="mt-6 max-w-4xl text-5xl font-bold leading-tight tracking-tight sm:text-6xl lg:text-7xl">
-          QR Codes que{" "}
-          <span className="text-primary">automatizam</span>{" "}
-          sua operação
-        </h1>
-        <p className="mt-6 max-w-2xl text-xl text-background/60">
-          Substitua planilhas, assinaturas físicas e processos manuais por fluxos inteligentes.
-          GPS, formulários, presença certificada e IA — tudo em um QR Code dinâmico.
-        </p>
-        <div className="mt-10 flex flex-wrap gap-4">
-          <a href="#entrar">
-            <Button size="lg" className="gap-2 text-base">
-              Começar grátis <ArrowRight className="h-4 w-4" />
-            </Button>
-          </a>
-          <a href="#fluxo">
-            <Button
-              size="lg"
-              variant="outline"
-              className="gap-2 border-background/20 text-[#045575] bg-background hover:bg-background/90"
-            >
-              Ver como funciona <ChevronRight className="h-4 w-4" />
-            </Button>
-          </a>
-        </div>
-        <div className="mt-12 flex flex-wrap gap-6 text-sm text-background/40">
-          <span className="flex items-center gap-2">
-            <CheckCircle className="h-4 w-4 text-primary" /> Sem contrato
-          </span>
-          <span className="flex items-center gap-2">
-            <CheckCircle className="h-4 w-4 text-primary" /> QR Codes ilimitados
-          </span>
-          <span className="flex items-center gap-2">
-            <CheckCircle className="h-4 w-4 text-primary" /> Dados 100% seus
-          </span>
-          <span className="flex items-center gap-2">
-            <CheckCircle className="h-4 w-4 text-primary" /> Exportação CSV
-          </span>
+        <div className="flex flex-col items-start gap-0 lg:flex-row lg:items-center lg:gap-12">
+          {/* Left: copy */}
+          <div className="flex-1 min-w-0">
+            <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
+              <Zap className="h-3 w-3" /> Automação empresarial e industrial
+            </div>
+            <h1 className="mt-6 max-w-2xl text-5xl font-bold leading-tight tracking-tight sm:text-6xl lg:text-7xl">
+              QR Codes que{" "}
+              <span className="text-primary">automatizam</span>{" "}
+              sua operação
+            </h1>
+            <p className="mt-6 max-w-xl text-xl text-background/60">
+              Substitua planilhas, assinaturas físicas e processos manuais por fluxos inteligentes.
+              GPS, formulários, presença certificada e IA — tudo em um QR Code dinâmico.
+            </p>
+            <div className="mt-10 flex flex-wrap gap-4">
+              <a href="#entrar">
+                <Button size="lg" className="gap-2 text-base">
+                  Começar grátis <ArrowRight className="h-4 w-4" />
+                </Button>
+              </a>
+              <a href="#fluxo">
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="gap-2 border-background/20 text-[#045575] bg-background hover:bg-background/90"
+                >
+                  Ver como funciona <ChevronRight className="h-4 w-4" />
+                </Button>
+              </a>
+            </div>
+            <div className="mt-12 flex flex-wrap gap-6 text-sm text-background/40">
+              <span className="flex items-center gap-2">
+                <CheckCircle className="h-4 w-4 text-primary" /> Sem contrato
+              </span>
+              <span className="flex items-center gap-2">
+                <CheckCircle className="h-4 w-4 text-primary" /> QR Codes ilimitados
+              </span>
+              <span className="flex items-center gap-2">
+                <CheckCircle className="h-4 w-4 text-primary" /> Dados 100% seus
+              </span>
+              <span className="flex items-center gap-2">
+                <CheckCircle className="h-4 w-4 text-primary" /> Exportação CSV
+              </span>
+            </div>
+          </div>
+
+          {/* Right: animated illustration */}
+          <div className="mt-12 w-full max-w-sm self-center lg:mt-0 lg:max-w-lg xl:max-w-xl shrink-0">
+            <HeroAnimation className="w-full h-auto drop-shadow-2xl" />
+          </div>
         </div>
       </div>
     </section>

@@ -20,16 +20,24 @@ import { Route as FShortIdRouteImport } from './routes/f.$shortId'
 import { Route as AiShortIdRouteImport } from './routes/ai.$shortId'
 import { Route as AuthenticatedSubmissionsRouteImport } from './routes/_authenticated/submissions'
 import { Route as AuthenticatedProofsRouteImport } from './routes/_authenticated/proofs'
+import { Route as AuthenticatedPlansRouteImport } from './routes/_authenticated/plans'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedCreateRouteImport } from './routes/_authenticated/create'
 import { Route as AuthenticatedBulkRouteImport } from './routes/_authenticated/bulk'
+import { Route as AuthenticatedBillingRouteImport } from './routes/_authenticated/billing'
 import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authenticated/analytics'
 import { Route as ApiPublicSubmitRouteImport } from './routes/api/public/submit'
 import { Route as ApiPublicScanaiRouteImport } from './routes/api/public/scanai'
 import { Route as ApiPublicScanRouteImport } from './routes/api/public/scan'
+import { Route as ApiMpWebhookRouteImport } from './routes/api/mp/webhook'
+import { Route as ApiMpSubscriptionRouteImport } from './routes/api/mp/subscription'
+import { Route as ApiMpSubscribeRouteImport } from './routes/api/mp/subscribe'
+import { Route as ApiAiChatRouteImport } from './routes/api/ai/chat'
 import { Route as AuthenticatedFlowBuilderQrIdRouteImport } from './routes/_authenticated/flow-builder.$qrId'
+import { Route as AuthenticatedCheckoutPlanSlugRouteImport } from './routes/_authenticated/checkout.$planSlug'
 import { Route as AuthenticatedAnalyticsQrIdRouteImport } from './routes/_authenticated/analytics.$qrId'
 import { Route as AuthenticatedAdminPlansRouteImport } from './routes/_authenticated/admin.plans'
+import { Route as AuthenticatedAdminAiRouteImport } from './routes/_authenticated/admin.ai'
 
 const AuthenticatedRoute = AuthenticatedRouteImport.update({
   id: '/_authenticated',
@@ -86,6 +94,11 @@ const AuthenticatedProofsRoute = AuthenticatedProofsRouteImport.update({
   path: '/proofs',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedPlansRoute = AuthenticatedPlansRouteImport.update({
+  id: '/plans',
+  path: '/plans',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -99,6 +112,11 @@ const AuthenticatedCreateRoute = AuthenticatedCreateRouteImport.update({
 const AuthenticatedBulkRoute = AuthenticatedBulkRouteImport.update({
   id: '/bulk',
   path: '/bulk',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedBillingRoute = AuthenticatedBillingRouteImport.update({
+  id: '/billing',
+  path: '/billing',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedAnalyticsRoute = AuthenticatedAnalyticsRouteImport.update({
@@ -121,10 +139,36 @@ const ApiPublicScanRoute = ApiPublicScanRouteImport.update({
   path: '/api/public/scan',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiMpWebhookRoute = ApiMpWebhookRouteImport.update({
+  id: '/api/mp/webhook',
+  path: '/api/mp/webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiMpSubscriptionRoute = ApiMpSubscriptionRouteImport.update({
+  id: '/api/mp/subscription',
+  path: '/api/mp/subscription',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiMpSubscribeRoute = ApiMpSubscribeRouteImport.update({
+  id: '/api/mp/subscribe',
+  path: '/api/mp/subscribe',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAiChatRoute = ApiAiChatRouteImport.update({
+  id: '/api/ai/chat',
+  path: '/api/ai/chat',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedFlowBuilderQrIdRoute =
   AuthenticatedFlowBuilderQrIdRouteImport.update({
     id: '/flow-builder/$qrId',
     path: '/flow-builder/$qrId',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedCheckoutPlanSlugRoute =
+  AuthenticatedCheckoutPlanSlugRouteImport.update({
+    id: '/checkout/$planSlug',
+    path: '/checkout/$planSlug',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
 const AuthenticatedAnalyticsQrIdRoute =
@@ -138,13 +182,20 @@ const AuthenticatedAdminPlansRoute = AuthenticatedAdminPlansRouteImport.update({
   path: '/admin/plans',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedAdminAiRoute = AuthenticatedAdminAiRouteImport.update({
+  id: '/admin/ai',
+  path: '/admin/ai',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/analytics': typeof AuthenticatedAnalyticsRouteWithChildren
+  '/billing': typeof AuthenticatedBillingRoute
   '/bulk': typeof AuthenticatedBulkRoute
   '/create': typeof AuthenticatedCreateRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/plans': typeof AuthenticatedPlansRoute
   '/proofs': typeof AuthenticatedProofsRoute
   '/submissions': typeof AuthenticatedSubmissionsRoute
   '/ai/$shortId': typeof AiShortIdRoute
@@ -154,9 +205,15 @@ export interface FileRoutesByFullPath {
   '/q/$shortId': typeof QShortIdRoute
   '/r/$shortId': typeof RShortIdRoute
   '/vcard/$shortId': typeof VcardShortIdRoute
+  '/admin/ai': typeof AuthenticatedAdminAiRoute
   '/admin/plans': typeof AuthenticatedAdminPlansRoute
   '/analytics/$qrId': typeof AuthenticatedAnalyticsQrIdRoute
+  '/checkout/$planSlug': typeof AuthenticatedCheckoutPlanSlugRoute
   '/flow-builder/$qrId': typeof AuthenticatedFlowBuilderQrIdRoute
+  '/api/ai/chat': typeof ApiAiChatRoute
+  '/api/mp/subscribe': typeof ApiMpSubscribeRoute
+  '/api/mp/subscription': typeof ApiMpSubscriptionRoute
+  '/api/mp/webhook': typeof ApiMpWebhookRoute
   '/api/public/scan': typeof ApiPublicScanRoute
   '/api/public/scanai': typeof ApiPublicScanaiRoute
   '/api/public/submit': typeof ApiPublicSubmitRoute
@@ -164,9 +221,11 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/analytics': typeof AuthenticatedAnalyticsRouteWithChildren
+  '/billing': typeof AuthenticatedBillingRoute
   '/bulk': typeof AuthenticatedBulkRoute
   '/create': typeof AuthenticatedCreateRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/plans': typeof AuthenticatedPlansRoute
   '/proofs': typeof AuthenticatedProofsRoute
   '/submissions': typeof AuthenticatedSubmissionsRoute
   '/ai/$shortId': typeof AiShortIdRoute
@@ -176,9 +235,15 @@ export interface FileRoutesByTo {
   '/q/$shortId': typeof QShortIdRoute
   '/r/$shortId': typeof RShortIdRoute
   '/vcard/$shortId': typeof VcardShortIdRoute
+  '/admin/ai': typeof AuthenticatedAdminAiRoute
   '/admin/plans': typeof AuthenticatedAdminPlansRoute
   '/analytics/$qrId': typeof AuthenticatedAnalyticsQrIdRoute
+  '/checkout/$planSlug': typeof AuthenticatedCheckoutPlanSlugRoute
   '/flow-builder/$qrId': typeof AuthenticatedFlowBuilderQrIdRoute
+  '/api/ai/chat': typeof ApiAiChatRoute
+  '/api/mp/subscribe': typeof ApiMpSubscribeRoute
+  '/api/mp/subscription': typeof ApiMpSubscriptionRoute
+  '/api/mp/webhook': typeof ApiMpWebhookRoute
   '/api/public/scan': typeof ApiPublicScanRoute
   '/api/public/scanai': typeof ApiPublicScanaiRoute
   '/api/public/submit': typeof ApiPublicSubmitRoute
@@ -188,9 +253,11 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/_authenticated/analytics': typeof AuthenticatedAnalyticsRouteWithChildren
+  '/_authenticated/billing': typeof AuthenticatedBillingRoute
   '/_authenticated/bulk': typeof AuthenticatedBulkRoute
   '/_authenticated/create': typeof AuthenticatedCreateRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/plans': typeof AuthenticatedPlansRoute
   '/_authenticated/proofs': typeof AuthenticatedProofsRoute
   '/_authenticated/submissions': typeof AuthenticatedSubmissionsRoute
   '/ai/$shortId': typeof AiShortIdRoute
@@ -200,9 +267,15 @@ export interface FileRoutesById {
   '/q/$shortId': typeof QShortIdRoute
   '/r/$shortId': typeof RShortIdRoute
   '/vcard/$shortId': typeof VcardShortIdRoute
+  '/_authenticated/admin/ai': typeof AuthenticatedAdminAiRoute
   '/_authenticated/admin/plans': typeof AuthenticatedAdminPlansRoute
   '/_authenticated/analytics/$qrId': typeof AuthenticatedAnalyticsQrIdRoute
+  '/_authenticated/checkout/$planSlug': typeof AuthenticatedCheckoutPlanSlugRoute
   '/_authenticated/flow-builder/$qrId': typeof AuthenticatedFlowBuilderQrIdRoute
+  '/api/ai/chat': typeof ApiAiChatRoute
+  '/api/mp/subscribe': typeof ApiMpSubscribeRoute
+  '/api/mp/subscription': typeof ApiMpSubscriptionRoute
+  '/api/mp/webhook': typeof ApiMpWebhookRoute
   '/api/public/scan': typeof ApiPublicScanRoute
   '/api/public/scanai': typeof ApiPublicScanaiRoute
   '/api/public/submit': typeof ApiPublicSubmitRoute
@@ -212,9 +285,11 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/analytics'
+    | '/billing'
     | '/bulk'
     | '/create'
     | '/dashboard'
+    | '/plans'
     | '/proofs'
     | '/submissions'
     | '/ai/$shortId'
@@ -224,9 +299,15 @@ export interface FileRouteTypes {
     | '/q/$shortId'
     | '/r/$shortId'
     | '/vcard/$shortId'
+    | '/admin/ai'
     | '/admin/plans'
     | '/analytics/$qrId'
+    | '/checkout/$planSlug'
     | '/flow-builder/$qrId'
+    | '/api/ai/chat'
+    | '/api/mp/subscribe'
+    | '/api/mp/subscription'
+    | '/api/mp/webhook'
     | '/api/public/scan'
     | '/api/public/scanai'
     | '/api/public/submit'
@@ -234,9 +315,11 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/analytics'
+    | '/billing'
     | '/bulk'
     | '/create'
     | '/dashboard'
+    | '/plans'
     | '/proofs'
     | '/submissions'
     | '/ai/$shortId'
@@ -246,9 +329,15 @@ export interface FileRouteTypes {
     | '/q/$shortId'
     | '/r/$shortId'
     | '/vcard/$shortId'
+    | '/admin/ai'
     | '/admin/plans'
     | '/analytics/$qrId'
+    | '/checkout/$planSlug'
     | '/flow-builder/$qrId'
+    | '/api/ai/chat'
+    | '/api/mp/subscribe'
+    | '/api/mp/subscription'
+    | '/api/mp/webhook'
     | '/api/public/scan'
     | '/api/public/scanai'
     | '/api/public/submit'
@@ -257,9 +346,11 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/_authenticated/analytics'
+    | '/_authenticated/billing'
     | '/_authenticated/bulk'
     | '/_authenticated/create'
     | '/_authenticated/dashboard'
+    | '/_authenticated/plans'
     | '/_authenticated/proofs'
     | '/_authenticated/submissions'
     | '/ai/$shortId'
@@ -269,9 +360,15 @@ export interface FileRouteTypes {
     | '/q/$shortId'
     | '/r/$shortId'
     | '/vcard/$shortId'
+    | '/_authenticated/admin/ai'
     | '/_authenticated/admin/plans'
     | '/_authenticated/analytics/$qrId'
+    | '/_authenticated/checkout/$planSlug'
     | '/_authenticated/flow-builder/$qrId'
+    | '/api/ai/chat'
+    | '/api/mp/subscribe'
+    | '/api/mp/subscription'
+    | '/api/mp/webhook'
     | '/api/public/scan'
     | '/api/public/scanai'
     | '/api/public/submit'
@@ -287,6 +384,10 @@ export interface RootRouteChildren {
   QShortIdRoute: typeof QShortIdRoute
   RShortIdRoute: typeof RShortIdRoute
   VcardShortIdRoute: typeof VcardShortIdRoute
+  ApiAiChatRoute: typeof ApiAiChatRoute
+  ApiMpSubscribeRoute: typeof ApiMpSubscribeRoute
+  ApiMpSubscriptionRoute: typeof ApiMpSubscriptionRoute
+  ApiMpWebhookRoute: typeof ApiMpWebhookRoute
   ApiPublicScanRoute: typeof ApiPublicScanRoute
   ApiPublicScanaiRoute: typeof ApiPublicScanaiRoute
   ApiPublicSubmitRoute: typeof ApiPublicSubmitRoute
@@ -371,6 +472,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedProofsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/plans': {
+      id: '/_authenticated/plans'
+      path: '/plans'
+      fullPath: '/plans'
+      preLoaderRoute: typeof AuthenticatedPlansRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/dashboard': {
       id: '/_authenticated/dashboard'
       path: '/dashboard'
@@ -390,6 +498,13 @@ declare module '@tanstack/react-router' {
       path: '/bulk'
       fullPath: '/bulk'
       preLoaderRoute: typeof AuthenticatedBulkRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/billing': {
+      id: '/_authenticated/billing'
+      path: '/billing'
+      fullPath: '/billing'
+      preLoaderRoute: typeof AuthenticatedBillingRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/analytics': {
@@ -420,11 +535,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicScanRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/mp/webhook': {
+      id: '/api/mp/webhook'
+      path: '/api/mp/webhook'
+      fullPath: '/api/mp/webhook'
+      preLoaderRoute: typeof ApiMpWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/mp/subscription': {
+      id: '/api/mp/subscription'
+      path: '/api/mp/subscription'
+      fullPath: '/api/mp/subscription'
+      preLoaderRoute: typeof ApiMpSubscriptionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/mp/subscribe': {
+      id: '/api/mp/subscribe'
+      path: '/api/mp/subscribe'
+      fullPath: '/api/mp/subscribe'
+      preLoaderRoute: typeof ApiMpSubscribeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/ai/chat': {
+      id: '/api/ai/chat'
+      path: '/api/ai/chat'
+      fullPath: '/api/ai/chat'
+      preLoaderRoute: typeof ApiAiChatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/flow-builder/$qrId': {
       id: '/_authenticated/flow-builder/$qrId'
       path: '/flow-builder/$qrId'
       fullPath: '/flow-builder/$qrId'
       preLoaderRoute: typeof AuthenticatedFlowBuilderQrIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/checkout/$planSlug': {
+      id: '/_authenticated/checkout/$planSlug'
+      path: '/checkout/$planSlug'
+      fullPath: '/checkout/$planSlug'
+      preLoaderRoute: typeof AuthenticatedCheckoutPlanSlugRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/analytics/$qrId': {
@@ -439,6 +589,13 @@ declare module '@tanstack/react-router' {
       path: '/admin/plans'
       fullPath: '/admin/plans'
       preLoaderRoute: typeof AuthenticatedAdminPlansRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/admin/ai': {
+      id: '/_authenticated/admin/ai'
+      path: '/admin/ai'
+      fullPath: '/admin/ai'
+      preLoaderRoute: typeof AuthenticatedAdminAiRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
   }
@@ -460,23 +617,31 @@ const AuthenticatedAnalyticsRouteWithChildren =
 
 interface AuthenticatedRouteChildren {
   AuthenticatedAnalyticsRoute: typeof AuthenticatedAnalyticsRouteWithChildren
+  AuthenticatedBillingRoute: typeof AuthenticatedBillingRoute
   AuthenticatedBulkRoute: typeof AuthenticatedBulkRoute
   AuthenticatedCreateRoute: typeof AuthenticatedCreateRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedPlansRoute: typeof AuthenticatedPlansRoute
   AuthenticatedProofsRoute: typeof AuthenticatedProofsRoute
   AuthenticatedSubmissionsRoute: typeof AuthenticatedSubmissionsRoute
+  AuthenticatedAdminAiRoute: typeof AuthenticatedAdminAiRoute
   AuthenticatedAdminPlansRoute: typeof AuthenticatedAdminPlansRoute
+  AuthenticatedCheckoutPlanSlugRoute: typeof AuthenticatedCheckoutPlanSlugRoute
   AuthenticatedFlowBuilderQrIdRoute: typeof AuthenticatedFlowBuilderQrIdRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAnalyticsRoute: AuthenticatedAnalyticsRouteWithChildren,
+  AuthenticatedBillingRoute: AuthenticatedBillingRoute,
   AuthenticatedBulkRoute: AuthenticatedBulkRoute,
   AuthenticatedCreateRoute: AuthenticatedCreateRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedPlansRoute: AuthenticatedPlansRoute,
   AuthenticatedProofsRoute: AuthenticatedProofsRoute,
   AuthenticatedSubmissionsRoute: AuthenticatedSubmissionsRoute,
+  AuthenticatedAdminAiRoute: AuthenticatedAdminAiRoute,
   AuthenticatedAdminPlansRoute: AuthenticatedAdminPlansRoute,
+  AuthenticatedCheckoutPlanSlugRoute: AuthenticatedCheckoutPlanSlugRoute,
   AuthenticatedFlowBuilderQrIdRoute: AuthenticatedFlowBuilderQrIdRoute,
 }
 
@@ -494,6 +659,10 @@ const rootRouteChildren: RootRouteChildren = {
   QShortIdRoute: QShortIdRoute,
   RShortIdRoute: RShortIdRoute,
   VcardShortIdRoute: VcardShortIdRoute,
+  ApiAiChatRoute: ApiAiChatRoute,
+  ApiMpSubscribeRoute: ApiMpSubscribeRoute,
+  ApiMpSubscriptionRoute: ApiMpSubscriptionRoute,
+  ApiMpWebhookRoute: ApiMpWebhookRoute,
   ApiPublicScanRoute: ApiPublicScanRoute,
   ApiPublicScanaiRoute: ApiPublicScanaiRoute,
   ApiPublicSubmitRoute: ApiPublicSubmitRoute,
