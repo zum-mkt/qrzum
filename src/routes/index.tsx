@@ -90,7 +90,7 @@ function Nav() {
 /* ─────────────── Hero ─────────────── */
 function Hero() {
   return (
-    <section className="relative overflow-hidden bg-foreground py-24 text-background lg:py-36">
+    <section className="relative overflow-hidden bg-[#045575] py-24 text-background lg:py-36">
       <div
         className="absolute inset-0 opacity-[0.04]"
         style={{
@@ -201,7 +201,7 @@ const FLOW_BLOCKS = [
 
 function FlowBuilderSection() {
   return (
-    <section id="fluxo" className="bg-foreground py-20 text-background">
+    <section id="fluxo" className="bg-[#045575] py-20 text-background">
       <div className="mx-auto max-w-6xl px-6">
         <div className="mb-12">
           <span className="text-xs font-semibold uppercase tracking-widest text-primary">
@@ -313,7 +313,7 @@ function ProofRoutingSection() {
       <div className="mx-auto max-w-6xl px-6">
         <div className="grid gap-8 lg:grid-cols-2">
           {/* Presence Proof */}
-          <div className="rounded-2xl bg-foreground p-8 text-background">
+          <div className="rounded-2xl bg-[#045575] p-8 text-background">
             <div className="inline-flex items-center gap-2 rounded-full bg-primary/20 px-3 py-1 text-xs font-semibold text-primary">
               <Shield className="h-3 w-3" /> Prova de Presença
             </div>
@@ -538,7 +538,7 @@ const USE_CASES = [
   {
     icon: Factory,
     title: "Indústria & Manutenção",
-    style: "bg-foreground text-background",
+    style: "bg-[#045575] text-background",
     accent: "text-primary",
     items: [
       "Check-in de técnicos com GPS obrigatório",
@@ -867,7 +867,7 @@ function AuthSection() {
   };
 
   return (
-    <section id="entrar" className="bg-foreground py-20 text-background">
+    <section id="entrar" className="bg-[#045575] py-20 text-background">
       <div className="mx-auto max-w-6xl px-6">
         <div className="grid items-center gap-12 lg:grid-cols-2">
           <div>
@@ -927,7 +927,7 @@ function AuthSection() {
 /* ─────────────── Footer ─────────────── */
 function Footer() {
   return (
-    <footer className="border-t border-background/10 bg-foreground py-8 text-background">
+    <footer className="border-t border-white/10 bg-[#045575] py-8 text-background">
       <div className="mx-auto flex max-w-6xl flex-col items-center gap-4 px-6 md:flex-row md:justify-between">
         <div className="flex items-center gap-2">
           <img src="/logo.svg" alt="zum" className="h-6" />
