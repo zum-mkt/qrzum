@@ -1,10 +1,10 @@
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect, useMemo } from "react";
+import { useChat } from "@ai-sdk/react";
+import { DefaultChatTransport } from "ai";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Send, Sparkles, X, AlertCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-
-type Message = { id: string; role: "user" | "assistant"; text: string };
 
 type Props = {
   agentSlug: string;
@@ -15,12 +15,33 @@ type Props = {
 };
 
 export function AiChatPanel({ agentSlug, agentName = "Assistente IA", contextData, onClose, className }: Props) {
-  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const assistantIdRef = useRef<string | null>(null);
+
+  // Fetch token fresh on each request — no timing race
+  const transport = useMemo(() => new DefaultChatTransport({
+    api: "/api/ai/chat",
+    body: { agentSlug, contextData },
+    fetch: async (url, options) => {
+      const { data } = await supabase.auth.getSession();
+      const tok = data.session?.access_token;
+      return fetch(url, {
+        ...options,
+        headers: {
+          ...(options?.headers as Record<string, string> ?? {}),
+          "Content-Type": "application/json",
+          ...(tok ? { Authorization: `Bearer ${tok}` } : {}),
+        },
+      });
+    },
+  }), [agentSlug, contextData]);
+
+  const { messages, sendMessage, status, error } = useChat({
+    id: `ai-${agentSlug}`,
+    transport,
+  });
+
+  const isStreaming = status === "submitted" || status === "streaming";
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
@@ -29,88 +50,9 @@ export function AiChatPanel({ agentSlug, agentName = "Assistente IA", contextDat
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     const text = input.trim();
-    if (!text || isLoading) return;
-
+    if (!text || isStreaming) return;
     setInput("");
-    setError(null);
-
-    const userMsg: Message = { id: crypto.randomUUID(), role: "user", text };
-    const asstId = crypto.randomUUID();
-    assistantIdRef.current = asstId;
-
-    setMessages(prev => [...prev, userMsg]);
-    setIsLoading(true);
-
-    try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const tok = sessionData.session?.access_token;
-      if (!tok) throw new Error("Sessão expirada. Faça login novamente.");
-
-      // Build core messages for the server
-      const history = messages.map(m => ({ role: m.role, content: m.text }));
-      history.push({ role: "user", content: text });
-
-      const res = await fetch("/api/ai/chat", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${tok}`,
-        },
-        body: JSON.stringify({ agentSlug, contextData, messages: history }),
-      });
-
-      if (!res.ok) {
-        const errText = await res.text();
-        throw new Error(errText || `Erro ${res.status}`);
-      }
-
-      // Add placeholder for assistant message
-      setMessages(prev => [...prev, { id: asstId, role: "assistant", text: "" }]);
-
-      // Parse Vercel AI data stream: lines like `0:"text chunk"\n`
-      const reader = res.body!.getReader();
-      const decoder = new TextDecoder();
-      let buffer = "";
-      let assembled = "";
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split("\n");
-        buffer = lines.pop() ?? "";
-
-        for (const line of lines) {
-          if (line.startsWith("0:")) {
-            try {
-              const chunk: string = JSON.parse(line.slice(2));
-              assembled += chunk;
-              setMessages(prev =>
-                prev.map(m => m.id === asstId ? { ...m, text: assembled } : m)
-              );
-            } catch { /* skip malformed chunk */ }
-          }
-        }
-      }
-
-      // Final flush if buffer has remaining content
-      if (buffer.startsWith("0:")) {
-        try {
-          const chunk: string = JSON.parse(buffer.slice(2));
-          assembled += chunk;
-          setMessages(prev =>
-            prev.map(m => m.id === asstId ? { ...m, text: assembled } : m)
-          );
-        } catch { /* ignore */ }
-      }
-    } catch (err: any) {
-      setError(err.message ?? "Erro ao conectar com a IA.");
-      // Remove empty assistant bubble on error
-      setMessages(prev => prev.filter(m => m.id !== asstId));
-    } finally {
-      setIsLoading(false);
-    }
+    await sendMessage({ text });
   };
 
   return (
@@ -141,27 +83,31 @@ export function AiChatPanel({ agentSlug, agentName = "Assistente IA", contextDat
         {error && (
           <div className="flex items-start gap-2 rounded-lg bg-destructive/10 border border-destructive/20 px-3 py-2 text-xs text-destructive">
             <AlertCircle className="h-3.5 w-3.5 shrink-0 mt-0.5" />
-            <span>{error}</span>
+            <span>{error.message}</span>
           </div>
         )}
 
-        {messages.map((m) => (
-          <div key={m.id} className={m.role === "user" ? "flex justify-end" : ""}>
-            <div className={
-              m.role === "user"
-                ? "max-w-[85%] rounded-2xl bg-primary px-3 py-2 text-sm text-primary-foreground"
-                : "max-w-[85%] text-sm text-foreground whitespace-pre-wrap leading-relaxed"
-            }>
-              {m.text || (m.role === "assistant" && isLoading ? (
-                <span className="flex gap-1.5 items-center py-1">
-                  <span className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce [animation-delay:-0.3s]" />
-                  <span className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce [animation-delay:-0.15s]" />
-                  <span className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce" />
-                </span>
-              ) : null)}
+        {messages.map((m) => {
+          const text = m.parts?.map(p => p.type === "text" ? p.text : "").join("") ?? "";
+          if (!text && m.role !== "assistant") return null;
+          return (
+            <div key={m.id} className={m.role === "user" ? "flex justify-end" : ""}>
+              <div className={
+                m.role === "user"
+                  ? "max-w-[85%] rounded-2xl bg-primary px-3 py-2 text-sm text-primary-foreground"
+                  : "max-w-[85%] text-sm text-foreground whitespace-pre-wrap leading-relaxed"
+              }>
+                {text || (isStreaming ? (
+                  <span className="flex gap-1.5 items-center py-1">
+                    <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground animate-bounce [animation-delay:-0.3s]" />
+                    <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground animate-bounce [animation-delay:-0.15s]" />
+                    <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground animate-bounce" />
+                  </span>
+                ) : "—")}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* Input */}
@@ -174,7 +120,7 @@ export function AiChatPanel({ agentSlug, agentName = "Assistente IA", contextDat
           onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) submit(e as any); }}
           className="min-h-9 resize-none flex-1 text-sm"
         />
-        <Button type="submit" size="icon" className="h-9 w-9 shrink-0" disabled={isLoading || !input.trim()}>
+        <Button type="submit" size="icon" className="h-9 w-9 shrink-0" disabled={isStreaming || !input.trim()}>
           <Send className="h-4 w-4" />
         </Button>
       </form>
