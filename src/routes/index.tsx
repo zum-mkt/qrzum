@@ -634,6 +634,8 @@ type PricingPlan = {
   cta_label: string;
   highlighted: boolean;
   sort_order: number;
+  price_monthly: number | null;
+  price_annual: number | null;
 };
 
 type PricingFeature = {
@@ -714,15 +716,27 @@ function PricingSection() {
                     </div>
                   )}
                   <div className="mb-1 text-lg font-bold">{plan.name}</div>
-                  <div className={`mb-4 text-2xl font-extrabold ${plan.highlighted ? "text-primary-foreground" : "text-foreground"}`}>
-                    {plan.price_label ?? (
-                      <span className="text-base font-medium">Sob consulta</span>
-                    )}
+                  <div className={`mb-1 text-2xl font-extrabold ${plan.highlighted ? "text-primary-foreground" : "text-foreground"}`}>
+                    {plan.price_monthly
+                      ? <>
+                          {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(plan.price_monthly / 100)}
+                          <span className={`text-sm font-normal ${plan.highlighted ? "text-primary-foreground/70" : "text-muted-foreground"}`}>/mês</span>
+                        </>
+                      : plan.price_label
+                      ? plan.price_label
+                      : <span className="text-base font-medium">Sob consulta</span>
+                    }
                   </div>
+                  {plan.price_annual != null && plan.price_monthly != null && (
+                    <div className={`mb-3 text-xs ${plan.highlighted ? "text-primary-foreground/60" : "text-muted-foreground"}`}>
+                      ou {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(plan.price_annual / 100)}/ano
+                      {" · economia de "}{Math.round((1 - plan.price_annual / (plan.price_monthly * 12)) * 100)}%
+                    </div>
+                  )}
                   <p className={`mb-6 text-sm flex-1 ${plan.highlighted ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
                     {plan.tagline}
                   </p>
-                  <a href={plan.price_monthly || plan.price_annual ? `/checkout/${plan.slug}` : "#entrar"}>
+                  <a href={plan.price_monthly != null || plan.price_annual != null ? `/checkout/${plan.slug}` : "#entrar"}>
                     <Button
                       className="w-full"
                       variant={plan.highlighted ? "secondary" : "default"}
@@ -792,7 +806,7 @@ function PricingSection() {
                       <td className="px-5 py-4" />
                       {plans.map((plan) => (
                         <td key={plan.id} className="px-5 py-4 text-center">
-                          <a href={plan.price_monthly || plan.price_annual ? `/checkout/${plan.slug}` : "#entrar"}>
+                          <a href={plan.price_monthly != null || plan.price_annual != null ? `/checkout/${plan.slug}` : "#entrar"}>
                             <Button
                               size="sm"
                               variant={plan.highlighted ? "default" : "outline"}
