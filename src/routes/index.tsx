@@ -93,7 +93,7 @@ function Hero() {
   return (
     <section
       className="relative overflow-hidden py-24 text-background lg:py-36"
-      style={{ background: "linear-gradient(155deg, #045575 0%, #033a52 50%, #022b3b 100%)" }}
+      style={{ background: "linear-gradient(155deg, #133249 0%, #0f2637 50%, #0a1925 100%)" }}
     >
       {/* QR-like square texture that fades with the gradient */}
       <div
@@ -133,7 +133,7 @@ function Hero() {
                 <Button
                   size="lg"
                   variant="outline"
-                  className="gap-2 border-background/20 text-[#045575] bg-background hover:bg-background/90"
+                  className="gap-2 border-background/20 text-[#133249] bg-background hover:bg-background/90"
                 >
                   Ver como funciona <ChevronRight className="h-4 w-4" />
                 </Button>
@@ -219,7 +219,7 @@ const FLOW_BLOCKS = [
 
 function FlowBuilderSection() {
   return (
-    <section id="fluxo" className="bg-[#045575] py-20 text-background">
+    <section id="fluxo" className="bg-[#133249] py-20 text-background">
       <div className="mx-auto max-w-6xl px-6">
         <div className="mb-12">
           <span className="text-xs font-semibold uppercase tracking-widest text-primary">
@@ -331,7 +331,7 @@ function ProofRoutingSection() {
       <div className="mx-auto max-w-6xl px-6">
         <div className="grid gap-8 lg:grid-cols-2">
           {/* Presence Proof */}
-          <div className="rounded-2xl bg-[#045575] p-8 text-background">
+          <div className="rounded-2xl bg-[#133249] p-8 text-background">
             <div className="inline-flex items-center gap-2 rounded-full bg-primary/20 px-3 py-1 text-xs font-semibold text-primary">
               <Shield className="h-3 w-3" /> Prova de Presença
             </div>
@@ -556,7 +556,7 @@ const USE_CASES = [
   {
     icon: Factory,
     title: "Indústria & Manutenção",
-    style: "bg-[#045575] text-background",
+    style: "bg-[#133249] text-background",
     accent: "text-primary",
     items: [
       "Check-in de técnicos com GPS obrigatório",
@@ -885,7 +885,7 @@ function AuthSection() {
   };
 
   return (
-    <section id="entrar" className="bg-[#045575] py-20 text-background">
+    <section id="entrar" className="bg-[#133249] py-20 text-background">
       <div className="mx-auto max-w-6xl px-6">
         <div className="grid items-center gap-12 lg:grid-cols-2">
           <div>
@@ -945,7 +945,7 @@ function AuthSection() {
 /* ─────────────── Footer ─────────────── */
 function Footer() {
   return (
-    <footer className="border-t border-white/10 bg-[#045575] py-8 text-background">
+    <footer className="border-t border-white/10 bg-[#133249] py-8 text-background">
       <div className="mx-auto flex max-w-6xl flex-col items-center gap-4 px-6 md:flex-row md:justify-between">
         <div className="flex items-center gap-2">
           <img src="/logo.svg" alt="zum" className="h-6" />
