@@ -72,34 +72,72 @@ export const Route = createFileRoute("/api/ai/chat")({
           const apiKey = getEnvVar("OPENROUTER_API_KEY");
           if (!apiKey) return new Response("[6] OPENROUTER_API_KEY not configured", { status: 500 });
 
-          // Step 7: resolve model — if configured model is unavailable for free,
-          // fetch OpenRouter list server-side and pick first working free text model
-          if (!agent.model) return new Response("[7] Modelo não configurado. Acesse Admin → IAs para selecionar um modelo.", { status: 500 });
+          // Step 7: resolve a working model then stream
+          if (!agent.model) return new Response("[7] Modelo não configurado. Acesse Admin → IAs.", { status: 500 });
 
-          let resolvedModel = agent.model;
+          // Build candidate list: configured model first, then other free text models from OpenRouter
+          let candidates: string[] = [agent.model];
           try {
             const orRes = await fetch("https://openrouter.ai/api/v1/models");
             if (orRes.ok) {
-              const orJson = await orRes.json() as { data: Array<{ id: string; architecture?: { modality?: string }; pricing?: { prompt: string; completion: string } }> };
-              const inList = orJson.data.find(m => m.id === agent.model);
-              if (!inList) {
-                // Model removed — pick first free text model
-                const fallback = orJson.data.find(m =>
-                  m.id.endsWith(":free") &&
-                  (m.architecture?.modality ?? "").includes("text")
-                );
-                if (fallback) {
-                  resolvedModel = fallback.id;
-                  // Auto-heal DB so admin sees corrected model
-                  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-                  supabaseAdmin.from("ai_agents").update({ model: resolvedModel }).eq("id", agent.id).then(() => {});
-                }
-              }
+              type ORModel = { id: string; architecture?: { modality?: string } };
+              const orJson = await orRes.json() as { data: ORModel[] };
+              const freeText = orJson.data
+                .filter(m => m.id.endsWith(":free") && (m.architecture?.modality ?? "text").includes("text"))
+                .map(m => m.id);
+              // Put configured model first if present, then others as fallbacks
+              const others = freeText.filter(id => id !== agent.model);
+              candidates = freeText.includes(agent.model)
+                ? [agent.model, ...others]
+                : [...others]; // configured model removed from list — skip it
             }
-          } catch { /* non-fatal — use original model */ }
+          } catch { /* non-fatal */ }
+
+          if (candidates.length === 0) {
+            return new Response("[7] Nenhum modelo gratuito disponível no OpenRouter no momento.", { status: 503 });
+          }
+
+          // Test each candidate with a 1-token probe until one responds
+          const gateway = createOpenRouterProvider(apiKey);
+          let resolvedModel = candidates[0];
+          for (const candidate of candidates) {
+            try {
+              const probe = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${apiKey}`,
+                  "HTTP-Referer": "https://qrzum.com",
+                  "X-Title": "QRzum",
+                },
+                body: JSON.stringify({
+                  model: candidate,
+                  messages: [{ role: "user", content: "ping" }],
+                  max_tokens: 1,
+                  stream: false,
+                }),
+              });
+              if (probe.ok) {
+                resolvedModel = candidate;
+                break;
+              }
+              const err = await probe.json().catch(() => ({})) as { error?: { message?: string } };
+              const msg = err?.error?.message ?? "";
+              // Hard stop if it's clearly not free anymore (not a transient error)
+              if (msg.includes("unavailable for free") || msg.includes("no endpoints")) continue;
+              // Transient errors (rate limit, overload) — still try this model for the real stream
+              resolvedModel = candidate;
+              break;
+            } catch { continue; }
+          }
+
+          // Auto-heal DB if we switched models
+          if (resolvedModel !== agent.model) {
+            const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+            supabaseAdmin.from("ai_agents").update({ model: resolvedModel }).eq("id", agent.id).then(() => {});
+          }
 
           try {
-            const gateway = createOpenRouterProvider(apiKey);
             const result = streamText({
               model: gateway(resolvedModel),
               system,
