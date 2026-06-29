@@ -73,30 +73,24 @@ export const Route = createFileRoute("/api/ai/chat")({
           if (!apiKey) return new Response("[6] OPENROUTER_API_KEY not configured", { status: 500 });
 
           // Step 7: stream
-          // Replace known-discontinued models with a reliable fallback
-          const DISCONTINUED = new Set([
-            "google/gemini-2.0-flash-exp:free",
-            "google/gemini-flash-1.5-8b:free",
-          ]);
-          const FALLBACK_MODEL = "meta-llama/llama-3.1-8b-instruct:free";
-          const modelId = DISCONTINUED.has(agent.model) ? FALLBACK_MODEL : (agent.model || FALLBACK_MODEL);
-
-          // Auto-heal DB record so admin sees the correct model next time
-          if (DISCONTINUED.has(agent.model)) {
-            const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-            supabaseAdmin.from("ai_agents").update({ model: FALLBACK_MODEL }).eq("id", agent.id).then(() => {});
-          }
+          if (!agent.model) return new Response("[7] Modelo não configurado. Acesse Admin → IAs para selecionar um modelo.", { status: 500 });
 
           try {
             const gateway = createOpenRouterProvider(apiKey);
             const result = streamText({
-              model: gateway(modelId),
+              model: gateway(agent.model),
               system,
               messages: await convertToModelMessages(body.messages),
             });
             return result.toUIMessageStreamResponse({
               originalMessages: body.messages,
-              onError: (error: unknown) => error instanceof Error ? error.message : String(error),
+              onError: (error: unknown) => {
+                const msg = error instanceof Error ? error.message : String(error);
+                if (msg.includes("unavailable for free") || msg.includes("no endpoints") || msg.includes("Provider returned")) {
+                  return `Modelo "${agent.model}" indisponível. Acesse Admin → IAs e selecione outro modelo na lista.`;
+                }
+                return msg;
+              },
             });
           } catch (e: any) {
             return new Response(`[7] Stream error: ${e?.message}`, { status: 500 });

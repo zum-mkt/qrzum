@@ -274,6 +274,13 @@ function AdminAiPage() {
                       className="pl-8 h-8 text-xs mb-1.5"
                     />
                   </div>
+                  {/* warn when saved model is not in the current API list */}
+                  {!modelsLoading && selected.model && !models.find(m => m.id === selected.model) && (
+                    <div className="flex items-center gap-1.5 rounded-md bg-destructive/10 border border-destructive/20 px-3 py-2 text-xs text-destructive mb-1">
+                      <span>⚠️</span>
+                      <span>O modelo atual <strong>{selected.model}</strong> não está mais disponível no OpenRouter. Selecione outro abaixo e salve.</span>
+                    </div>
+                  )}
                   <select
                     value={selected.model}
                     onChange={e => setSelected({ ...selected, model: e.target.value })}
@@ -282,7 +289,7 @@ function AdminAiPage() {
                   >
                     {/* keep current value even if not in list */}
                     {!models.find(m => m.id === selected.model) && (
-                      <option value={selected.model}>{selected.model} (atual)</option>
+                      <option value={selected.model}>{selected.model} ⚠️ indisponível</option>
                     )}
                     {freeModels.length > 0 && (
                       <optgroup label="── Gratuitos ──">
