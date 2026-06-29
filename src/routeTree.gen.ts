@@ -15,11 +15,13 @@ import { Route as VcardShortIdRouteImport } from './routes/vcard.$shortId'
 import { Route as RShortIdRouteImport } from './routes/r.$shortId'
 import { Route as QShortIdRouteImport } from './routes/q.$shortId'
 import { Route as ProofIdRouteImport } from './routes/proof.$id'
+import { Route as PontoShortIdRouteImport } from './routes/ponto.$shortId'
 import { Route as LinksShortIdRouteImport } from './routes/links.$shortId'
 import { Route as FShortIdRouteImport } from './routes/f.$shortId'
 import { Route as AiShortIdRouteImport } from './routes/ai.$shortId'
 import { Route as AuthenticatedSubmissionsRouteImport } from './routes/_authenticated/submissions'
 import { Route as AuthenticatedProofsRouteImport } from './routes/_authenticated/proofs'
+import { Route as AuthenticatedPontoRouteImport } from './routes/_authenticated/ponto'
 import { Route as AuthenticatedPlansRouteImport } from './routes/_authenticated/plans'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedCreateRouteImport } from './routes/_authenticated/create'
@@ -29,6 +31,7 @@ import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authentica
 import { Route as ApiPublicSubmitRouteImport } from './routes/api/public/submit'
 import { Route as ApiPublicScanaiRouteImport } from './routes/api/public/scanai'
 import { Route as ApiPublicScanRouteImport } from './routes/api/public/scan'
+import { Route as ApiPontoPunchRouteImport } from './routes/api/ponto/punch'
 import { Route as ApiMpWebhookRouteImport } from './routes/api/mp/webhook'
 import { Route as ApiMpSubscriptionRouteImport } from './routes/api/mp/subscription'
 import { Route as ApiMpSubscribeRouteImport } from './routes/api/mp/subscribe'
@@ -68,6 +71,11 @@ const ProofIdRoute = ProofIdRouteImport.update({
   path: '/proof/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PontoShortIdRoute = PontoShortIdRouteImport.update({
+  id: '/ponto/$shortId',
+  path: '/ponto/$shortId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LinksShortIdRoute = LinksShortIdRouteImport.update({
   id: '/links/$shortId',
   path: '/links/$shortId',
@@ -92,6 +100,11 @@ const AuthenticatedSubmissionsRoute =
 const AuthenticatedProofsRoute = AuthenticatedProofsRouteImport.update({
   id: '/proofs',
   path: '/proofs',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedPontoRoute = AuthenticatedPontoRouteImport.update({
+  id: '/ponto',
+  path: '/ponto',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedPlansRoute = AuthenticatedPlansRouteImport.update({
@@ -137,6 +150,11 @@ const ApiPublicScanaiRoute = ApiPublicScanaiRouteImport.update({
 const ApiPublicScanRoute = ApiPublicScanRouteImport.update({
   id: '/api/public/scan',
   path: '/api/public/scan',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPontoPunchRoute = ApiPontoPunchRouteImport.update({
+  id: '/api/ponto/punch',
+  path: '/api/ponto/punch',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiMpWebhookRoute = ApiMpWebhookRouteImport.update({
@@ -196,11 +214,13 @@ export interface FileRoutesByFullPath {
   '/create': typeof AuthenticatedCreateRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/plans': typeof AuthenticatedPlansRoute
+  '/ponto': typeof AuthenticatedPontoRoute
   '/proofs': typeof AuthenticatedProofsRoute
   '/submissions': typeof AuthenticatedSubmissionsRoute
   '/ai/$shortId': typeof AiShortIdRoute
   '/f/$shortId': typeof FShortIdRoute
   '/links/$shortId': typeof LinksShortIdRoute
+  '/ponto/$shortId': typeof PontoShortIdRoute
   '/proof/$id': typeof ProofIdRoute
   '/q/$shortId': typeof QShortIdRoute
   '/r/$shortId': typeof RShortIdRoute
@@ -214,6 +234,7 @@ export interface FileRoutesByFullPath {
   '/api/mp/subscribe': typeof ApiMpSubscribeRoute
   '/api/mp/subscription': typeof ApiMpSubscriptionRoute
   '/api/mp/webhook': typeof ApiMpWebhookRoute
+  '/api/ponto/punch': typeof ApiPontoPunchRoute
   '/api/public/scan': typeof ApiPublicScanRoute
   '/api/public/scanai': typeof ApiPublicScanaiRoute
   '/api/public/submit': typeof ApiPublicSubmitRoute
@@ -226,11 +247,13 @@ export interface FileRoutesByTo {
   '/create': typeof AuthenticatedCreateRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/plans': typeof AuthenticatedPlansRoute
+  '/ponto': typeof AuthenticatedPontoRoute
   '/proofs': typeof AuthenticatedProofsRoute
   '/submissions': typeof AuthenticatedSubmissionsRoute
   '/ai/$shortId': typeof AiShortIdRoute
   '/f/$shortId': typeof FShortIdRoute
   '/links/$shortId': typeof LinksShortIdRoute
+  '/ponto/$shortId': typeof PontoShortIdRoute
   '/proof/$id': typeof ProofIdRoute
   '/q/$shortId': typeof QShortIdRoute
   '/r/$shortId': typeof RShortIdRoute
@@ -244,6 +267,7 @@ export interface FileRoutesByTo {
   '/api/mp/subscribe': typeof ApiMpSubscribeRoute
   '/api/mp/subscription': typeof ApiMpSubscriptionRoute
   '/api/mp/webhook': typeof ApiMpWebhookRoute
+  '/api/ponto/punch': typeof ApiPontoPunchRoute
   '/api/public/scan': typeof ApiPublicScanRoute
   '/api/public/scanai': typeof ApiPublicScanaiRoute
   '/api/public/submit': typeof ApiPublicSubmitRoute
@@ -258,11 +282,13 @@ export interface FileRoutesById {
   '/_authenticated/create': typeof AuthenticatedCreateRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/plans': typeof AuthenticatedPlansRoute
+  '/_authenticated/ponto': typeof AuthenticatedPontoRoute
   '/_authenticated/proofs': typeof AuthenticatedProofsRoute
   '/_authenticated/submissions': typeof AuthenticatedSubmissionsRoute
   '/ai/$shortId': typeof AiShortIdRoute
   '/f/$shortId': typeof FShortIdRoute
   '/links/$shortId': typeof LinksShortIdRoute
+  '/ponto/$shortId': typeof PontoShortIdRoute
   '/proof/$id': typeof ProofIdRoute
   '/q/$shortId': typeof QShortIdRoute
   '/r/$shortId': typeof RShortIdRoute
@@ -276,6 +302,7 @@ export interface FileRoutesById {
   '/api/mp/subscribe': typeof ApiMpSubscribeRoute
   '/api/mp/subscription': typeof ApiMpSubscriptionRoute
   '/api/mp/webhook': typeof ApiMpWebhookRoute
+  '/api/ponto/punch': typeof ApiPontoPunchRoute
   '/api/public/scan': typeof ApiPublicScanRoute
   '/api/public/scanai': typeof ApiPublicScanaiRoute
   '/api/public/submit': typeof ApiPublicSubmitRoute
@@ -290,11 +317,13 @@ export interface FileRouteTypes {
     | '/create'
     | '/dashboard'
     | '/plans'
+    | '/ponto'
     | '/proofs'
     | '/submissions'
     | '/ai/$shortId'
     | '/f/$shortId'
     | '/links/$shortId'
+    | '/ponto/$shortId'
     | '/proof/$id'
     | '/q/$shortId'
     | '/r/$shortId'
@@ -308,6 +337,7 @@ export interface FileRouteTypes {
     | '/api/mp/subscribe'
     | '/api/mp/subscription'
     | '/api/mp/webhook'
+    | '/api/ponto/punch'
     | '/api/public/scan'
     | '/api/public/scanai'
     | '/api/public/submit'
@@ -320,11 +350,13 @@ export interface FileRouteTypes {
     | '/create'
     | '/dashboard'
     | '/plans'
+    | '/ponto'
     | '/proofs'
     | '/submissions'
     | '/ai/$shortId'
     | '/f/$shortId'
     | '/links/$shortId'
+    | '/ponto/$shortId'
     | '/proof/$id'
     | '/q/$shortId'
     | '/r/$shortId'
@@ -338,6 +370,7 @@ export interface FileRouteTypes {
     | '/api/mp/subscribe'
     | '/api/mp/subscription'
     | '/api/mp/webhook'
+    | '/api/ponto/punch'
     | '/api/public/scan'
     | '/api/public/scanai'
     | '/api/public/submit'
@@ -351,11 +384,13 @@ export interface FileRouteTypes {
     | '/_authenticated/create'
     | '/_authenticated/dashboard'
     | '/_authenticated/plans'
+    | '/_authenticated/ponto'
     | '/_authenticated/proofs'
     | '/_authenticated/submissions'
     | '/ai/$shortId'
     | '/f/$shortId'
     | '/links/$shortId'
+    | '/ponto/$shortId'
     | '/proof/$id'
     | '/q/$shortId'
     | '/r/$shortId'
@@ -369,6 +404,7 @@ export interface FileRouteTypes {
     | '/api/mp/subscribe'
     | '/api/mp/subscription'
     | '/api/mp/webhook'
+    | '/api/ponto/punch'
     | '/api/public/scan'
     | '/api/public/scanai'
     | '/api/public/submit'
@@ -380,6 +416,7 @@ export interface RootRouteChildren {
   AiShortIdRoute: typeof AiShortIdRoute
   FShortIdRoute: typeof FShortIdRoute
   LinksShortIdRoute: typeof LinksShortIdRoute
+  PontoShortIdRoute: typeof PontoShortIdRoute
   ProofIdRoute: typeof ProofIdRoute
   QShortIdRoute: typeof QShortIdRoute
   RShortIdRoute: typeof RShortIdRoute
@@ -388,6 +425,7 @@ export interface RootRouteChildren {
   ApiMpSubscribeRoute: typeof ApiMpSubscribeRoute
   ApiMpSubscriptionRoute: typeof ApiMpSubscriptionRoute
   ApiMpWebhookRoute: typeof ApiMpWebhookRoute
+  ApiPontoPunchRoute: typeof ApiPontoPunchRoute
   ApiPublicScanRoute: typeof ApiPublicScanRoute
   ApiPublicScanaiRoute: typeof ApiPublicScanaiRoute
   ApiPublicSubmitRoute: typeof ApiPublicSubmitRoute
@@ -437,6 +475,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProofIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/ponto/$shortId': {
+      id: '/ponto/$shortId'
+      path: '/ponto/$shortId'
+      fullPath: '/ponto/$shortId'
+      preLoaderRoute: typeof PontoShortIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/links/$shortId': {
       id: '/links/$shortId'
       path: '/links/$shortId'
@@ -470,6 +515,13 @@ declare module '@tanstack/react-router' {
       path: '/proofs'
       fullPath: '/proofs'
       preLoaderRoute: typeof AuthenticatedProofsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/ponto': {
+      id: '/_authenticated/ponto'
+      path: '/ponto'
+      fullPath: '/ponto'
+      preLoaderRoute: typeof AuthenticatedPontoRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/plans': {
@@ -533,6 +585,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/scan'
       fullPath: '/api/public/scan'
       preLoaderRoute: typeof ApiPublicScanRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/ponto/punch': {
+      id: '/api/ponto/punch'
+      path: '/api/ponto/punch'
+      fullPath: '/api/ponto/punch'
+      preLoaderRoute: typeof ApiPontoPunchRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/mp/webhook': {
@@ -622,6 +681,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedCreateRoute: typeof AuthenticatedCreateRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedPlansRoute: typeof AuthenticatedPlansRoute
+  AuthenticatedPontoRoute: typeof AuthenticatedPontoRoute
   AuthenticatedProofsRoute: typeof AuthenticatedProofsRoute
   AuthenticatedSubmissionsRoute: typeof AuthenticatedSubmissionsRoute
   AuthenticatedAdminAiRoute: typeof AuthenticatedAdminAiRoute
@@ -637,6 +697,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedCreateRoute: AuthenticatedCreateRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedPlansRoute: AuthenticatedPlansRoute,
+  AuthenticatedPontoRoute: AuthenticatedPontoRoute,
   AuthenticatedProofsRoute: AuthenticatedProofsRoute,
   AuthenticatedSubmissionsRoute: AuthenticatedSubmissionsRoute,
   AuthenticatedAdminAiRoute: AuthenticatedAdminAiRoute,
@@ -655,6 +716,7 @@ const rootRouteChildren: RootRouteChildren = {
   AiShortIdRoute: AiShortIdRoute,
   FShortIdRoute: FShortIdRoute,
   LinksShortIdRoute: LinksShortIdRoute,
+  PontoShortIdRoute: PontoShortIdRoute,
   ProofIdRoute: ProofIdRoute,
   QShortIdRoute: QShortIdRoute,
   RShortIdRoute: RShortIdRoute,
@@ -663,6 +725,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiMpSubscribeRoute: ApiMpSubscribeRoute,
   ApiMpSubscriptionRoute: ApiMpSubscriptionRoute,
   ApiMpWebhookRoute: ApiMpWebhookRoute,
+  ApiPontoPunchRoute: ApiPontoPunchRoute,
   ApiPublicScanRoute: ApiPublicScanRoute,
   ApiPublicScanaiRoute: ApiPublicScanaiRoute,
   ApiPublicSubmitRoute: ApiPublicSubmitRoute,
