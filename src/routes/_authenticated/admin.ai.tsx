@@ -9,7 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Trash2, Save, Bot, RefreshCw, Search } from "lucide-react";
+import { Plus, Trash2, Save, Bot, Search } from "lucide-react";
 import { toast } from "sonner";
 import { AiChatPanel } from "@/components/AiChatPanel";
 
@@ -41,26 +41,31 @@ type KnowledgeDoc = {
   _deleted?: boolean;
 };
 
-type OpenRouterModel = {
-  id: string;
-  name: string;
-  context_length: number;
-  pricing: { prompt: string; completion: string };
-  architecture?: { modality?: string };
-  supported_parameters?: string[];
+type ModelOption = { id: string; name: string; ctx: number; provider: "gemini" | "groq" | "openrouter" };
+
+// Static reliable free models — no API call needed
+const FREE_MODELS: ModelOption[] = [
+  // Google Gemini (direct API — needs GEMINI_API_KEY)
+  { id: "gemini-2.0-flash", name: "Gemini 2.0 Flash", ctx: 1_048_576, provider: "gemini" },
+  { id: "gemini-2.0-flash-lite", name: "Gemini 2.0 Flash Lite", ctx: 1_048_576, provider: "gemini" },
+  { id: "gemini-1.5-flash", name: "Gemini 1.5 Flash", ctx: 1_048_576, provider: "gemini" },
+  { id: "gemini-1.5-flash-8b", name: "Gemini 1.5 Flash 8B", ctx: 1_048_576, provider: "gemini" },
+  // Groq (direct API — needs GROQ_API_KEY)
+  { id: "llama-3.3-70b-versatile", name: "Llama 3.3 70B", ctx: 128_000, provider: "groq" },
+  { id: "llama-3.1-8b-instant", name: "Llama 3.1 8B (rápido)", ctx: 128_000, provider: "groq" },
+  { id: "mixtral-8x7b-32768", name: "Mixtral 8x7B", ctx: 32_768, provider: "groq" },
+  { id: "gemma2-9b-it", name: "Gemma 2 9B", ctx: 8_192, provider: "groq" },
+  // OpenRouter (needs OPENROUTER_API_KEY com créditos)
+  { id: "google/gemini-2.0-flash-001", name: "Gemini 2.0 Flash (OR)", ctx: 1_048_576, provider: "openrouter" },
+  { id: "openai/gpt-4o-mini", name: "GPT-4o Mini (OR)", ctx: 128_000, provider: "openrouter" },
+  { id: "anthropic/claude-3-haiku", name: "Claude 3 Haiku (OR)", ctx: 200_000, provider: "openrouter" },
+];
+
+const PROVIDER_LABELS: Record<string, string> = {
+  gemini: "Google Gemini (grátis · GEMINI_API_KEY)",
+  groq: "Groq (grátis · GROQ_API_KEY)",
+  openrouter: "OpenRouter (créditos necessários)",
 };
-
-function isFree(m: OpenRouterModel) {
-  return m.id.endsWith(":free") || (parseFloat(m.pricing?.prompt ?? "1") === 0 && parseFloat(m.pricing?.completion ?? "1") === 0);
-}
-
-// Only text-in / text-out models work for chat
-function isTextChat(m: OpenRouterModel) {
-  const mod = m.architecture?.modality ?? "";
-  if (!mod) return true; // unknown — keep
-  // exclude pure audio/image/video generation models
-  return mod.includes("text") && (mod.includes("->text") || mod === "text");
-}
 
 function ctxLabel(ctx: number) {
   if (!ctx) return "";
@@ -69,54 +74,32 @@ function ctxLabel(ctx: number) {
   return ` · ${ctx} ctx`;
 }
 
-async function fetchOpenRouterModels(): Promise<OpenRouterModel[]> {
-  const res = await fetch("https://openrouter.ai/api/v1/models");
-  if (!res.ok) throw new Error("Falha ao carregar modelos");
-  const json = await res.json() as { data: OpenRouterModel[] };
-  // Keep only text-generation models (exclude audio/image/video)
-  return (json.data ?? []).filter(isTextChat);
-}
-
 function AdminAiPage() {
   const [agents, setAgents] = useState<Agent[]>([]);
   const [selected, setSelected] = useState<Agent | null>(null);
   const [docs, setDocs] = useState<KnowledgeDoc[]>([]);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [models, setModels] = useState<OpenRouterModel[]>([]);
-  const [modelsLoading, setModelsLoading] = useState(true);
   const [modelSearch, setModelSearch] = useState("");
-
-  const loadModels = async () => {
-    setModelsLoading(true);
-    try {
-      const data = await fetchOpenRouterModels();
-      setModels(data.sort((a, b) => {
-        const af = isFree(a), bf = isFree(b);
-        if (af !== bf) return af ? -1 : 1;
-        return a.name.localeCompare(b.name);
-      }));
-    } catch {
-      toast.error("Não foi possível carregar modelos do OpenRouter");
-    } finally {
-      setModelsLoading(false);
-    }
-  };
 
   const filteredModels = useMemo(() => {
     const q = modelSearch.toLowerCase();
-    return models.filter(m => !q || m.name.toLowerCase().includes(q) || m.id.toLowerCase().includes(q));
-  }, [models, modelSearch]);
+    return FREE_MODELS.filter(m => !q || m.name.toLowerCase().includes(q) || m.id.toLowerCase().includes(q));
+  }, [modelSearch]);
 
-  const freeModels = filteredModels.filter(isFree);
-  const paidModels = filteredModels.filter(m => !isFree(m));
+  const byProvider = useMemo(() => {
+    const groups: Record<string, ModelOption[]> = {};
+    for (const m of filteredModels) {
+      (groups[m.provider] ??= []).push(m);
+    }
+    return groups;
+  }, [filteredModels]);
 
   useEffect(() => {
     supabase.from("ai_agents").select("*").order("created_at").then(({ data }) => {
       setAgents((data as Agent[]) ?? []);
       setLoading(false);
     });
-    loadModels();
   }, []);
 
   const selectAgent = async (agent: Agent) => {
@@ -264,18 +247,7 @@ function AdminAiPage() {
                   <Input value={selected.description} onChange={e => setSelected({ ...selected, description: e.target.value })} />
                 </div>
                 <div className="space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <Label>Modelo</Label>
-                    <button
-                      type="button"
-                      onClick={loadModels}
-                      disabled={modelsLoading}
-                      className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                      <RefreshCw className={`h-3 w-3 ${modelsLoading ? "animate-spin" : ""}`} />
-                      {modelsLoading ? "Carregando…" : "Atualizar lista"}
-                    </button>
-                  </div>
+                  <Label>Modelo</Label>
                   <div className="relative">
                     <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
                     <Input
@@ -285,47 +257,34 @@ function AdminAiPage() {
                       className="pl-8 h-8 text-xs mb-1.5"
                     />
                   </div>
-                  {/* warn when saved model is not in the current API list */}
-                  {!modelsLoading && selected.model && !models.find(m => m.id === selected.model) && (
-                    <div className="flex items-center gap-1.5 rounded-md bg-destructive/10 border border-destructive/20 px-3 py-2 text-xs text-destructive mb-1">
+                  {selected.model && !FREE_MODELS.find(m => m.id === selected.model) && (
+                    <div className="flex items-start gap-1.5 rounded-md bg-destructive/10 border border-destructive/20 px-3 py-2 text-xs text-destructive mb-1">
                       <span>⚠️</span>
-                      <span>O modelo atual <strong>{selected.model}</strong> não está mais disponível no OpenRouter. Selecione outro abaixo e salve.</span>
+                      <span>Modelo <strong>{selected.model}</strong> não está na lista. Selecione outro e salve.</span>
                     </div>
                   )}
                   <select
                     value={selected.model}
                     onChange={e => setSelected({ ...selected, model: e.target.value })}
                     className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-                    size={7}
+                    size={8}
                   >
-                    {/* keep current value even if not in list */}
-                    {!models.find(m => m.id === selected.model) && (
-                      <option value={selected.model}>{selected.model} ⚠️ indisponível</option>
+                    {!FREE_MODELS.find(m => m.id === selected.model) && (
+                      <option value={selected.model}>{selected.model} ⚠️</option>
                     )}
-                    {freeModels.length > 0 && (
-                      <optgroup label="── Gratuitos ──">
-                        {freeModels.map(m => (
+                    {Object.entries(byProvider).map(([provider, ms]) => (
+                      <optgroup key={provider} label={`── ${PROVIDER_LABELS[provider]} ──`}>
+                        {ms.map(m => (
                           <option key={m.id} value={m.id}>
-                            {m.name}{ctxLabel(m.context_length)}
+                            {m.name}{ctxLabel(m.ctx)}
                           </option>
                         ))}
                       </optgroup>
-                    )}
-                    {paidModels.length > 0 && (
-                      <optgroup label="── Pagos ──">
-                        {paidModels.map(m => (
-                          <option key={m.id} value={m.id}>
-                            {m.name}{ctxLabel(m.context_length)}
-                          </option>
-                        ))}
-                      </optgroup>
-                    )}
-                    {!modelsLoading && filteredModels.length === 0 && (
-                      <option disabled>Nenhum modelo encontrado</option>
-                    )}
+                    ))}
+                    {filteredModels.length === 0 && <option disabled>Nenhum modelo encontrado</option>}
                   </select>
                   <p className="text-xs text-muted-foreground">
-                    {modelsLoading ? "Carregando modelos…" : `${freeModels.length} gratuitos · ${paidModels.length} pagos · via OpenRouter`}
+                    Gemini e Groq são gratuitos · OpenRouter requer créditos
                   </p>
                 </div>
                 <div className="space-y-1.5">
