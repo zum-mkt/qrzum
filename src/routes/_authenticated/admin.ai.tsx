@@ -42,11 +42,13 @@ type KnowledgeDoc = {
 };
 
 const MODELS = [
-  { value: "google/gemini-2.0-flash-exp:free", label: "Gemini 2.0 Flash (gratuito)" },
-  { value: "google/gemini-flash-1.5-8b:free", label: "Gemini 1.5 Flash 8B (gratuito)" },
+  { value: "google/gemini-2.5-flash:free", label: "Gemini 2.5 Flash (gratuito)" },
+  { value: "google/gemini-2.0-flash-lite:free", label: "Gemini 2.0 Flash Lite (gratuito)" },
+  { value: "google/gemma-3-27b-it:free", label: "Gemma 3 27B (gratuito)" },
+  { value: "meta-llama/llama-3.3-70b-instruct:free", label: "Llama 3.3 70B (gratuito)" },
   { value: "meta-llama/llama-3.1-8b-instruct:free", label: "Llama 3.1 8B (gratuito)" },
-  { value: "mistralai/mistral-7b-instruct:free", label: "Mistral 7B (gratuito)" },
   { value: "deepseek/deepseek-r1:free", label: "DeepSeek R1 (gratuito)" },
+  { value: "mistralai/mistral-small-3.1-24b-instruct:free", label: "Mistral Small 3.1 24B (gratuito)" },
   { value: "google/gemini-2.0-flash-001", label: "Gemini 2.0 Flash (pago)" },
   { value: "openai/gpt-4o-mini", label: "GPT-4o Mini (pago)" },
 ];

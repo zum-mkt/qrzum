@@ -76,7 +76,7 @@ export const Route = createFileRoute("/api/ai/chat")({
           try {
             const gateway = createOpenRouterProvider(apiKey);
             const result = streamText({
-              model: gateway(agent.model ?? "google/gemini-2.0-flash-exp:free"),
+              model: gateway(agent.model ?? "google/gemini-2.5-flash:free"),
               system,
               messages: await convertToModelMessages(body.messages),
             });

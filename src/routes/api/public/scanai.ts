@@ -44,7 +44,7 @@ export const Route = createFileRoute("/api/public/scanai")({
 
         const gateway = createOpenRouterProvider(key);
         const result = streamText({
-          model: gateway("google/gemini-2.0-flash-exp:free"),
+          model: gateway("google/gemini-2.5-flash:free"),
           system,
           messages: await convertToModelMessages(body.messages),
         });
