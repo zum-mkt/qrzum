@@ -12,8 +12,8 @@
     "format": "prettier --write ."
   },
   "dependencies": {
-    "@ai-sdk/google": "^4.0.2",
-    "@ai-sdk/groq": "^4.0.1",
+    "@ai-sdk/google": "^3.0.86",
+    "@ai-sdk/groq": "^3.0.45",
     "@ai-sdk/openai-compatible": "^2.0.48",
     "@ai-sdk/react": "^3.0.199",
     "@cloudflare/vite-plugin": "^1.25.5",
