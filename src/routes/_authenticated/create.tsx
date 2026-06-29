@@ -22,7 +22,7 @@ import { setQrTags } from "@/lib/organize";
 import {
   Copy, Link as LinkIcon, FileUp, Contact, ArrowLeft,
   MessageCircle, Wifi, Video, ListOrdered, Plus, Trash2,
-  FileText, Workflow, QrCode, Calendar, Lock,
+  FileText, Workflow, QrCode, Calendar, Lock, Clock,
 } from "lucide-react";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { FeatureGate } from "@/components/FeatureGate";
@@ -32,7 +32,7 @@ export const Route = createFileRoute("/_authenticated/create")({
   component: Create,
 });
 
-type QrType = "link" | "file" | "vcard" | "whatsapp" | "wifi" | "video" | "links" | "pdf" | "flow" | "pix" | "calendar";
+type QrType = "link" | "file" | "vcard" | "whatsapp" | "wifi" | "video" | "links" | "pdf" | "flow" | "pix" | "calendar" | "ponto";
 type Created = {
   shortId: string;
   title: string;
@@ -82,6 +82,7 @@ function Create() {
                 <TabsTrigger value="pix" className="gap-1 whitespace-nowrap">{!hasAdvanced && <Lock className="h-3 w-3 opacity-50" />}<QrCode className="h-3.5 w-3.5" /> PIX</TabsTrigger>
                 <TabsTrigger value="calendar" className="gap-1 whitespace-nowrap">{!hasAdvanced && <Lock className="h-3 w-3 opacity-50" />}<Calendar className="h-3.5 w-3.5" /> Evento</TabsTrigger>
                 <TabsTrigger value="flow" className="gap-1 whitespace-nowrap">{!hasFlow && <Lock className="h-3 w-3 opacity-50" />}<Workflow className="h-3.5 w-3.5" /> Fluxo</TabsTrigger>
+                <TabsTrigger value="ponto" className="gap-1 whitespace-nowrap"><Clock className="h-3.5 w-3.5" /> Ponto</TabsTrigger>
               </TabsList>
             </div>
             <div className="mb-6 mt-4">
@@ -98,6 +99,7 @@ function Create() {
             <TabsContent value="pix"><FeatureGate featureKey="qr_advanced_types" featureLabel="Tipos avançados de QR Code" requiredPlan="Pro"><PixForm style={style} setStyle={setStyle} pixels={pixels} setPixels={setPixels} folderId={folderId} tagIds={tagIds} onCreated={setCreated} onPreviewChange={setPreviewValue} /></FeatureGate></TabsContent>
             <TabsContent value="calendar"><FeatureGate featureKey="qr_advanced_types" featureLabel="Tipos avançados de QR Code" requiredPlan="Pro"><CalendarForm style={style} setStyle={setStyle} pixels={pixels} setPixels={setPixels} folderId={folderId} tagIds={tagIds} onCreated={setCreated} onPreviewChange={setPreviewValue} /></FeatureGate></TabsContent>
             <TabsContent value="flow"><FeatureGate featureKey="operational_flow" featureLabel="Fluxo Operacional" requiredPlan="Pro"><FlowForm folderId={folderId} tagIds={tagIds} /></FeatureGate></TabsContent>
+            <TabsContent value="ponto"><PontoForm style={style} setStyle={setStyle} pixels={pixels} setPixels={setPixels} folderId={folderId} tagIds={tagIds} onCreated={setCreated} onPreviewChange={setPreviewValue} /></TabsContent>
           </Tabs>
         </Card>
 
@@ -707,6 +709,63 @@ function FlowForm({ folderId, tagIds }: { folderId: string | null; tagIds: strin
       <Button type="submit" disabled={loading}>
         <Workflow className="mr-2 h-4 w-4" />
         {loading ? "Criando…" : "Criar fluxo e abrir editor"}
+      </Button>
+    </form>
+  );
+}
+
+/* ─── Ponto Form ─── */
+
+function PontoForm({ style, setStyle, folderId, tagIds, onCreated, onPreviewChange }: FormCtx) {
+  const [title, setTitle] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const submit = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!title.trim()) return toast.error("Digite um nome para o ponto (ex: Portaria Principal)");
+    setLoading(true);
+    try {
+      const { data: u } = await supabase.auth.getUser();
+      if (!u.user) throw new Error("Não autenticado");
+      const short_id = generateShortId();
+      const { data: inserted, error } = await (supabase.from("qr_links") as any).insert({
+        user_id: u.user.id,
+        title: title.trim(),
+        type: "ponto",
+        short_id,
+        destination_url: buildInternalUrl(`/ponto/${short_id}`),
+        style,
+        folder_id: folderId ?? null,
+      }).select("id, short_id").single();
+      if (error) throw error;
+      if (tagIds.length > 0 && inserted?.id) {
+        try { await setQrTags(inserted.id as string, tagIds); } catch { /* non-fatal */ }
+      }
+      onCreated({ shortId: inserted.short_id as string, title: title.trim(), style });
+    } catch (err: any) { toast.error(err.message); }
+    finally { setLoading(false); }
+  };
+
+  return (
+    <form onSubmit={submit} className="max-w-md space-y-6">
+      <div className="rounded-lg border border-border bg-muted/40 p-4 text-sm text-muted-foreground space-y-1">
+        <p className="font-medium text-foreground">QR Code de Ponto</p>
+        <p>Gera um QR fixo para um local de registro. Funcionários escaneiam e batem ponto com seu PIN.</p>
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="ponto-title">Nome do local *</Label>
+        <Input
+          id="ponto-title"
+          value={title}
+          onChange={(e) => { setTitle(e.target.value); onPreviewChange(buildInternalUrl(`/ponto/preview`)); }}
+          placeholder="Ex: Portaria Principal, Loja Centro"
+          required
+        />
+      </div>
+      <QRStyleFields style={style} onChange={setStyle} />
+      <Button type="submit" disabled={loading}>
+        <Clock className="mr-2 h-4 w-4" />
+        {loading ? "Criando…" : "Criar QR de Ponto"}
       </Button>
     </form>
   );
