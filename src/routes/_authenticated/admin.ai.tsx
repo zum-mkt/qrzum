@@ -46,10 +46,20 @@ type OpenRouterModel = {
   name: string;
   context_length: number;
   pricing: { prompt: string; completion: string };
+  architecture?: { modality?: string };
+  supported_parameters?: string[];
 };
 
 function isFree(m: OpenRouterModel) {
   return m.id.endsWith(":free") || (parseFloat(m.pricing?.prompt ?? "1") === 0 && parseFloat(m.pricing?.completion ?? "1") === 0);
+}
+
+// Only text-in / text-out models work for chat
+function isTextChat(m: OpenRouterModel) {
+  const mod = m.architecture?.modality ?? "";
+  if (!mod) return true; // unknown — keep
+  // exclude pure audio/image/video generation models
+  return mod.includes("text") && (mod.includes("->text") || mod === "text");
 }
 
 function ctxLabel(ctx: number) {
@@ -63,7 +73,8 @@ async function fetchOpenRouterModels(): Promise<OpenRouterModel[]> {
   const res = await fetch("https://openrouter.ai/api/v1/models");
   if (!res.ok) throw new Error("Falha ao carregar modelos");
   const json = await res.json() as { data: OpenRouterModel[] };
-  return json.data ?? [];
+  // Keep only text-generation models (exclude audio/image/video)
+  return (json.data ?? []).filter(isTextChat);
 }
 
 function AdminAiPage() {

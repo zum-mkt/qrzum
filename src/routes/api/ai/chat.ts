@@ -72,25 +72,42 @@ export const Route = createFileRoute("/api/ai/chat")({
           const apiKey = getEnvVar("OPENROUTER_API_KEY");
           if (!apiKey) return new Response("[6] OPENROUTER_API_KEY not configured", { status: 500 });
 
-          // Step 7: stream
+          // Step 7: resolve model — if configured model is unavailable for free,
+          // fetch OpenRouter list server-side and pick first working free text model
           if (!agent.model) return new Response("[7] Modelo não configurado. Acesse Admin → IAs para selecionar um modelo.", { status: 500 });
+
+          let resolvedModel = agent.model;
+          try {
+            const orRes = await fetch("https://openrouter.ai/api/v1/models");
+            if (orRes.ok) {
+              const orJson = await orRes.json() as { data: Array<{ id: string; architecture?: { modality?: string }; pricing?: { prompt: string; completion: string } }> };
+              const inList = orJson.data.find(m => m.id === agent.model);
+              if (!inList) {
+                // Model removed — pick first free text model
+                const fallback = orJson.data.find(m =>
+                  m.id.endsWith(":free") &&
+                  (m.architecture?.modality ?? "").includes("text")
+                );
+                if (fallback) {
+                  resolvedModel = fallback.id;
+                  // Auto-heal DB so admin sees corrected model
+                  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+                  supabaseAdmin.from("ai_agents").update({ model: resolvedModel }).eq("id", agent.id).then(() => {});
+                }
+              }
+            }
+          } catch { /* non-fatal — use original model */ }
 
           try {
             const gateway = createOpenRouterProvider(apiKey);
             const result = streamText({
-              model: gateway(agent.model),
+              model: gateway(resolvedModel),
               system,
               messages: await convertToModelMessages(body.messages),
             });
             return result.toUIMessageStreamResponse({
               originalMessages: body.messages,
-              onError: (error: unknown) => {
-                const msg = error instanceof Error ? error.message : String(error);
-                if (msg.includes("unavailable for free") || msg.includes("no endpoints") || msg.includes("Provider returned")) {
-                  return `Modelo "${agent.model}" indisponível. Acesse Admin → IAs e selecione outro modelo na lista.`;
-                }
-                return msg;
-              },
+              onError: (error: unknown) => error instanceof Error ? error.message : String(error),
             });
           } catch (e: any) {
             return new Response(`[7] Stream error: ${e?.message}`, { status: 500 });
