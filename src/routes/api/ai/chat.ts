@@ -80,7 +80,10 @@ export const Route = createFileRoute("/api/ai/chat")({
               system,
               messages: await convertToModelMessages(body.messages),
             });
-            return result.toUIMessageStreamResponse({ originalMessages: body.messages });
+            return result.toUIMessageStreamResponse({
+              originalMessages: body.messages,
+              onError: (error: unknown) => error instanceof Error ? error.message : String(error),
+            });
           } catch (e: any) {
             return new Response(`[7] Stream error: ${e?.message}`, { status: 500 });
           }
