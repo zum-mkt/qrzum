@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { convertToModelMessages, streamText, type UIMessage } from "ai";
 import { createOpenRouterProvider } from "@/lib/ai-gateway.server";
+import { getEnvVar } from "@/lib/cloudflare-context";
 
 export const Route = createFileRoute("/api/ai/chat")({
   server: {
@@ -68,7 +69,7 @@ export const Route = createFileRoute("/api/ai/chat")({
           if (body.contextData) system += `\n\n=== DADOS PARA ANÁLISE ===\n${body.contextData}`;
 
           // Step 6: check API key
-          const apiKey = process.env.OPENROUTER_API_KEY;
+          const apiKey = getEnvVar("OPENROUTER_API_KEY");
           if (!apiKey) return new Response("[6] OPENROUTER_API_KEY not configured", { status: 500 });
 
           // Step 7: stream

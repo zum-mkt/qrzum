@@ -1,9 +1,10 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
+import { getEnvVar } from "@/lib/cloudflare-context";
 
 async function hmac(message: string): Promise<string> {
-  const secret = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "lovable-fallback-secret";
+  const secret = getEnvVar("SUPABASE_SERVICE_ROLE_KEY") ?? "fallback-secret";
   const key = await crypto.subtle.importKey(
     "raw",
     new TextEncoder().encode("presence-v1:" + secret),

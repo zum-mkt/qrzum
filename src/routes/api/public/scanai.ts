@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { convertToModelMessages, streamText, type UIMessage } from "ai";
 import { createOpenRouterProvider } from "@/lib/ai-gateway.server";
+import { getEnvVar } from "@/lib/cloudflare-context";
 
 export const Route = createFileRoute("/api/public/scanai")({
   server: {
@@ -15,7 +16,7 @@ export const Route = createFileRoute("/api/public/scanai")({
         if (!body.shortId || !body.sessionId || !Array.isArray(body.messages)) {
           return new Response("Bad request", { status: 400 });
         }
-        const key = process.env.OPENROUTER_API_KEY;
+        const key = getEnvVar("OPENROUTER_API_KEY");
         if (!key) return new Response("Missing OPENROUTER_API_KEY", { status: 500 });
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");

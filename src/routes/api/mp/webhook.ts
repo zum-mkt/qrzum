@@ -1,10 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { createHmac } from "crypto";
+import { getEnvVar } from "@/lib/cloudflare-context";
 
 const MP_API = "https://api.mercadopago.com";
 
 async function validateMpSignature(request: Request, rawBody: string): Promise<boolean> {
-  const secret = process.env.MP_WEBHOOK_SECRET;
+  const secret = getEnvVar("MP_WEBHOOK_SECRET");
   if (!secret) return true; // skip validation if secret not configured
 
   const xSignature = request.headers.get("x-signature") || "";
@@ -30,7 +31,7 @@ export const Route = createFileRoute("/api/mp/webhook")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const accessToken = process.env.MP_ACCESS_TOKEN;
+        const accessToken = getEnvVar("MP_ACCESS_TOKEN");
         if (!accessToken) return new Response("ok", { status: 200 });
 
         const rawBody = await request.text();

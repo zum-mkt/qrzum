@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { getEnvVar } from "@/lib/cloudflare-context";
 
 const MP_API = "https://api.mercadopago.com";
 
@@ -6,7 +7,7 @@ export const Route = createFileRoute("/api/mp/subscribe")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const accessToken = process.env.MP_ACCESS_TOKEN;
+        const accessToken = getEnvVar("MP_ACCESS_TOKEN");
         if (!accessToken) {
           return new Response(JSON.stringify({ error: "MP not configured" }), {
             status: 500, headers: { "Content-Type": "application/json" },
@@ -76,7 +77,7 @@ export const Route = createFileRoute("/api/mp/subscribe")({
 
           // Create MP Preapproval (subscription)
           const mpBody = {
-            back_url: `${process.env.VITE_APP_URL || "https://qrzum.morning-mouse-a96d.workers.dev"}/billing`,
+            back_url: `${getEnvVar("VITE_APP_URL") || "https://qrzum.morning-mouse-a96d.workers.dev"}/billing`,
             reason: `${plan.name} – ${isAnnual ? "Anual" : "Mensal"}`,
             payer_email: payer_email,
             card_token_id: card_token,
