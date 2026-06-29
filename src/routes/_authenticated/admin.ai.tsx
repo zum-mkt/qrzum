@@ -1,5 +1,5 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,7 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Trash2, Save, Bot } from "lucide-react";
+import { Plus, Trash2, Save, Bot, RefreshCw, Search } from "lucide-react";
 import { toast } from "sonner";
 import { AiChatPanel } from "@/components/AiChatPanel";
 
@@ -41,17 +41,30 @@ type KnowledgeDoc = {
   _deleted?: boolean;
 };
 
-const MODELS = [
-  { value: "google/gemini-2.5-flash:free", label: "Gemini 2.5 Flash (gratuito)" },
-  { value: "google/gemini-2.0-flash-lite:free", label: "Gemini 2.0 Flash Lite (gratuito)" },
-  { value: "google/gemma-3-27b-it:free", label: "Gemma 3 27B (gratuito)" },
-  { value: "meta-llama/llama-3.3-70b-instruct:free", label: "Llama 3.3 70B (gratuito)" },
-  { value: "meta-llama/llama-3.1-8b-instruct:free", label: "Llama 3.1 8B (gratuito)" },
-  { value: "deepseek/deepseek-r1:free", label: "DeepSeek R1 (gratuito)" },
-  { value: "mistralai/mistral-small-3.1-24b-instruct:free", label: "Mistral Small 3.1 24B (gratuito)" },
-  { value: "google/gemini-2.0-flash-001", label: "Gemini 2.0 Flash (pago)" },
-  { value: "openai/gpt-4o-mini", label: "GPT-4o Mini (pago)" },
-];
+type OpenRouterModel = {
+  id: string;
+  name: string;
+  context_length: number;
+  pricing: { prompt: string; completion: string };
+};
+
+function isFree(m: OpenRouterModel) {
+  return m.id.endsWith(":free") || (parseFloat(m.pricing?.prompt ?? "1") === 0 && parseFloat(m.pricing?.completion ?? "1") === 0);
+}
+
+function ctxLabel(ctx: number) {
+  if (!ctx) return "";
+  if (ctx >= 1_000_000) return ` · ${(ctx / 1_000_000).toFixed(0)}M ctx`;
+  if (ctx >= 1_000) return ` · ${Math.round(ctx / 1_000)}K ctx`;
+  return ` · ${ctx} ctx`;
+}
+
+async function fetchOpenRouterModels(): Promise<OpenRouterModel[]> {
+  const res = await fetch("https://openrouter.ai/api/v1/models");
+  if (!res.ok) throw new Error("Falha ao carregar modelos");
+  const json = await res.json() as { data: OpenRouterModel[] };
+  return json.data ?? [];
+}
 
 function AdminAiPage() {
   const [agents, setAgents] = useState<Agent[]>([]);
@@ -59,12 +72,40 @@ function AdminAiPage() {
   const [docs, setDocs] = useState<KnowledgeDoc[]>([]);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [models, setModels] = useState<OpenRouterModel[]>([]);
+  const [modelsLoading, setModelsLoading] = useState(true);
+  const [modelSearch, setModelSearch] = useState("");
+
+  const loadModels = async () => {
+    setModelsLoading(true);
+    try {
+      const data = await fetchOpenRouterModels();
+      setModels(data.sort((a, b) => {
+        const af = isFree(a), bf = isFree(b);
+        if (af !== bf) return af ? -1 : 1;
+        return a.name.localeCompare(b.name);
+      }));
+    } catch {
+      toast.error("Não foi possível carregar modelos do OpenRouter");
+    } finally {
+      setModelsLoading(false);
+    }
+  };
+
+  const filteredModels = useMemo(() => {
+    const q = modelSearch.toLowerCase();
+    return models.filter(m => !q || m.name.toLowerCase().includes(q) || m.id.toLowerCase().includes(q));
+  }, [models, modelSearch]);
+
+  const freeModels = filteredModels.filter(isFree);
+  const paidModels = filteredModels.filter(m => !isFree(m));
 
   useEffect(() => {
     supabase.from("ai_agents").select("*").order("created_at").then(({ data }) => {
       setAgents((data as Agent[]) ?? []);
       setLoading(false);
     });
+    loadModels();
   }, []);
 
   const selectAgent = async (agent: Agent) => {
@@ -212,14 +253,62 @@ function AdminAiPage() {
                   <Input value={selected.description} onChange={e => setSelected({ ...selected, description: e.target.value })} />
                 </div>
                 <div className="space-y-1.5">
-                  <Label>Modelo</Label>
+                  <div className="flex items-center justify-between">
+                    <Label>Modelo</Label>
+                    <button
+                      type="button"
+                      onClick={loadModels}
+                      disabled={modelsLoading}
+                      className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      <RefreshCw className={`h-3 w-3 ${modelsLoading ? "animate-spin" : ""}`} />
+                      {modelsLoading ? "Carregando…" : "Atualizar lista"}
+                    </button>
+                  </div>
+                  <div className="relative">
+                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+                    <Input
+                      placeholder="Buscar modelo…"
+                      value={modelSearch}
+                      onChange={e => setModelSearch(e.target.value)}
+                      className="pl-8 h-8 text-xs mb-1.5"
+                    />
+                  </div>
                   <select
                     value={selected.model}
                     onChange={e => setSelected({ ...selected, model: e.target.value })}
                     className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+                    size={7}
                   >
-                    {MODELS.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
+                    {/* keep current value even if not in list */}
+                    {!models.find(m => m.id === selected.model) && (
+                      <option value={selected.model}>{selected.model} (atual)</option>
+                    )}
+                    {freeModels.length > 0 && (
+                      <optgroup label="── Gratuitos ──">
+                        {freeModels.map(m => (
+                          <option key={m.id} value={m.id}>
+                            {m.name}{ctxLabel(m.context_length)}
+                          </option>
+                        ))}
+                      </optgroup>
+                    )}
+                    {paidModels.length > 0 && (
+                      <optgroup label="── Pagos ──">
+                        {paidModels.map(m => (
+                          <option key={m.id} value={m.id}>
+                            {m.name}{ctxLabel(m.context_length)}
+                          </option>
+                        ))}
+                      </optgroup>
+                    )}
+                    {!modelsLoading && filteredModels.length === 0 && (
+                      <option disabled>Nenhum modelo encontrado</option>
+                    )}
                   </select>
+                  <p className="text-xs text-muted-foreground">
+                    {modelsLoading ? "Carregando modelos…" : `${freeModels.length} gratuitos · ${paidModels.length} pagos · via OpenRouter`}
+                  </p>
                 </div>
                 <div className="space-y-1.5">
                   <Label>Prompt de sistema</Label>
