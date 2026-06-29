@@ -73,10 +73,24 @@ export const Route = createFileRoute("/api/ai/chat")({
           if (!apiKey) return new Response("[6] OPENROUTER_API_KEY not configured", { status: 500 });
 
           // Step 7: stream
+          // Replace known-discontinued models with a reliable fallback
+          const DISCONTINUED = new Set([
+            "google/gemini-2.0-flash-exp:free",
+            "google/gemini-flash-1.5-8b:free",
+          ]);
+          const FALLBACK_MODEL = "meta-llama/llama-3.1-8b-instruct:free";
+          const modelId = DISCONTINUED.has(agent.model) ? FALLBACK_MODEL : (agent.model || FALLBACK_MODEL);
+
+          // Auto-heal DB record so admin sees the correct model next time
+          if (DISCONTINUED.has(agent.model)) {
+            const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+            supabaseAdmin.from("ai_agents").update({ model: FALLBACK_MODEL }).eq("id", agent.id).then(() => {});
+          }
+
           try {
             const gateway = createOpenRouterProvider(apiKey);
             const result = streamText({
-              model: gateway(agent.model ?? "google/gemini-2.5-flash:free"),
+              model: gateway(modelId),
               system,
               messages: await convertToModelMessages(body.messages),
             });
