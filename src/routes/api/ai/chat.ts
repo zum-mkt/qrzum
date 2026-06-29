@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { convertToModelMessages, streamText, type UIMessage } from "ai";
-import { resolveModel } from "@/lib/ai-gateway.server";
+import { resolveModel, buildFallbackChain, isQuotaError } from "@/lib/ai-gateway.server";
 
 export const Route = createFileRoute("/api/ai/chat")({
   server: {
@@ -67,24 +67,69 @@ export const Route = createFileRoute("/api/ai/chat")({
           } catch { /* non-fatal */ }
           if (body.contextData) system += `\n\n=== DADOS PARA ANÁLISE ===\n${body.contextData}`;
 
-          // Step 6: resolve model and stream
-          let model;
-          try {
-            model = resolveModel(agent.model);
-          } catch (e: any) {
-            return new Response(`[6] ${e?.message}`, { status: 500 });
+          // Step 6: stream with automatic quota fallback
+          const messages = await convertToModelMessages(body.messages);
+          const fallbackChain = buildFallbackChain(agent.model);
+
+          for (let attempt = 0; attempt < fallbackChain.length; attempt++) {
+            const modelId = fallbackChain[attempt];
+            const isLast = attempt === fallbackChain.length - 1;
+
+            let model;
+            try {
+              model = resolveModel(modelId);
+            } catch {
+              // API key not configured for this provider — skip silently
+              if (!isLast) continue;
+              return new Response(
+                "[6] Nenhum provider disponível. Adicione GEMINI_API_KEY ou GROQ_API_KEY no Cloudflare.",
+                { status: 500 }
+              );
+            }
+
+            const result = streamText({ model, system, messages });
+
+            // Last model in chain: commit immediately, show errors in UI
+            if (isLast) {
+              return result.toUIMessageStreamResponse({
+                originalMessages: body.messages,
+                onError: (error) => error instanceof Error ? error.message : String(error),
+              });
+            }
+
+            // Non-last: tee the stream to peek at the first chunk for quota errors.
+            // If quota error detected before any real data → try next model silently.
+            const innerResponse = result.toUIMessageStreamResponse({
+              originalMessages: body.messages,
+              onError: (error) => error instanceof Error ? error.message : String(error),
+            });
+
+            const [probeStream, mainStream] = innerResponse.body!.tee();
+            const reader = probeStream.getReader();
+
+            try {
+              const { value, done } = await reader.read();
+              reader.cancel().catch(() => {});
+
+              if (!done && value && isQuotaError(new TextDecoder().decode(value))) {
+                mainStream.cancel().catch(() => {});
+                continue; // quota error in first chunk → try next model
+              }
+
+              // First chunk is clean — return the full response via mainStream (tee keeps all data)
+              return new Response(mainStream, {
+                headers: {
+                  "Content-Type": "text/plain; charset=utf-8",
+                  "X-Vercel-AI-Data-Stream": "v1",
+                },
+              });
+            } catch {
+              mainStream.cancel().catch(() => {});
+              if (!isLast) continue;
+            }
           }
 
-          const result = streamText({
-            model,
-            system,
-            messages: await convertToModelMessages(body.messages),
-          });
-
-          return result.toUIMessageStreamResponse({
-            originalMessages: body.messages,
-            onError: (error: unknown) => error instanceof Error ? error.message : String(error),
-          });
+          return new Response("[6] Todos os modelos gratuitos estão indisponíveis.", { status: 503 });
 
         } catch (e: any) {
           return new Response(`[0] Unhandled crash: ${e?.message}`, { status: 500 });
