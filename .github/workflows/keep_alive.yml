@@ -11,6 +11,15 @@ jobs:
     steps:
       - name: Ping Supabase REST API
         run: |
-          curl --fail --silent --show-error \
+          url="${{ secrets.SUPABASE_URL }}"
+          url="${url%/}/rest/v1/"
+          status=$(curl -sS -o response.txt -w "%{http_code}" \
             -H "apikey: ${{ secrets.SUPABASE_KEY }}" \
-            "${{ secrets.SUPABASE_URL }}/rest/v1/"
+            "$url")
+          echo "HTTP status: $status"
+          echo "Response body:"
+          cat response.txt
+          if [ "$status" -ge 400 ]; then
+            echo "::error::Supabase ping failed with status $status"
+            exit 1
+          fi
