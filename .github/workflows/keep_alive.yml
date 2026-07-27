@@ -12,9 +12,10 @@ jobs:
       - name: Ping Supabase REST API
         run: |
           url="${{ secrets.SUPABASE_URL }}"
-          url="${url%/}/rest/v1/"
+          url="${url%/}/rest/v1/pricing_plans?select=id&limit=1"
           status=$(curl -sS -o response.txt -w "%{http_code}" \
             -H "apikey: ${{ secrets.SUPABASE_KEY }}" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_KEY }}" \
             "$url")
           echo "HTTP status: $status"
           echo "Response body:"
