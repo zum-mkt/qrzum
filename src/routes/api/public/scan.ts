@@ -1,10 +1,22 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { createHash } from "crypto";
+import { rateLimit } from "@/lib/rate-limit";
 
 export const Route = createFileRoute("/api/public/scan")({
   server: {
     handlers: {
       POST: async ({ request }) => {
+        const ip = (
+          request.headers.get("cf-connecting-ip") ||
+          request.headers.get("x-forwarded-for") ||
+          "anon"
+        ).split(",")[0].trim();
+
+        // 60 scans per 60s per IP — prevents analytics flood
+        if (!rateLimit(`scan:${ip}`, 60, 60_000)) {
+          return new Response("ok", { status: 200 }); // silent drop, never break redirect
+        }
+
         let body: { short_id?: string; referrer?: string | null } = {};
         try { body = await request.json(); } catch { /* ignore */ }
         const shortId = (body.short_id || "").toString().slice(0, 20);
@@ -12,10 +24,16 @@ export const Route = createFileRoute("/api/public/scan")({
           return new Response("bad request", { status: 400 });
         }
 
+        // Validate referrer as a URL or discard it
+        const rawReferrer = (body.referrer || request.headers.get("referer") || "").toString();
+        let referrer: string | null = null;
+        if (rawReferrer) {
+          try { referrer = new URL(rawReferrer).href.slice(0, 500); } catch { /* ignore non-URL */ }
+        }
+
         const ua = request.headers.get("user-agent") || "";
         const country = request.headers.get("cf-ipcountry") || request.headers.get("x-vercel-ip-country");
         const city = request.headers.get("cf-ipcity") || request.headers.get("x-vercel-ip-city");
-        const referrer = (body.referrer || request.headers.get("referer") || "").toString().slice(0, 500) || null;
 
         const device = /Mobi|Android|iPhone/i.test(ua) ? "mobile" : /iPad|Tablet/i.test(ua) ? "tablet" : "desktop";
         let os = "unknown";

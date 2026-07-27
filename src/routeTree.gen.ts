@@ -28,9 +28,11 @@ import { Route as AuthenticatedCreateRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedBulkRouteImport } from './routes/_authenticated/bulk'
 import { Route as AuthenticatedBillingRouteImport } from './routes/_authenticated/billing'
 import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authenticated/analytics'
+import { Route as ApiPublicVerifyPasswordRouteImport } from './routes/api/public/verify-password'
 import { Route as ApiPublicSubmitRouteImport } from './routes/api/public/submit'
 import { Route as ApiPublicScanaiRouteImport } from './routes/api/public/scanai'
 import { Route as ApiPublicScanRouteImport } from './routes/api/public/scan'
+import { Route as ApiPontoResolvePinRouteImport } from './routes/api/ponto/resolve-pin'
 import { Route as ApiPontoPunchRouteImport } from './routes/api/ponto/punch'
 import { Route as ApiMpWebhookRouteImport } from './routes/api/mp/webhook'
 import { Route as ApiMpSubscriptionRouteImport } from './routes/api/mp/subscription'
@@ -41,6 +43,12 @@ import { Route as AuthenticatedCheckoutPlanSlugRouteImport } from './routes/_aut
 import { Route as AuthenticatedAnalyticsQrIdRouteImport } from './routes/_authenticated/analytics.$qrId'
 import { Route as AuthenticatedAdminPlansRouteImport } from './routes/_authenticated/admin.plans'
 import { Route as AuthenticatedAdminAiRouteImport } from './routes/_authenticated/admin.ai'
+import { Route as ApiPontoWebauthnRegisterVerifyRouteImport } from './routes/api/ponto/webauthn/register-verify'
+import { Route as ApiPontoWebauthnRegisterOptionsRouteImport } from './routes/api/ponto/webauthn/register-options'
+import { Route as ApiPontoWebauthnAuthVerifyRouteImport } from './routes/api/ponto/webauthn/auth-verify'
+import { Route as ApiPontoWebauthnAuthOptionsRouteImport } from './routes/api/ponto/webauthn/auth-options'
+import { Route as ApiPontoAdminWebauthnClearRouteImport } from './routes/api/ponto/admin/webauthn-clear'
+import { Route as ApiPontoAdminDeviceResetRouteImport } from './routes/api/ponto/admin/device-reset'
 
 const AuthenticatedRoute = AuthenticatedRouteImport.update({
   id: '/_authenticated',
@@ -137,6 +145,11 @@ const AuthenticatedAnalyticsRoute = AuthenticatedAnalyticsRouteImport.update({
   path: '/analytics',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const ApiPublicVerifyPasswordRoute = ApiPublicVerifyPasswordRouteImport.update({
+  id: '/api/public/verify-password',
+  path: '/api/public/verify-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicSubmitRoute = ApiPublicSubmitRouteImport.update({
   id: '/api/public/submit',
   path: '/api/public/submit',
@@ -150,6 +163,11 @@ const ApiPublicScanaiRoute = ApiPublicScanaiRouteImport.update({
 const ApiPublicScanRoute = ApiPublicScanRouteImport.update({
   id: '/api/public/scan',
   path: '/api/public/scan',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPontoResolvePinRoute = ApiPontoResolvePinRouteImport.update({
+  id: '/api/ponto/resolve-pin',
+  path: '/api/ponto/resolve-pin',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPontoPunchRoute = ApiPontoPunchRouteImport.update({
@@ -205,6 +223,42 @@ const AuthenticatedAdminAiRoute = AuthenticatedAdminAiRouteImport.update({
   path: '/admin/ai',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const ApiPontoWebauthnRegisterVerifyRoute =
+  ApiPontoWebauthnRegisterVerifyRouteImport.update({
+    id: '/api/ponto/webauthn/register-verify',
+    path: '/api/ponto/webauthn/register-verify',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPontoWebauthnRegisterOptionsRoute =
+  ApiPontoWebauthnRegisterOptionsRouteImport.update({
+    id: '/api/ponto/webauthn/register-options',
+    path: '/api/ponto/webauthn/register-options',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPontoWebauthnAuthVerifyRoute =
+  ApiPontoWebauthnAuthVerifyRouteImport.update({
+    id: '/api/ponto/webauthn/auth-verify',
+    path: '/api/ponto/webauthn/auth-verify',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPontoWebauthnAuthOptionsRoute =
+  ApiPontoWebauthnAuthOptionsRouteImport.update({
+    id: '/api/ponto/webauthn/auth-options',
+    path: '/api/ponto/webauthn/auth-options',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPontoAdminWebauthnClearRoute =
+  ApiPontoAdminWebauthnClearRouteImport.update({
+    id: '/api/ponto/admin/webauthn-clear',
+    path: '/api/ponto/admin/webauthn-clear',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPontoAdminDeviceResetRoute =
+  ApiPontoAdminDeviceResetRouteImport.update({
+    id: '/api/ponto/admin/device-reset',
+    path: '/api/ponto/admin/device-reset',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -235,9 +289,17 @@ export interface FileRoutesByFullPath {
   '/api/mp/subscription': typeof ApiMpSubscriptionRoute
   '/api/mp/webhook': typeof ApiMpWebhookRoute
   '/api/ponto/punch': typeof ApiPontoPunchRoute
+  '/api/ponto/resolve-pin': typeof ApiPontoResolvePinRoute
   '/api/public/scan': typeof ApiPublicScanRoute
   '/api/public/scanai': typeof ApiPublicScanaiRoute
   '/api/public/submit': typeof ApiPublicSubmitRoute
+  '/api/public/verify-password': typeof ApiPublicVerifyPasswordRoute
+  '/api/ponto/admin/device-reset': typeof ApiPontoAdminDeviceResetRoute
+  '/api/ponto/admin/webauthn-clear': typeof ApiPontoAdminWebauthnClearRoute
+  '/api/ponto/webauthn/auth-options': typeof ApiPontoWebauthnAuthOptionsRoute
+  '/api/ponto/webauthn/auth-verify': typeof ApiPontoWebauthnAuthVerifyRoute
+  '/api/ponto/webauthn/register-options': typeof ApiPontoWebauthnRegisterOptionsRoute
+  '/api/ponto/webauthn/register-verify': typeof ApiPontoWebauthnRegisterVerifyRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -268,9 +330,17 @@ export interface FileRoutesByTo {
   '/api/mp/subscription': typeof ApiMpSubscriptionRoute
   '/api/mp/webhook': typeof ApiMpWebhookRoute
   '/api/ponto/punch': typeof ApiPontoPunchRoute
+  '/api/ponto/resolve-pin': typeof ApiPontoResolvePinRoute
   '/api/public/scan': typeof ApiPublicScanRoute
   '/api/public/scanai': typeof ApiPublicScanaiRoute
   '/api/public/submit': typeof ApiPublicSubmitRoute
+  '/api/public/verify-password': typeof ApiPublicVerifyPasswordRoute
+  '/api/ponto/admin/device-reset': typeof ApiPontoAdminDeviceResetRoute
+  '/api/ponto/admin/webauthn-clear': typeof ApiPontoAdminWebauthnClearRoute
+  '/api/ponto/webauthn/auth-options': typeof ApiPontoWebauthnAuthOptionsRoute
+  '/api/ponto/webauthn/auth-verify': typeof ApiPontoWebauthnAuthVerifyRoute
+  '/api/ponto/webauthn/register-options': typeof ApiPontoWebauthnRegisterOptionsRoute
+  '/api/ponto/webauthn/register-verify': typeof ApiPontoWebauthnRegisterVerifyRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -303,9 +373,17 @@ export interface FileRoutesById {
   '/api/mp/subscription': typeof ApiMpSubscriptionRoute
   '/api/mp/webhook': typeof ApiMpWebhookRoute
   '/api/ponto/punch': typeof ApiPontoPunchRoute
+  '/api/ponto/resolve-pin': typeof ApiPontoResolvePinRoute
   '/api/public/scan': typeof ApiPublicScanRoute
   '/api/public/scanai': typeof ApiPublicScanaiRoute
   '/api/public/submit': typeof ApiPublicSubmitRoute
+  '/api/public/verify-password': typeof ApiPublicVerifyPasswordRoute
+  '/api/ponto/admin/device-reset': typeof ApiPontoAdminDeviceResetRoute
+  '/api/ponto/admin/webauthn-clear': typeof ApiPontoAdminWebauthnClearRoute
+  '/api/ponto/webauthn/auth-options': typeof ApiPontoWebauthnAuthOptionsRoute
+  '/api/ponto/webauthn/auth-verify': typeof ApiPontoWebauthnAuthVerifyRoute
+  '/api/ponto/webauthn/register-options': typeof ApiPontoWebauthnRegisterOptionsRoute
+  '/api/ponto/webauthn/register-verify': typeof ApiPontoWebauthnRegisterVerifyRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -338,9 +416,17 @@ export interface FileRouteTypes {
     | '/api/mp/subscription'
     | '/api/mp/webhook'
     | '/api/ponto/punch'
+    | '/api/ponto/resolve-pin'
     | '/api/public/scan'
     | '/api/public/scanai'
     | '/api/public/submit'
+    | '/api/public/verify-password'
+    | '/api/ponto/admin/device-reset'
+    | '/api/ponto/admin/webauthn-clear'
+    | '/api/ponto/webauthn/auth-options'
+    | '/api/ponto/webauthn/auth-verify'
+    | '/api/ponto/webauthn/register-options'
+    | '/api/ponto/webauthn/register-verify'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -371,9 +457,17 @@ export interface FileRouteTypes {
     | '/api/mp/subscription'
     | '/api/mp/webhook'
     | '/api/ponto/punch'
+    | '/api/ponto/resolve-pin'
     | '/api/public/scan'
     | '/api/public/scanai'
     | '/api/public/submit'
+    | '/api/public/verify-password'
+    | '/api/ponto/admin/device-reset'
+    | '/api/ponto/admin/webauthn-clear'
+    | '/api/ponto/webauthn/auth-options'
+    | '/api/ponto/webauthn/auth-verify'
+    | '/api/ponto/webauthn/register-options'
+    | '/api/ponto/webauthn/register-verify'
   id:
     | '__root__'
     | '/'
@@ -405,9 +499,17 @@ export interface FileRouteTypes {
     | '/api/mp/subscription'
     | '/api/mp/webhook'
     | '/api/ponto/punch'
+    | '/api/ponto/resolve-pin'
     | '/api/public/scan'
     | '/api/public/scanai'
     | '/api/public/submit'
+    | '/api/public/verify-password'
+    | '/api/ponto/admin/device-reset'
+    | '/api/ponto/admin/webauthn-clear'
+    | '/api/ponto/webauthn/auth-options'
+    | '/api/ponto/webauthn/auth-verify'
+    | '/api/ponto/webauthn/register-options'
+    | '/api/ponto/webauthn/register-verify'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -426,9 +528,17 @@ export interface RootRouteChildren {
   ApiMpSubscriptionRoute: typeof ApiMpSubscriptionRoute
   ApiMpWebhookRoute: typeof ApiMpWebhookRoute
   ApiPontoPunchRoute: typeof ApiPontoPunchRoute
+  ApiPontoResolvePinRoute: typeof ApiPontoResolvePinRoute
   ApiPublicScanRoute: typeof ApiPublicScanRoute
   ApiPublicScanaiRoute: typeof ApiPublicScanaiRoute
   ApiPublicSubmitRoute: typeof ApiPublicSubmitRoute
+  ApiPublicVerifyPasswordRoute: typeof ApiPublicVerifyPasswordRoute
+  ApiPontoAdminDeviceResetRoute: typeof ApiPontoAdminDeviceResetRoute
+  ApiPontoAdminWebauthnClearRoute: typeof ApiPontoAdminWebauthnClearRoute
+  ApiPontoWebauthnAuthOptionsRoute: typeof ApiPontoWebauthnAuthOptionsRoute
+  ApiPontoWebauthnAuthVerifyRoute: typeof ApiPontoWebauthnAuthVerifyRoute
+  ApiPontoWebauthnRegisterOptionsRoute: typeof ApiPontoWebauthnRegisterOptionsRoute
+  ApiPontoWebauthnRegisterVerifyRoute: typeof ApiPontoWebauthnRegisterVerifyRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -566,6 +676,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAnalyticsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/api/public/verify-password': {
+      id: '/api/public/verify-password'
+      path: '/api/public/verify-password'
+      fullPath: '/api/public/verify-password'
+      preLoaderRoute: typeof ApiPublicVerifyPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/submit': {
       id: '/api/public/submit'
       path: '/api/public/submit'
@@ -585,6 +702,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/scan'
       fullPath: '/api/public/scan'
       preLoaderRoute: typeof ApiPublicScanRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/ponto/resolve-pin': {
+      id: '/api/ponto/resolve-pin'
+      path: '/api/ponto/resolve-pin'
+      fullPath: '/api/ponto/resolve-pin'
+      preLoaderRoute: typeof ApiPontoResolvePinRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/ponto/punch': {
@@ -657,6 +781,48 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminAiRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/api/ponto/webauthn/register-verify': {
+      id: '/api/ponto/webauthn/register-verify'
+      path: '/api/ponto/webauthn/register-verify'
+      fullPath: '/api/ponto/webauthn/register-verify'
+      preLoaderRoute: typeof ApiPontoWebauthnRegisterVerifyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/ponto/webauthn/register-options': {
+      id: '/api/ponto/webauthn/register-options'
+      path: '/api/ponto/webauthn/register-options'
+      fullPath: '/api/ponto/webauthn/register-options'
+      preLoaderRoute: typeof ApiPontoWebauthnRegisterOptionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/ponto/webauthn/auth-verify': {
+      id: '/api/ponto/webauthn/auth-verify'
+      path: '/api/ponto/webauthn/auth-verify'
+      fullPath: '/api/ponto/webauthn/auth-verify'
+      preLoaderRoute: typeof ApiPontoWebauthnAuthVerifyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/ponto/webauthn/auth-options': {
+      id: '/api/ponto/webauthn/auth-options'
+      path: '/api/ponto/webauthn/auth-options'
+      fullPath: '/api/ponto/webauthn/auth-options'
+      preLoaderRoute: typeof ApiPontoWebauthnAuthOptionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/ponto/admin/webauthn-clear': {
+      id: '/api/ponto/admin/webauthn-clear'
+      path: '/api/ponto/admin/webauthn-clear'
+      fullPath: '/api/ponto/admin/webauthn-clear'
+      preLoaderRoute: typeof ApiPontoAdminWebauthnClearRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/ponto/admin/device-reset': {
+      id: '/api/ponto/admin/device-reset'
+      path: '/api/ponto/admin/device-reset'
+      fullPath: '/api/ponto/admin/device-reset'
+      preLoaderRoute: typeof ApiPontoAdminDeviceResetRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -726,9 +892,17 @@ const rootRouteChildren: RootRouteChildren = {
   ApiMpSubscriptionRoute: ApiMpSubscriptionRoute,
   ApiMpWebhookRoute: ApiMpWebhookRoute,
   ApiPontoPunchRoute: ApiPontoPunchRoute,
+  ApiPontoResolvePinRoute: ApiPontoResolvePinRoute,
   ApiPublicScanRoute: ApiPublicScanRoute,
   ApiPublicScanaiRoute: ApiPublicScanaiRoute,
   ApiPublicSubmitRoute: ApiPublicSubmitRoute,
+  ApiPublicVerifyPasswordRoute: ApiPublicVerifyPasswordRoute,
+  ApiPontoAdminDeviceResetRoute: ApiPontoAdminDeviceResetRoute,
+  ApiPontoAdminWebauthnClearRoute: ApiPontoAdminWebauthnClearRoute,
+  ApiPontoWebauthnAuthOptionsRoute: ApiPontoWebauthnAuthOptionsRoute,
+  ApiPontoWebauthnAuthVerifyRoute: ApiPontoWebauthnAuthVerifyRoute,
+  ApiPontoWebauthnRegisterOptionsRoute: ApiPontoWebauthnRegisterOptionsRoute,
+  ApiPontoWebauthnRegisterVerifyRoute: ApiPontoWebauthnRegisterVerifyRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

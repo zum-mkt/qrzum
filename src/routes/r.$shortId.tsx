@@ -18,7 +18,6 @@ function Redirector() {
   const [uiState, setUiState] = useState<UIState>("loading");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [title, setTitle] = useState<string | null>(null);
-  const [passwordHash, setPasswordHash] = useState<string>("");
   const proceedRef = useRef<(() => Promise<void>) | null>(null);
 
   useEffect(() => {
@@ -87,8 +86,7 @@ function Redirector() {
         window.location.replace(dest);
       };
 
-      if (row.password_enabled && row.password_hash) {
-        setPasswordHash(row.password_hash);
+      if (row.password_enabled) {
         proceedRef.current = proceed;
         setUiState("password");
       } else {
@@ -103,6 +101,19 @@ function Redirector() {
     if (proceedRef.current) await proceedRef.current();
   };
 
+  const verifyPasswordOnServer = async (password: string): Promise<boolean> => {
+    try {
+      const res = await fetch("/api/public/verify-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ shortId, password }),
+      });
+      return res.ok;
+    } catch {
+      return false;
+    }
+  };
+
   if (uiState === "password") {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-background p-6">
@@ -113,7 +124,7 @@ function Redirector() {
             </div>
           </div>
           {title && <p className="mb-2 text-center text-sm font-medium text-foreground">{title}</p>}
-          <PasswordGate config={{ password_hash: passwordHash }} onPass={onPasswordPass} />
+          <PasswordGate config={{}} onPass={onPasswordPass} serverVerify={verifyPasswordOnServer} />
         </div>
       </div>
     );

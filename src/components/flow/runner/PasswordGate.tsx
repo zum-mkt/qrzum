@@ -5,9 +5,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { sha256Hex, type PasswordGateConfig } from "@/lib/flow";
 
-type Props = { config: PasswordGateConfig; onPass: () => void };
+type Props = {
+  config: PasswordGateConfig;
+  onPass: () => void;
+  /** When provided, password verification is done server-side instead of comparing a local hash. */
+  serverVerify?: (password: string) => Promise<boolean>;
+};
 
-export function PasswordGate({ config, onPass }: Props) {
+export function PasswordGate({ config, onPass, serverVerify }: Props) {
   const [value, setValue] = useState("");
   const [show, setShow] = useState(false);
   const [error, setError] = useState(false);
@@ -17,8 +22,14 @@ export function PasswordGate({ config, onPass }: Props) {
     e.preventDefault();
     setLoading(true);
     setError(false);
-    const hash = await sha256Hex(value.trim());
-    if (hash === config.password_hash) {
+    let ok: boolean;
+    if (serverVerify) {
+      ok = await serverVerify(value.trim());
+    } else {
+      const hash = await sha256Hex(value.trim());
+      ok = hash === config.password_hash;
+    }
+    if (ok) {
       onPass();
     } else {
       setError(true);

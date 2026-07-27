@@ -16,18 +16,19 @@ export const Route = createFileRoute("/api/ai/chat")({
           try {
             const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
             const { data: { user }, error: authErr } = await supabaseAdmin.auth.getUser(token);
-            if (authErr || !user) return new Response(`[2] Auth failed: ${authErr?.message ?? "no user"}`, { status: 401 });
+            if (authErr || !user) { console.error("[ai/chat] auth:", authErr?.message); return new Response("Unauthorized", { status: 401 }); }
             userId = user.id;
           } catch (e: any) {
-            return new Response(`[2] Auth crash: ${e?.message}`, { status: 500 });
+            console.error("[ai/chat] auth crash:", e?.message);
+            return new Response("Unauthorized", { status: 401 });
           }
 
           // Step 3: parse body
           let body: { agentSlug?: string; messages?: UIMessage[]; contextData?: string };
           try {
             body = await request.json() as typeof body;
-          } catch (e: any) {
-            return new Response(`[3] Body parse error: ${e?.message}`, { status: 400 });
+          } catch {
+            return new Response("Bad request", { status: 400 });
           }
           if (!body.agentSlug || !Array.isArray(body.messages)) {
             return new Response("[3] Bad request: missing agentSlug or messages", { status: 400 });
@@ -43,12 +44,13 @@ export const Route = createFileRoute("/api/ai/chat")({
               .eq("slug", body.agentSlug)
               .eq("enabled", true)
               .maybeSingle();
-            if (agentErr) return new Response(`[4] DB error: ${agentErr.message}`, { status: 500 });
+            if (agentErr) { console.error("[ai/chat] agent fetch:", agentErr.message); return new Response("Internal error", { status: 500 }); }
             agent = data;
           } catch (e: any) {
-            return new Response(`[4] Agent fetch crash: ${e?.message}`, { status: 500 });
+            console.error("[ai/chat] agent crash:", e?.message);
+            return new Response("Internal error", { status: 500 });
           }
-          if (!agent) return new Response(`[4] Agent '${body.agentSlug}' not found`, { status: 404 });
+          if (!agent) return new Response("Agent not found", { status: 404 });
           if (!agent.model) return new Response("[4] Modelo não configurado. Acesse Admin → IAs.", { status: 500 });
 
           // Step 5: knowledge docs
@@ -132,7 +134,8 @@ export const Route = createFileRoute("/api/ai/chat")({
           return new Response("[6] Todos os modelos gratuitos estão indisponíveis.", { status: 503 });
 
         } catch (e: any) {
-          return new Response(`[0] Unhandled crash: ${e?.message}`, { status: 500 });
+          console.error("[ai/chat] unhandled crash:", e?.message);
+          return new Response("Internal error", { status: 500 });
         }
       },
     },

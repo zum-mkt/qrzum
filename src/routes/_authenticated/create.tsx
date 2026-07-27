@@ -22,7 +22,7 @@ import { setQrTags } from "@/lib/organize";
 import {
   Copy, Link as LinkIcon, FileUp, Contact, ArrowLeft,
   MessageCircle, Wifi, Video, ListOrdered, Plus, Trash2,
-  FileText, Workflow, QrCode, Calendar, Lock, Clock,
+  FileText, Workflow, QrCode, Calendar, Lock, Clock, MapPin, Loader2,
 } from "lucide-react";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { FeatureGate } from "@/components/FeatureGate";
@@ -82,7 +82,7 @@ function Create() {
                 <TabsTrigger value="pix" className="gap-1 whitespace-nowrap">{!hasAdvanced && <Lock className="h-3 w-3 opacity-50" />}<QrCode className="h-3.5 w-3.5" /> PIX</TabsTrigger>
                 <TabsTrigger value="calendar" className="gap-1 whitespace-nowrap">{!hasAdvanced && <Lock className="h-3 w-3 opacity-50" />}<Calendar className="h-3.5 w-3.5" /> Evento</TabsTrigger>
                 <TabsTrigger value="flow" className="gap-1 whitespace-nowrap">{!hasFlow && <Lock className="h-3 w-3 opacity-50" />}<Workflow className="h-3.5 w-3.5" /> Fluxo</TabsTrigger>
-                <TabsTrigger value="ponto" className="gap-1 whitespace-nowrap"><Clock className="h-3.5 w-3.5" /> Ponto</TabsTrigger>
+                <TabsTrigger value="ponto" className="gap-1 whitespace-nowrap">{!hasFeature("ponto") && <Lock className="h-3 w-3 opacity-50" />}<Clock className="h-3.5 w-3.5" /> Ponto</TabsTrigger>
               </TabsList>
             </div>
             <div className="mb-6 mt-4">
@@ -99,7 +99,7 @@ function Create() {
             <TabsContent value="pix"><FeatureGate featureKey="qr_advanced_types" featureLabel="Tipos avançados de QR Code" requiredPlan="Pro"><PixForm style={style} setStyle={setStyle} pixels={pixels} setPixels={setPixels} folderId={folderId} tagIds={tagIds} onCreated={setCreated} onPreviewChange={setPreviewValue} /></FeatureGate></TabsContent>
             <TabsContent value="calendar"><FeatureGate featureKey="qr_advanced_types" featureLabel="Tipos avançados de QR Code" requiredPlan="Pro"><CalendarForm style={style} setStyle={setStyle} pixels={pixels} setPixels={setPixels} folderId={folderId} tagIds={tagIds} onCreated={setCreated} onPreviewChange={setPreviewValue} /></FeatureGate></TabsContent>
             <TabsContent value="flow"><FeatureGate featureKey="operational_flow" featureLabel="Fluxo Operacional" requiredPlan="Pro"><FlowForm folderId={folderId} tagIds={tagIds} /></FeatureGate></TabsContent>
-            <TabsContent value="ponto"><PontoForm style={style} setStyle={setStyle} pixels={pixels} setPixels={setPixels} folderId={folderId} tagIds={tagIds} onCreated={setCreated} onPreviewChange={setPreviewValue} /></TabsContent>
+            <TabsContent value="ponto"><FeatureGate featureKey="ponto" featureLabel="Registro de Ponto" requiredPlan="Pro"><PontoForm style={style} setStyle={setStyle} pixels={pixels} setPixels={setPixels} folderId={folderId} tagIds={tagIds} onCreated={setCreated} onPreviewChange={setPreviewValue} /></FeatureGate></TabsContent>
           </Tabs>
         </Card>
 
@@ -117,6 +117,13 @@ function Create() {
                 logoUrl={style.logoUrl}
                 frameStyle={style.frameStyle}
                 frameText={style.frameText ?? null}
+                dotStyle={style.dotStyle}
+                cornerSquareStyle={style.cornerSquareStyle}
+                cornerDotStyle={style.cornerDotStyle}
+                gradientEnabled={style.gradientEnabled}
+                gradientType={style.gradientType}
+                gradientAngle={style.gradientAngle}
+                gradientColor2={style.gradientColor2}
                 name="Preview"
                 size={200}
               />
@@ -714,15 +721,161 @@ function FlowForm({ folderId, tagIds }: { folderId: string | null; tagIds: strin
   );
 }
 
+/* ─── Ponto branding ─── */
+
+type PontoBranding = {
+  brandColor: string;
+  bgColor: string;
+  logoUrl: string | null;
+};
+
+function defaultPontoBranding(): PontoBranding {
+  return { brandColor: "#0f172a", bgColor: "#ffffff", logoUrl: null };
+}
+
+function PontoBrandingFields({ branding, onChange }: {
+  branding: PontoBranding;
+  onChange: (b: PontoBranding) => void;
+}) {
+  const [uploading, setUploading] = useState(false);
+
+  const handleLogoUpload = async (file: File) => {
+    if (file.size > 2 * 1024 * 1024) { toast.error("Logo: máximo 2 MB"); return; }
+    setUploading(true);
+    try {
+      const { data: u } = await supabase.auth.getUser();
+      if (!u.user) throw new Error("Não autenticado");
+      const ext = file.name.split(".").pop() ?? "png";
+      const path = `${u.user.id}/logos/${Date.now()}.${ext}`;
+      const { error } = await supabase.storage.from("qr_files").upload(path, file, { upsert: false });
+      if (error) throw error;
+      const { data: pub } = supabase.storage.from("qr_files").getPublicUrl(path);
+      onChange({ ...branding, logoUrl: pub.publicUrl });
+      toast.success("Logo enviada");
+    } catch (e: any) { toast.error(e.message); }
+    finally { setUploading(false); }
+  };
+
+  return (
+    <div className="rounded-lg border border-border p-4 space-y-4">
+      <p className="text-sm font-semibold text-foreground">Identidade visual da tela de ponto</p>
+      <p className="text-xs text-muted-foreground -mt-2">Independente do estilo do QR Code.</p>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-1.5">
+          <Label className="text-xs">Cor da marca</Label>
+          <div className="flex items-center gap-2">
+            <input
+              type="color"
+              value={branding.brandColor}
+              onChange={e => onChange({ ...branding, brandColor: e.target.value })}
+              className="h-9 w-9 cursor-pointer rounded border border-border bg-transparent p-0.5 shrink-0"
+            />
+            <Input
+              value={branding.brandColor}
+              onChange={e => onChange({ ...branding, brandColor: e.target.value })}
+              className="h-9 font-mono text-xs"
+              maxLength={7}
+            />
+          </div>
+        </div>
+        <div className="space-y-1.5">
+          <Label className="text-xs">Cor de fundo</Label>
+          <div className="flex items-center gap-2">
+            <input
+              type="color"
+              value={branding.bgColor}
+              onChange={e => onChange({ ...branding, bgColor: e.target.value })}
+              className="h-9 w-9 cursor-pointer rounded border border-border bg-transparent p-0.5 shrink-0"
+            />
+            <Input
+              value={branding.bgColor}
+              onChange={e => onChange({ ...branding, bgColor: e.target.value })}
+              className="h-9 font-mono text-xs"
+              maxLength={7}
+            />
+          </div>
+        </div>
+      </div>
+
+      <div className="space-y-1.5">
+        <Label className="text-xs">Logo da empresa</Label>
+        <div className="flex gap-2">
+          <Input
+            placeholder="https://... ou envie um arquivo →"
+            value={branding.logoUrl ?? ""}
+            onChange={e => onChange({ ...branding, logoUrl: e.target.value || null })}
+            className="h-9 text-xs flex-1"
+          />
+          <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-border bg-background px-3 py-1.5 text-xs font-medium hover:bg-muted transition-colors shrink-0">
+            {uploading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileUp className="h-3.5 w-3.5" />}
+            Enviar
+            <input
+              type="file"
+              accept="image/*"
+              className="sr-only"
+              disabled={uploading}
+              onChange={e => { const f = e.target.files?.[0]; if (f) handleLogoUpload(f); e.target.value = ""; }}
+            />
+          </label>
+        </div>
+        {branding.logoUrl && (
+          <div className="flex items-center gap-3 mt-1">
+            <img src={branding.logoUrl} alt="logo" className="h-10 w-auto max-w-[120px] object-contain rounded border border-border bg-white p-1" />
+            <button type="button" onClick={() => onChange({ ...branding, logoUrl: null })} className="text-xs text-muted-foreground underline">Remover</button>
+          </div>
+        )}
+      </div>
+
+      {/* Mini preview */}
+      <div className="rounded-xl p-3 flex items-center gap-3 border border-border/50" style={{ backgroundColor: branding.bgColor }}>
+        {branding.logoUrl && (
+          <img src={branding.logoUrl} alt="" className="h-8 w-auto max-w-[80px] object-contain shrink-0" onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
+        )}
+        <div className="flex h-8 w-8 items-center justify-center rounded-lg text-white shrink-0" style={{ backgroundColor: branding.brandColor }}>
+          <Clock className="h-4 w-4" />
+        </div>
+        <div className="space-y-1 flex-1">
+          <div className="h-2 w-24 rounded-full opacity-80" style={{ backgroundColor: branding.brandColor }} />
+          <div className="h-2 w-14 rounded-full bg-gray-300" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ─── Ponto Form ─── */
 
 function PontoForm({ style, setStyle, folderId, tagIds, onCreated, onPreviewChange }: FormCtx) {
   const [title, setTitle] = useState("");
   const [loading, setLoading] = useState(false);
+  const [branding, setBranding] = useState<PontoBranding>(defaultPontoBranding());
+  const [geoEnabled, setGeoEnabled] = useState(false);
+  const [geoLat, setGeoLat] = useState<number | null>(null);
+  const [geoLng, setGeoLng] = useState<number | null>(null);
+  const [geoRadius, setGeoRadius] = useState(100);
+  const [geoFetching, setGeoFetching] = useState(false);
+
+  const fetchMyLocation = () => {
+    setGeoFetching(true);
+    navigator.geolocation?.getCurrentPosition(
+      (pos) => {
+        setGeoLat(parseFloat(pos.coords.latitude.toFixed(6)));
+        setGeoLng(parseFloat(pos.coords.longitude.toFixed(6)));
+        setGeoFetching(false);
+        toast.success("Localização capturada");
+      },
+      () => { toast.error("Não foi possível obter a localização"); setGeoFetching(false); },
+      { enableHighAccuracy: true, timeout: 10000 },
+    );
+  };
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     if (!title.trim()) return toast.error("Digite um nome para o ponto (ex: Portaria Principal)");
+    if (geoEnabled && (geoLat == null || geoLng == null)) {
+      return toast.error("Capture a localização ou desative o geofencing");
+    }
     setLoading(true);
     try {
       const { data: u } = await supabase.auth.getUser();
@@ -734,8 +887,18 @@ function PontoForm({ style, setStyle, folderId, tagIds, onCreated, onPreviewChan
         type: "ponto",
         short_id,
         destination_url: buildInternalUrl(`/ponto/${short_id}`),
-        style,
+        color: style.color,
+        bg_color: style.bgColor,
+        logo_url: style.logoUrl,
+        frame_style: style.frameStyle,
+        frame_text: style.frameText ?? null,
         folder_id: folderId ?? null,
+        ponto_color: branding.brandColor,
+        ponto_bg_color: branding.bgColor,
+        ponto_logo_url: branding.logoUrl,
+        geo_lat: geoEnabled ? geoLat : null,
+        geo_lng: geoEnabled ? geoLng : null,
+        geo_radius: geoEnabled ? geoRadius : null,
       }).select("id, short_id").single();
       if (error) throw error;
       if (tagIds.length > 0 && inserted?.id) {
@@ -762,6 +925,67 @@ function PontoForm({ style, setStyle, folderId, tagIds, onCreated, onPreviewChan
           required
         />
       </div>
+
+      <PontoBrandingFields branding={branding} onChange={setBranding} />
+
+      {/* Geofencing */}
+      <div className="rounded-lg border border-border p-4 space-y-4">
+        <label className="flex items-center gap-3 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={geoEnabled}
+            onChange={(e) => setGeoEnabled(e.target.checked)}
+            className="h-4 w-4 accent-primary"
+          />
+          <div>
+            <p className="text-sm font-medium text-foreground flex items-center gap-1.5">
+              <MapPin className="h-3.5 w-3.5 text-muted-foreground" /> Geofencing
+            </p>
+            <p className="text-xs text-muted-foreground">Exige que o funcionário esteja próximo ao local para bater ponto.</p>
+          </div>
+        </label>
+
+        {geoEnabled && (
+          <div className="space-y-3 pl-7">
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={fetchMyLocation}
+                disabled={geoFetching}
+                className="flex items-center gap-1.5"
+              >
+                {geoFetching
+                  ? <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Obtendo...</>
+                  : <><MapPin className="h-3.5 w-3.5" /> Usar minha localização atual</>
+                }
+              </Button>
+            </div>
+            {geoLat != null && geoLng != null && (
+              <p className="text-xs text-green-600 font-mono">
+                {geoLat.toFixed(5)}, {geoLng.toFixed(5)}
+              </p>
+            )}
+            <div className="space-y-1.5">
+              <Label className="text-xs">Raio permitido: <span className="font-semibold">{geoRadius}m</span></Label>
+              <input
+                type="range"
+                min={30}
+                max={500}
+                step={10}
+                value={geoRadius}
+                onChange={(e) => setGeoRadius(Number(e.target.value))}
+                className="w-full accent-primary"
+              />
+              <div className="flex justify-between text-[10px] text-muted-foreground">
+                <span>30m</span><span>100m</span><span>200m</span><span>500m</span>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
       <QRStyleFields style={style} onChange={setStyle} />
       <Button type="submit" disabled={loading}>
         <Clock className="mr-2 h-4 w-4" />
@@ -810,7 +1034,11 @@ function Success({ created, reset }: { created: NonNullable<Created>; reset: () 
           <div className="flex justify-center">
             <QRCodePreview value={qrValue} color={created.style.color} bgColor={created.style.bgColor}
               logoUrl={created.style.logoUrl} frameStyle={created.style.frameStyle}
-              frameText={created.style.frameText ?? null} name={created.title} size={240} />
+              frameText={created.style.frameText ?? null} dotStyle={created.style.dotStyle}
+              cornerSquareStyle={created.style.cornerSquareStyle} cornerDotStyle={created.style.cornerDotStyle}
+              gradientEnabled={created.style.gradientEnabled} gradientType={created.style.gradientType}
+              gradientAngle={created.style.gradientAngle} gradientColor2={created.style.gradientColor2}
+              name={created.title} size={240} />
           </div>
         </div>
       </Card>

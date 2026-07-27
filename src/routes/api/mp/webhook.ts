@@ -6,7 +6,10 @@ const MP_API = "https://api.mercadopago.com";
 
 async function validateMpSignature(request: Request, rawBody: string): Promise<boolean> {
   const secret = getEnvVar("MP_WEBHOOK_SECRET");
-  if (!secret) return true; // skip validation if secret not configured
+  if (!secret) {
+    console.error("[mp/webhook] MP_WEBHOOK_SECRET not configured — rejecting all requests");
+    return false;
+  }
 
   const xSignature = request.headers.get("x-signature") || "";
   const xRequestId = request.headers.get("x-request-id") || "";

@@ -3,17 +3,22 @@ import { customAlphabet } from "nanoid";
 const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
 export const generateShortId = customAlphabet(alphabet, 7);
 
-export const PUBLIC_BASE_URL: string =
-  (import.meta.env.VITE_PUBLIC_BASE_URL as string | undefined)?.replace(/\/$/, "") ||
-  "https://qrzum.lovable.app";
+function getBaseUrl(): string {
+  const env = (import.meta.env.VITE_PUBLIC_BASE_URL as string | undefined)?.replace(/\/$/, "");
+  if (env) return env;
+  if (typeof window !== "undefined") return window.location.origin;
+  return "";
+}
+
+export const PUBLIC_BASE_URL: string = getBaseUrl();
 
 export function buildInternalUrl(path: string) {
+  const base = getBaseUrl();
   const p = path.startsWith("/") ? path : `/${path}`;
-  return `${PUBLIC_BASE_URL}${p}`;
+  return `${base}${p}`;
 }
 
 export function buildQrUrl(shortId: string) {
-  // /r/<id> = pixel-aware redirector (Phase 3). /q/<id> remains as a legacy alias.
   return buildInternalUrl(`/r/${shortId}`);
 }
 

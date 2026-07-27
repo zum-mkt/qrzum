@@ -18,8 +18,11 @@ export const Route = createFileRoute("/_authenticated/analytics")({
   component: AnalyticsPage,
 });
 
-type Range = 7 | 30 | 90;
+// Hardcoded chart colors — oklch() CSS vars don't resolve in SVG attributes
+const C1 = "#c4882a"; // primary amber
+const C2 = "#9ca3af"; // muted gray
 
+type Range = 7 | 30 | 90;
 type Scan = { qr_id: string; scanned_at: string; visitor_hash: string | null };
 type LinkRow = { id: string; title: string; type: string; short_id: string };
 
@@ -27,23 +30,17 @@ function AnalyticsPage() {
   const [range, setRange] = useState<Range>(30);
 
   const since = useMemo(() => {
-    const d = new Date();
-    d.setDate(d.getDate() - range);
-    return d.toISOString();
+    const d = new Date(); d.setDate(d.getDate() - range); return d.toISOString();
   }, [range]);
 
   const sincePrev = useMemo(() => {
-    const d = new Date();
-    d.setDate(d.getDate() - range * 2);
-    return d.toISOString();
+    const d = new Date(); d.setDate(d.getDate() - range * 2); return d.toISOString();
   }, [range]);
 
   const { data: links } = useQuery({
     queryKey: ["qr_links_titles"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("qr_links")
-        .select("id,title,type,short_id");
+      const { data, error } = await supabase.from("qr_links").select("id,title,type,short_id");
       if (error) throw error;
       return data as LinkRow[];
     },
@@ -65,7 +62,7 @@ function AnalyticsPage() {
     queryKey: ["qr_unique_total", range],
     queryFn: async () => {
       const { data, error } = await (supabase.rpc as any)("qr_unique_visitors", { p_days: range });
-      if (error) throw error;
+      if (error) return 0;
       return (data ?? []).reduce((s: number, r: any) => s + Number(r.uniques || 0), 0);
     },
   });
@@ -83,33 +80,43 @@ function AnalyticsPage() {
     const current: Scan[] = [];
     const previous: Scan[] = [];
     let today = 0;
+
     (scans ?? []).forEach((s) => {
       const t = new Date(s.scanned_at).getTime();
       if (t >= sinceDate) {
         current.push(s);
         if (t >= todayMs) today += 1;
-      } else previous.push(s);
+      } else {
+        previous.push(s);
+      }
     });
-    // group by day for current range (totais + únicos)
+
+    // Build day buckets for the chart
     const days = new Map<string, { count: number; set: Set<string> }>();
     for (let i = range - 1; i >= 0; i--) {
       const d = new Date(); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() - i);
-      days.set(d.toISOString().slice(0, 10), { count: 0, set: new Set() });
+      // Use local date string to avoid UTC mismatch
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+      days.set(key, { count: 0, set: new Set() });
     }
+
     current.forEach((s) => {
-      const k = s.scanned_at.slice(0, 10);
-      const slot = days.get(k);
+      // Parse local date from the ISO timestamp
+      const d = new Date(s.scanned_at);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+      const slot = days.get(key);
       if (slot) {
         slot.count += 1;
         if (s.visitor_hash) slot.set.add(s.visitor_hash);
       }
     });
+
     const byDay = Array.from(days.entries()).map(([date, v]) => ({
-      date: date.slice(5),
+      date: date.slice(5), // MM-DD
       count: v.count,
       uniques: v.set.size,
     }));
-    // top QRs
+
     const counts = new Map<string, number>();
     current.forEach((s) => counts.set(s.qr_id, (counts.get(s.qr_id) || 0) + 1));
     const top = Array.from(counts.entries())
@@ -117,6 +124,7 @@ function AnalyticsPage() {
       .filter((r) => r.link)
       .sort((a, b) => b.count - a.count)
       .slice(0, 10);
+
     return { current, previous, today, byDay, top };
   }, [scans, since, range, byId]);
 
@@ -124,6 +132,8 @@ function AnalyticsPage() {
     ? (current.length > 0 ? 100 : 0)
     : Math.round(((current.length - previous.length) / previous.length) * 100);
   const topQr = top[0];
+
+  const hasData = current.length > 0;
 
   return (
     <div className="space-y-6">
@@ -134,12 +144,7 @@ function AnalyticsPage() {
         </div>
         <div className="flex gap-1 rounded-lg border border-border bg-card p-1">
           {([7, 30, 90] as Range[]).map((r) => (
-            <Button
-              key={r}
-              size="sm"
-              variant={range === r ? "default" : "ghost"}
-              onClick={() => setRange(r)}
-            >
+            <Button key={r} size="sm" variant={range === r ? "default" : "ghost"} onClick={() => setRange(r)}>
               {r}d
             </Button>
           ))}
@@ -147,59 +152,88 @@ function AnalyticsPage() {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Stat icon={<MousePointerClick className="h-5 w-5" />} label={`Scans últimos ${range}d`} value={current.length} />
-        <Stat icon={<Users className="h-5 w-5" />} label={`Visitantes únicos ${range}d`} value={uniquesTotal} />
-        <Stat icon={<BarChart3 className="h-5 w-5" />} label="Scans hoje" value={today} />
-        <Stat
+        <StatCard icon={<MousePointerClick className="h-5 w-5" />} label={`Scans últimos ${range}d`} value={current.length} />
+        <StatCard icon={<Users className="h-5 w-5" />} label={`Visitantes únicos ${range}d`} value={uniquesTotal} />
+        <StatCard icon={<BarChart3 className="h-5 w-5" />} label="Scans hoje" value={today} />
+        <StatCard
           icon={<TrendingUp className="h-5 w-5" />}
           label="vs período anterior"
           value={`${growth >= 0 ? "+" : ""}${growth}%`}
         />
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-1">
-        <Stat
+      {topQr && (
+        <StatCard
           icon={<Trophy className="h-5 w-5" />}
-          label="Top QR"
-          value={topQr?.link?.title ?? "—"}
+          label={`Top QR — ${topQr.count} scans`}
+          value={topQr.link?.title ?? "—"}
           small
         />
-      </div>
+      )}
 
       <Card className="p-5">
         <h2 className="mb-4 text-sm font-medium">Scans por dia</h2>
-        <div className="h-64 w-full">
-          <ResponsiveContainer>
-            <LineChart data={byDay}>
-              <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-              <XAxis dataKey="date" className="text-xs" />
-              <YAxis allowDecimals={false} className="text-xs" />
-              <Tooltip
-                contentStyle={{
-                  background: "hsl(var(--background))",
-                  border: "1px solid hsl(var(--border))",
-                  borderRadius: 8,
-                }}
-              />
-              <Line
-                type="monotone"
-                dataKey="count"
-                name="Scans"
-                stroke="hsl(var(--primary))"
-                strokeWidth={2}
-                dot={false}
-              />
-              <Line
-                type="monotone"
-                dataKey="uniques"
-                name="Únicos"
-                stroke="hsl(var(--muted-foreground))"
-                strokeWidth={2}
-                strokeDasharray="4 4"
-                dot={false}
-              />
-            </LineChart>
-          </ResponsiveContainer>
+        {!hasData && !isLoading ? (
+          <div className="flex h-64 items-center justify-center text-sm text-muted-foreground">
+            Nenhum scan registrado neste período.
+          </div>
+        ) : (
+          <div className="h-64 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={byDay} margin={{ top: 4, right: 8, bottom: 0, left: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                <XAxis
+                  dataKey="date"
+                  tick={{ fontSize: 11, fill: "#6b7280" }}
+                  tickLine={false}
+                  axisLine={false}
+                  interval={range === 7 ? 0 : range === 30 ? 4 : 9}
+                />
+                <YAxis
+                  allowDecimals={false}
+                  tick={{ fontSize: 11, fill: "#6b7280" }}
+                  tickLine={false}
+                  axisLine={false}
+                  width={28}
+                />
+                <Tooltip
+                  contentStyle={{
+                    background: "white",
+                    border: "1px solid #e5e7eb",
+                    borderRadius: 8,
+                    fontSize: 12,
+                  }}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="count"
+                  name="Scans"
+                  stroke={C1}
+                  strokeWidth={2}
+                  dot={false}
+                  activeDot={{ r: 4, fill: C1 }}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="uniques"
+                  name="Únicos"
+                  stroke={C2}
+                  strokeWidth={2}
+                  strokeDasharray="4 4"
+                  dot={false}
+                  activeDot={{ r: 4, fill: C2 }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        )}
+        <div className="mt-3 flex items-center gap-4 text-xs text-muted-foreground">
+          <span className="flex items-center gap-1.5">
+            <span className="inline-block h-2 w-5 rounded-full" style={{ backgroundColor: C1 }} /> Scans
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="inline-block h-0.5 w-5" style={{ borderTop: `2px dashed ${C2}` }} /> Únicos
+          </span>
         </div>
       </Card>
 
@@ -213,26 +247,35 @@ function AnalyticsPage() {
               <TableHead>Nome</TableHead>
               <TableHead>Tipo</TableHead>
               <TableHead className="text-right">Scans</TableHead>
-              <TableHead className="w-24"></TableHead>
+              <TableHead className="w-28"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading && (
-              <TableRow><TableCell colSpan={4} className="py-8 text-center text-muted-foreground">Carregando...</TableCell></TableRow>
+              <TableRow>
+                <TableCell colSpan={4} className="py-8 text-center text-muted-foreground">Carregando...</TableCell>
+              </TableRow>
             )}
             {!isLoading && top.length === 0 && (
-              <TableRow><TableCell colSpan={4} className="py-10 text-center text-muted-foreground">
-                Nenhum scan registrado ainda. Compartilhe seus QR Codes para começar a ver dados aqui.
-              </TableCell></TableRow>
+              <TableRow>
+                <TableCell colSpan={4} className="py-10 text-center text-muted-foreground">
+                  Nenhum scan registrado ainda. Compartilhe seus QR Codes para começar a ver dados aqui.
+                </TableCell>
+              </TableRow>
             )}
             {top.map((r) => (
               <TableRow key={r.id}>
                 <TableCell className="font-medium">{r.link!.title}</TableCell>
-                <TableCell className="text-muted-foreground">{QR_TYPE_LABELS[r.link!.type] ?? r.link!.type}</TableCell>
-                <TableCell className="text-right tabular-nums">{r.count}</TableCell>
+                <TableCell className="text-muted-foreground text-sm">{QR_TYPE_LABELS[r.link!.type] ?? r.link!.type}</TableCell>
+                <TableCell className="text-right tabular-nums font-medium">{r.count}</TableCell>
                 <TableCell className="text-right">
-                  <Link to="/analytics/$qrId" params={{ qrId: r.id }} className="text-sm text-primary hover:underline">
-                    Ver detalhes
+                  <Link
+                    to="/analytics/$qrId"
+                    params={{ qrId: r.id }}
+                    className="text-sm font-medium hover:underline"
+                    style={{ color: C1 }}
+                  >
+                    Ver detalhes →
                   </Link>
                 </TableCell>
               </TableRow>
@@ -244,13 +287,17 @@ function AnalyticsPage() {
   );
 }
 
-function Stat({ icon, label, value, small }: { icon: React.ReactNode; label: string; value: number | string; small?: boolean }) {
+function StatCard({ icon, label, value, small }: {
+  icon: React.ReactNode; label: string; value: number | string; small?: boolean;
+}) {
   return (
     <Card className="flex items-center gap-4 p-5">
       <div className="grid h-12 w-12 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">{icon}</div>
       <div className="min-w-0">
         <p className="text-xs text-muted-foreground">{label}</p>
-        <p className={`${small ? "truncate text-base font-medium" : "text-2xl font-semibold tabular-nums"}`}>{value}</p>
+        <p className={small ? "truncate text-base font-medium" : "text-2xl font-semibold tabular-nums"}>
+          {value}
+        </p>
       </div>
     </Card>
   );

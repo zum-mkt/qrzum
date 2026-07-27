@@ -9,9 +9,11 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import {
-  Clock, Plus, Trash2, UserCheck, Download,
+  Plus, Trash2, UserCheck, Download,
   LogIn, LogOut, Search, QrCode, RefreshCw,
+  Smartphone, Fingerprint,
 } from "lucide-react";
+import { FeatureGate } from "@/components/FeatureGate";
 
 export const Route = createFileRoute("/_authenticated/ponto")({
   component: PontoDashboard,
@@ -23,6 +25,8 @@ type Employee = {
   role: string | null;
   pin: string;
   active: boolean;
+  device_id: string | null;
+  has_webauthn?: boolean;
 };
 
 type Punch = {
@@ -60,7 +64,7 @@ function PontoDashboard() {
 
   async function loadAll() {
     setLoading(true);
-    const [empRes, punchRes, qrRes] = await Promise.all([
+    const [empRes, punchRes, qrRes, webauthnRes] = await Promise.all([
       supabase.from("employees").select("*").order("name"),
       supabase
         .from("time_punches")
@@ -68,12 +72,40 @@ function PontoDashboard() {
         .order("punched_at", { ascending: false })
         .limit(500),
       supabase.from("qr_links").select("id, title, short_id").eq("type", "ponto").order("title"),
+      supabase.from("employee_webauthn_credentials").select("employee_id"),
     ]);
-    setEmployees((empRes.data as Employee[]) ?? []);
+    const webauthnSet = new Set((webauthnRes.data ?? []).map((r: any) => r.employee_id));
+    const emps = ((empRes.data as Employee[]) ?? []).map(e => ({
+      ...e,
+      has_webauthn: webauthnSet.has(e.id),
+    }));
+    setEmployees(emps);
     setPunches((punchRes.data as unknown as Punch[]) ?? []);
     setPontoQrs((qrRes.data as PontoQr[]) ?? []);
     setLoading(false);
   }
+
+  const resetDevice = async (empId: string) => {
+    const { data: { session } } = await supabase.auth.getSession();
+    await fetch("/api/ponto/admin/device-reset", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session!.access_token}` },
+      body: JSON.stringify({ employeeId: empId }),
+    });
+    toast.success("Vínculo de dispositivo removido");
+    setEmployees(prev => prev.map(e => e.id === empId ? { ...e, device_id: null } : e));
+  };
+
+  const clearWebAuthn = async (empId: string) => {
+    const { data: { session } } = await supabase.auth.getSession();
+    await fetch("/api/ponto/admin/webauthn-clear", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session!.access_token}` },
+      body: JSON.stringify({ employeeId: empId }),
+    });
+    toast.success("Biometria removida");
+    setEmployees(prev => prev.map(e => e.id === empId ? { ...e, has_webauthn: false } : e));
+  };
 
   const generatePin = () => {
     const pin = String(Math.floor(100000 + Math.random() * 900000));
@@ -157,6 +189,7 @@ function PontoDashboard() {
   if (loading) return <div className="flex h-64 items-center justify-center text-muted-foreground">Carregando…</div>;
 
   return (
+    <FeatureGate featureKey="ponto" featureLabel="Registro de Ponto" requiredPlan="Pro">
     <div className="space-y-6">
       <div className="flex items-start justify-between">
         <div>
@@ -364,7 +397,25 @@ function PontoDashboard() {
                       PIN: <span className="font-mono">{emp.pin}</span>
                     </p>
                   </div>
-                  <div className="flex items-center gap-2 shrink-0">
+                  <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
+                    {emp.device_id && (
+                      <button
+                        onClick={() => resetDevice(emp.id)}
+                        title="Remover vínculo de dispositivo"
+                        className="inline-flex items-center gap-1 rounded-md border border-border px-1.5 py-0.5 text-[10px] text-muted-foreground hover:border-orange-300 hover:text-orange-500"
+                      >
+                        <Smartphone className="h-3 w-3" /> Desvincular
+                      </button>
+                    )}
+                    {emp.has_webauthn && (
+                      <button
+                        onClick={() => clearWebAuthn(emp.id)}
+                        title="Remover biometria"
+                        className="inline-flex items-center gap-1 rounded-md border border-border px-1.5 py-0.5 text-[10px] text-muted-foreground hover:border-red-300 hover:text-red-500"
+                      >
+                        <Fingerprint className="h-3 w-3" /> Remover biometria
+                      </button>
+                    )}
                     <Badge variant={emp.active ? "default" : "secondary"} className="text-[10px]">
                       {emp.active ? "Ativo" : "Inativo"}
                     </Badge>
@@ -385,5 +436,6 @@ function PontoDashboard() {
         </TabsContent>
       </Tabs>
     </div>
+    </FeatureGate>
   );
 }

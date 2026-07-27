@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { rateLimit } from "@/lib/rate-limit";
 import { convertToModelMessages, streamText, type UIMessage } from "ai";
 import { createOpenRouterProvider } from "@/lib/ai-gateway.server";
 import { getEnvVar } from "@/lib/cloudflare-context";
@@ -7,6 +8,17 @@ export const Route = createFileRoute("/api/public/scanai")({
   server: {
     handlers: {
       POST: async ({ request }) => {
+        const ip = (
+          request.headers.get("cf-connecting-ip") ||
+          request.headers.get("x-forwarded-for") ||
+          "anon"
+        ).split(",")[0].trim();
+
+        // 20 AI messages per 60s per IP
+        if (!rateLimit(`scanai:${ip}`, 20, 60_000)) {
+          return new Response("Too many requests", { status: 429 });
+        }
+
         const body = (await request.json()) as {
           shortId?: string;
           sessionId?: string;
@@ -15,6 +27,14 @@ export const Route = createFileRoute("/api/public/scanai")({
         };
         if (!body.shortId || !body.sessionId || !Array.isArray(body.messages)) {
           return new Response("Bad request", { status: 400 });
+        }
+
+        // Validate sessionId format and cap message count
+        if (!/^[0-9a-f-]{36}$/i.test(body.sessionId)) {
+          return new Response("Bad request", { status: 400 });
+        }
+        if (body.messages.length > 50) {
+          return new Response("Too many messages", { status: 400 });
         }
         const key = getEnvVar("OPENROUTER_API_KEY");
         if (!key) return new Response("Missing OPENROUTER_API_KEY", { status: 500 });
