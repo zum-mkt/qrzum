@@ -6,7 +6,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { CheckCircle, Lock, ShieldCheck, ArrowLeft, Star } from "lucide-react";
+import {
+  CheckCircle,
+  Lock,
+  ShieldCheck,
+  ArrowLeft,
+  Star,
+  Copy,
+  QrCode,
+  CreditCard,
+} from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/checkout/$planSlug")({
   validateSearch: (search: Record<string, unknown>) => ({
@@ -44,8 +53,23 @@ interface CardFormData {
   payer: { email: string; identification: { type: string; number: string } };
 }
 
+type PixData = {
+  subscription_id: string;
+  payment_id: number;
+  qr_code: string;
+  qr_code_base64: string;
+  expires_at: string;
+};
+
 function formatBRL(cents: number) {
   return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(cents / 100);
+}
+
+function formatCountdown(msRemaining: number) {
+  const totalSeconds = Math.max(0, Math.floor(msRemaining / 1000));
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes}:${seconds.toString().padStart(2, "0")}`;
 }
 
 function CheckoutPage() {
@@ -60,8 +84,99 @@ function CheckoutPage() {
   const [success, setSuccess] = useState(false);
   const [mpReady, setMpReady] = useState(false);
 
-  const cardFormRef = useRef<{ getCardFormData: () => CardFormData; unmount: () => void } | null>(null);
+  const [paymentMethod, setPaymentMethod] = useState<"card" | "pix">("card");
+  const [pixName, setPixName] = useState("");
+  const [pixCpf, setPixCpf] = useState("");
+  const [pixEmail, setPixEmail] = useState("");
+  const [pixData, setPixData] = useState<PixData | null>(null);
+  const [pixSubmitting, setPixSubmitting] = useState(false);
+  const [now, setNow] = useState(() => Date.now());
+
+  const cardFormRef = useRef<{ getCardFormData: () => CardFormData; unmount: () => void } | null>(
+    null,
+  );
   const mpRef = useRef<MercadoPagoInstance | null>(null);
+
+  // Prefill Pix email from the logged-in session
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user.email) setPixEmail(session.user.email);
+    });
+  }, []);
+
+  // Poll for Pix payment approval
+  useEffect(() => {
+    if (!pixData) return;
+    const interval = setInterval(async () => {
+      setNow(Date.now());
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (!session) return;
+      const res = await fetch("/api/mp/subscription", {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+      const data = await res.json();
+      if (
+        data.subscription?.id === pixData.subscription_id &&
+        data.subscription?.status === "authorized"
+      ) {
+        clearInterval(interval);
+        setSuccess(true);
+      }
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [pixData]);
+
+  const handlePixSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!plan) return;
+    setPixSubmitting(true);
+
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (!session) {
+        navigate({ to: "/" });
+        return;
+      }
+
+      const res = await fetch("/api/mp/pix-checkout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          plan_id: plan.id,
+          period,
+          payer_email: pixEmail || session.user.email,
+          payer_name: pixName,
+          cpf: pixCpf,
+        }),
+      });
+
+      const result = await res.json();
+      if (!res.ok) {
+        toast.error(result.error || "Erro ao gerar Pix.");
+        setPixSubmitting(false);
+        return;
+      }
+
+      setPixData(result);
+    } catch {
+      toast.error("Erro de conexão. Tente novamente.");
+    } finally {
+      setPixSubmitting(false);
+    }
+  };
+
+  const copyPixCode = async () => {
+    if (!pixData) return;
+    await navigator.clipboard.writeText(pixData.qr_code);
+    toast.success("Código Pix copiado!");
+  };
 
   // Load plan
   useEffect(() => {
@@ -77,9 +192,11 @@ function CheckoutPage() {
       });
   }, [planSlug, navigate]);
 
-  // Load MP SDK and init cardform
+  // Load MP SDK and init cardform (only while the card tab is active — its iframes
+  // aren't in the DOM while the Pix tab is showing, so mounting would target stale nodes)
   useEffect(() => {
-    if (!plan) return;
+    if (!plan || paymentMethod !== "card") return;
+    setMpReady(false);
     const publicKey = import.meta.env.VITE_MP_PUBLIC_KEY;
     if (!publicKey) {
       toast.error("Chave pública do Mercado Pago não configurada.");
@@ -94,7 +211,10 @@ function CheckoutPage() {
 
     function initCardForm() {
       if (!window.MercadoPago) return;
-      if (cardFormRef.current) { cardFormRef.current.unmount(); cardFormRef.current = null; }
+      if (cardFormRef.current) {
+        cardFormRef.current.unmount();
+        cardFormRef.current = null;
+      }
 
       const mp = new window.MercadoPago(publicKey, { locale: "pt-BR" });
       mpRef.current = mp;
@@ -133,10 +253,12 @@ function CheckoutPage() {
     }
 
     return () => {
-      if (cardFormRef.current) { cardFormRef.current.unmount(); cardFormRef.current = null; }
+      if (cardFormRef.current) {
+        cardFormRef.current.unmount();
+        cardFormRef.current = null;
+      }
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [plan, period]);
+  }, [plan, period, paymentMethod]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -151,8 +273,13 @@ function CheckoutPage() {
         return;
       }
 
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) { navigate({ to: "/" }); return; }
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (!session) {
+        navigate({ to: "/" });
+        return;
+      }
 
       const payer = formData.payer;
 
@@ -167,7 +294,8 @@ function CheckoutPage() {
           period,
           card_token: formData.token,
           payer_email: payer.email || session.user.email,
-          payer_name: (document.getElementById("mp-cardholder-name") as HTMLInputElement)?.value || "",
+          payer_name:
+            (document.getElementById("mp-cardholder-name") as HTMLInputElement)?.value || "",
           cpf: payer.identification?.number || "",
         }),
       });
@@ -194,9 +322,7 @@ function CheckoutPage() {
   const annualPrice = plan.price_annual;
   const monthlyPrice = plan.price_monthly;
   const annualDiscount =
-    monthlyPrice && annualPrice
-      ? Math.round((1 - annualPrice / (monthlyPrice * 12)) * 100)
-      : 0;
+    monthlyPrice && annualPrice ? Math.round((1 - annualPrice / (monthlyPrice * 12)) * 100) : 0;
 
   if (success) {
     return (
@@ -263,61 +389,174 @@ function CheckoutPage() {
             </div>
           )}
 
-          <form id="mp-card-form" onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="mp-card-number">Número do cartão</Label>
-              <div id="mp-card-number" className="mp-iframe h-10 rounded-md border border-input bg-background px-3 py-2" />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="mp-expiration-date">Validade</Label>
-                <div id="mp-expiration-date" className="mp-iframe h-10 rounded-md border border-input bg-background px-3 py-2" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="mp-security-code">CVV</Label>
-                <div id="mp-security-code" className="mp-iframe h-10 rounded-md border border-input bg-background px-3 py-2" />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="mp-cardholder-name">Nome no cartão</Label>
-              <div id="mp-cardholder-name" className="mp-iframe h-10 rounded-md border border-input bg-background px-3 py-2" />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Tipo de documento</Label>
-                <div id="mp-identification-type" className="mp-iframe h-10 rounded-md border border-input bg-background px-3 py-2" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="mp-identification-number">CPF</Label>
-                <div id="mp-identification-number" className="mp-iframe h-10 rounded-md border border-input bg-background px-3 py-2" />
-              </div>
-            </div>
-
-            <div className="hidden">
-              <div id="mp-issuer" />
-              <div id="mp-installments" />
-            </div>
-
-            <div className="pt-2 flex items-center gap-2 text-xs text-muted-foreground">
-              <Lock className="h-3.5 w-3.5" />
-              Seus dados são criptografados pelo Mercado Pago
-            </div>
-
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={!mpReady || submitting || !price}
+          {/* Payment method toggle */}
+          <div className="mb-6 flex gap-2">
+            <button
+              type="button"
+              onClick={() => setPaymentMethod("card")}
+              className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg border py-2.5 text-sm font-medium transition-colors ${
+                paymentMethod === "card"
+                  ? "border-primary bg-primary text-primary-foreground"
+                  : "border-border bg-card text-muted-foreground hover:border-primary/50"
+              }`}
             >
-              {submitting
-                ? "Processando..."
-                : price
-                ? `Assinar por ${formatBRL(price)}/${period === "annual" ? "ano" : "mês"}`
-                : "Preço não configurado"}
-            </Button>
-          </form>
+              <CreditCard className="h-3.5 w-3.5" /> Cartão
+            </button>
+            <button
+              type="button"
+              onClick={() => setPaymentMethod("pix")}
+              className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg border py-2.5 text-sm font-medium transition-colors ${
+                paymentMethod === "pix"
+                  ? "border-primary bg-primary text-primary-foreground"
+                  : "border-border bg-card text-muted-foreground hover:border-primary/50"
+              }`}
+            >
+              <QrCode className="h-3.5 w-3.5" /> Pix
+            </button>
+          </div>
+
+          {paymentMethod === "pix" ? (
+            pixData ? (
+              <div className="space-y-4 text-center">
+                <img
+                  src={`data:image/png;base64,${pixData.qr_code_base64}`}
+                  alt="QR Code Pix"
+                  className="mx-auto h-56 w-56 rounded-lg border border-border"
+                />
+                <div className="flex items-center gap-2 rounded-md border border-input bg-background px-3 py-2">
+                  <span className="flex-1 truncate text-left text-xs text-muted-foreground">
+                    {pixData.qr_code}
+                  </span>
+                  <Button type="button" size="sm" variant="outline" onClick={copyPixCode}>
+                    <Copy className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  {new Date(pixData.expires_at).getTime() > now
+                    ? `Expira em ${formatCountdown(new Date(pixData.expires_at).getTime() - now)}`
+                    : "Código expirado — gere um novo Pix."}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Aguardando confirmação do pagamento...
+                </p>
+              </div>
+            ) : (
+              <form onSubmit={handlePixSubmit} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="pix-name">Nome completo</Label>
+                  <Input
+                    id="pix-name"
+                    value={pixName}
+                    onChange={(e) => setPixName(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="pix-email">E-mail</Label>
+                  <Input
+                    id="pix-email"
+                    type="email"
+                    value={pixEmail}
+                    onChange={(e) => setPixEmail(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="pix-cpf">CPF</Label>
+                  <Input
+                    id="pix-cpf"
+                    value={pixCpf}
+                    onChange={(e) => setPixCpf(e.target.value)}
+                    placeholder="Somente números"
+                    required
+                  />
+                </div>
+
+                <div className="pt-2 flex items-center gap-2 text-xs text-muted-foreground">
+                  <Lock className="h-3.5 w-3.5" />
+                  Seus dados são criptografados pelo Mercado Pago
+                </div>
+
+                <Button type="submit" className="w-full" disabled={pixSubmitting || !price}>
+                  {pixSubmitting
+                    ? "Gerando Pix..."
+                    : price
+                      ? `Gerar Pix de ${formatBRL(price)}`
+                      : "Preço não configurado"}
+                </Button>
+              </form>
+            )
+          ) : (
+            <form id="mp-card-form" onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="mp-card-number">Número do cartão</Label>
+                <div
+                  id="mp-card-number"
+                  className="mp-iframe h-10 rounded-md border border-input bg-background px-3 py-2"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="mp-expiration-date">Validade</Label>
+                  <div
+                    id="mp-expiration-date"
+                    className="mp-iframe h-10 rounded-md border border-input bg-background px-3 py-2"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="mp-security-code">CVV</Label>
+                  <div
+                    id="mp-security-code"
+                    className="mp-iframe h-10 rounded-md border border-input bg-background px-3 py-2"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="mp-cardholder-name">Nome no cartão</Label>
+                <div
+                  id="mp-cardholder-name"
+                  className="mp-iframe h-10 rounded-md border border-input bg-background px-3 py-2"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Tipo de documento</Label>
+                  <div
+                    id="mp-identification-type"
+                    className="mp-iframe h-10 rounded-md border border-input bg-background px-3 py-2"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="mp-identification-number">CPF</Label>
+                  <div
+                    id="mp-identification-number"
+                    className="mp-iframe h-10 rounded-md border border-input bg-background px-3 py-2"
+                  />
+                </div>
+              </div>
+
+              <div className="hidden">
+                <div id="mp-issuer" />
+                <div id="mp-installments" />
+              </div>
+
+              <div className="pt-2 flex items-center gap-2 text-xs text-muted-foreground">
+                <Lock className="h-3.5 w-3.5" />
+                Seus dados são criptografados pelo Mercado Pago
+              </div>
+
+              <Button type="submit" className="w-full" disabled={!mpReady || submitting || !price}>
+                {submitting
+                  ? "Processando..."
+                  : price
+                    ? `Assinar por ${formatBRL(price)}/${period === "annual" ? "ano" : "mês"}`
+                    : "Preço não configurado"}
+              </Button>
+            </form>
+          )}
         </div>
 
         {/* Plan summary */}
@@ -341,8 +580,8 @@ function CheckoutPage() {
             </div>
             {period === "annual" && monthlyPrice && annualPrice && (
               <div className="mt-1 text-xs text-green-600">
-                Equivale a {formatBRL(Math.round(annualPrice / 12))}/mês
-                {" "}(economia de {formatBRL(monthlyPrice * 12 - annualPrice)}/ano)
+                Equivale a {formatBRL(Math.round(annualPrice / 12))}/mês (economia de{" "}
+                {formatBRL(monthlyPrice * 12 - annualPrice)}/ano)
               </div>
             )}
             <p className="mt-3 text-sm text-muted-foreground">{plan.tagline}</p>

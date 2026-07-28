@@ -13,6 +13,7 @@ type Subscription = {
   id: string;
   period: "monthly" | "annual";
   status: "pending" | "authorized" | "paused" | "cancelled";
+  payment_method: "card" | "pix";
   mp_payer_email: string | null;
   current_period_end: string | null;
   created_at: string;
@@ -29,10 +30,26 @@ function formatDate(iso: string | null) {
 }
 
 const STATUS_MAP: Record<string, { label: string; color: string; icon: typeof CheckCircle }> = {
-  authorized: { label: "Ativa",     color: "bg-green-500/10 text-green-700 border-green-500/30", icon: CheckCircle },
-  pending:    { label: "Pendente",  color: "bg-yellow-500/10 text-yellow-700 border-yellow-500/30", icon: AlertCircle },
-  paused:     { label: "Pausada",   color: "bg-orange-500/10 text-orange-700 border-orange-500/30", icon: AlertCircle },
-  cancelled:  { label: "Cancelada", color: "bg-red-500/10 text-red-700 border-red-500/30", icon: XCircle },
+  authorized: {
+    label: "Ativa",
+    color: "bg-green-500/10 text-green-700 border-green-500/30",
+    icon: CheckCircle,
+  },
+  pending: {
+    label: "Pendente",
+    color: "bg-yellow-500/10 text-yellow-700 border-yellow-500/30",
+    icon: AlertCircle,
+  },
+  paused: {
+    label: "Pausada",
+    color: "bg-orange-500/10 text-orange-700 border-orange-500/30",
+    icon: AlertCircle,
+  },
+  cancelled: {
+    label: "Cancelada",
+    color: "bg-red-500/10 text-red-700 border-red-500/30",
+    icon: XCircle,
+  },
 };
 
 export default function BillingPage() {
@@ -41,7 +58,10 @@ export default function BillingPage() {
 
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
-      if (!session) { setLoading(false); return; }
+      if (!session) {
+        setLoading(false);
+        return;
+      }
       const res = await fetch("/api/mp/subscription", {
         headers: { Authorization: `Bearer ${session.access_token}` },
       });
@@ -69,11 +89,7 @@ export default function BillingPage() {
       </div>
 
       {/* Current subscription */}
-      {subscription ? (
-        <SubscriptionCard subscription={subscription} />
-      ) : (
-        <NoSubscriptionCard />
-      )}
+      {subscription ? <SubscriptionCard subscription={subscription} /> : <NoSubscriptionCard />}
     </div>
   );
 }
@@ -89,7 +105,9 @@ function SubscriptionCard({ subscription }: { subscription: Subscription }) {
         <div>
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-lg font-bold text-foreground">{subscription.plan.name}</span>
-            <span className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-medium ${status.color}`}>
+            <span
+              className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-medium ${status.color}`}
+            >
               <StatusIcon className="h-3 w-3" /> {status.label}
             </span>
             <Badge variant="outline">{periodLabel}</Badge>
@@ -103,18 +121,17 @@ function SubscriptionCard({ subscription }: { subscription: Subscription }) {
         <div className="flex gap-2">
           <Link to="/checkout/$planSlug" params={{ planSlug: subscription.plan.slug }}>
             <Button variant="outline" size="sm">
-              <CreditCard className="mr-1.5 h-3.5 w-3.5" /> Trocar plano
+              <CreditCard className="mr-1.5 h-3.5 w-3.5" />
+              {subscription.payment_method === "pix" ? "Renovar / trocar plano" : "Trocar plano"}
             </Button>
           </Link>
-          <a
-            href="https://www.mercadopago.com.br/subscriptions"
-            target="_blank"
-            rel="noreferrer"
-          >
-            <Button variant="ghost" size="sm">
-              <ExternalLink className="mr-1.5 h-3.5 w-3.5" /> Gerenciar no MP
-            </Button>
-          </a>
+          {subscription.payment_method === "card" && (
+            <a href="https://www.mercadopago.com.br/subscriptions" target="_blank" rel="noreferrer">
+              <Button variant="ghost" size="sm">
+                <ExternalLink className="mr-1.5 h-3.5 w-3.5" /> Gerenciar no MP
+              </Button>
+            </a>
+          )}
         </div>
       </div>
 
@@ -122,12 +139,18 @@ function SubscriptionCard({ subscription }: { subscription: Subscription }) {
         <Stat label="Plano" value={subscription.plan.name} />
         <Stat label="Período" value={periodLabel} />
         <Stat
-          label={subscription.status === "cancelled" ? "Cancelado em" : "Próxima cobrança"}
+          label={
+            subscription.status === "cancelled"
+              ? "Cancelado em"
+              : subscription.payment_method === "pix"
+                ? "Vence em"
+                : "Próxima cobrança"
+          }
           value={formatDate(subscription.current_period_end)}
         />
       </div>
 
-      {subscription.status === "authorized" && (
+      {subscription.status === "authorized" && subscription.payment_method === "card" && (
         <div className="rounded-lg bg-secondary/50 p-3 text-xs text-muted-foreground">
           Para cancelar sua assinatura acesse o painel do Mercado Pago em{" "}
           <a
@@ -139,6 +162,13 @@ function SubscriptionCard({ subscription }: { subscription: Subscription }) {
             mercadopago.com.br/subscriptions
           </a>
           .
+        </div>
+      )}
+
+      {subscription.status === "authorized" && subscription.payment_method === "pix" && (
+        <div className="rounded-lg bg-secondary/50 p-3 text-xs text-muted-foreground">
+          Pagamento via Pix não é recorrente — renove manualmente antes do vencimento usando o botão
+          "Renovar / trocar plano" acima.
         </div>
       )}
     </div>

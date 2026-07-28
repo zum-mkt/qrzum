@@ -37,6 +37,7 @@ import { Route as ApiPontoPunchRouteImport } from './routes/api/ponto/punch'
 import { Route as ApiMpWebhookRouteImport } from './routes/api/mp/webhook'
 import { Route as ApiMpSubscriptionRouteImport } from './routes/api/mp/subscription'
 import { Route as ApiMpSubscribeRouteImport } from './routes/api/mp/subscribe'
+import { Route as ApiMpPixCheckoutRouteImport } from './routes/api/mp/pix-checkout'
 import { Route as ApiAiChatRouteImport } from './routes/api/ai/chat'
 import { Route as AuthenticatedFlowBuilderQrIdRouteImport } from './routes/_authenticated/flow-builder.$qrId'
 import { Route as AuthenticatedCheckoutPlanSlugRouteImport } from './routes/_authenticated/checkout.$planSlug'
@@ -190,6 +191,11 @@ const ApiMpSubscribeRoute = ApiMpSubscribeRouteImport.update({
   path: '/api/mp/subscribe',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiMpPixCheckoutRoute = ApiMpPixCheckoutRouteImport.update({
+  id: '/api/mp/pix-checkout',
+  path: '/api/mp/pix-checkout',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiAiChatRoute = ApiAiChatRouteImport.update({
   id: '/api/ai/chat',
   path: '/api/ai/chat',
@@ -285,6 +291,7 @@ export interface FileRoutesByFullPath {
   '/checkout/$planSlug': typeof AuthenticatedCheckoutPlanSlugRoute
   '/flow-builder/$qrId': typeof AuthenticatedFlowBuilderQrIdRoute
   '/api/ai/chat': typeof ApiAiChatRoute
+  '/api/mp/pix-checkout': typeof ApiMpPixCheckoutRoute
   '/api/mp/subscribe': typeof ApiMpSubscribeRoute
   '/api/mp/subscription': typeof ApiMpSubscriptionRoute
   '/api/mp/webhook': typeof ApiMpWebhookRoute
@@ -326,6 +333,7 @@ export interface FileRoutesByTo {
   '/checkout/$planSlug': typeof AuthenticatedCheckoutPlanSlugRoute
   '/flow-builder/$qrId': typeof AuthenticatedFlowBuilderQrIdRoute
   '/api/ai/chat': typeof ApiAiChatRoute
+  '/api/mp/pix-checkout': typeof ApiMpPixCheckoutRoute
   '/api/mp/subscribe': typeof ApiMpSubscribeRoute
   '/api/mp/subscription': typeof ApiMpSubscriptionRoute
   '/api/mp/webhook': typeof ApiMpWebhookRoute
@@ -369,6 +377,7 @@ export interface FileRoutesById {
   '/_authenticated/checkout/$planSlug': typeof AuthenticatedCheckoutPlanSlugRoute
   '/_authenticated/flow-builder/$qrId': typeof AuthenticatedFlowBuilderQrIdRoute
   '/api/ai/chat': typeof ApiAiChatRoute
+  '/api/mp/pix-checkout': typeof ApiMpPixCheckoutRoute
   '/api/mp/subscribe': typeof ApiMpSubscribeRoute
   '/api/mp/subscription': typeof ApiMpSubscriptionRoute
   '/api/mp/webhook': typeof ApiMpWebhookRoute
@@ -412,6 +421,7 @@ export interface FileRouteTypes {
     | '/checkout/$planSlug'
     | '/flow-builder/$qrId'
     | '/api/ai/chat'
+    | '/api/mp/pix-checkout'
     | '/api/mp/subscribe'
     | '/api/mp/subscription'
     | '/api/mp/webhook'
@@ -453,6 +463,7 @@ export interface FileRouteTypes {
     | '/checkout/$planSlug'
     | '/flow-builder/$qrId'
     | '/api/ai/chat'
+    | '/api/mp/pix-checkout'
     | '/api/mp/subscribe'
     | '/api/mp/subscription'
     | '/api/mp/webhook'
@@ -495,6 +506,7 @@ export interface FileRouteTypes {
     | '/_authenticated/checkout/$planSlug'
     | '/_authenticated/flow-builder/$qrId'
     | '/api/ai/chat'
+    | '/api/mp/pix-checkout'
     | '/api/mp/subscribe'
     | '/api/mp/subscription'
     | '/api/mp/webhook'
@@ -524,6 +536,7 @@ export interface RootRouteChildren {
   RShortIdRoute: typeof RShortIdRoute
   VcardShortIdRoute: typeof VcardShortIdRoute
   ApiAiChatRoute: typeof ApiAiChatRoute
+  ApiMpPixCheckoutRoute: typeof ApiMpPixCheckoutRoute
   ApiMpSubscribeRoute: typeof ApiMpSubscribeRoute
   ApiMpSubscriptionRoute: typeof ApiMpSubscriptionRoute
   ApiMpWebhookRoute: typeof ApiMpWebhookRoute
@@ -739,6 +752,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiMpSubscribeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/mp/pix-checkout': {
+      id: '/api/mp/pix-checkout'
+      path: '/api/mp/pix-checkout'
+      fullPath: '/api/mp/pix-checkout'
+      preLoaderRoute: typeof ApiMpPixCheckoutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/ai/chat': {
       id: '/api/ai/chat'
       path: '/api/ai/chat'
@@ -888,6 +908,7 @@ const rootRouteChildren: RootRouteChildren = {
   RShortIdRoute: RShortIdRoute,
   VcardShortIdRoute: VcardShortIdRoute,
   ApiAiChatRoute: ApiAiChatRoute,
+  ApiMpPixCheckoutRoute: ApiMpPixCheckoutRoute,
   ApiMpSubscribeRoute: ApiMpSubscribeRoute,
   ApiMpSubscriptionRoute: ApiMpSubscriptionRoute,
   ApiMpWebhookRoute: ApiMpWebhookRoute,

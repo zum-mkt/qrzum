@@ -8,7 +8,8 @@ export const Route = createFileRoute("/api/mp/subscription")({
         const jwt = authHeader.replace(/^Bearer\s+/i, "");
         if (!jwt) {
           return new Response(JSON.stringify({ subscription: null }), {
-            status: 200, headers: { "Content-Type": "application/json" },
+            status: 200,
+            headers: { "Content-Type": "application/json" },
           });
         }
 
@@ -16,19 +17,24 @@ export const Route = createFileRoute("/api/mp/subscription")({
           const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
           const admin = supabaseAdmin as any;
 
-          const { data: { user } } = await admin.auth.getUser(jwt);
+          const {
+            data: { user },
+          } = await admin.auth.getUser(jwt);
           if (!user) {
             return new Response(JSON.stringify({ subscription: null }), {
-              status: 200, headers: { "Content-Type": "application/json" },
+              status: 200,
+              headers: { "Content-Type": "application/json" },
             });
           }
 
           const { data: sub } = await admin
             .from("user_subscriptions")
-            .select(`
-              id, period, status, mp_payer_email, current_period_end, created_at,
+            .select(
+              `
+              id, period, status, payment_method, mp_payer_email, current_period_end, created_at,
               plan:pricing_plans ( id, name, slug )
-            `)
+            `,
+            )
             .eq("user_id", user.id)
             .in("status", ["authorized", "pending", "paused"])
             .order("created_at", { ascending: false })
@@ -36,12 +42,14 @@ export const Route = createFileRoute("/api/mp/subscription")({
             .maybeSingle();
 
           return new Response(JSON.stringify({ subscription: sub ?? null }), {
-            status: 200, headers: { "Content-Type": "application/json" },
+            status: 200,
+            headers: { "Content-Type": "application/json" },
           });
         } catch (err) {
           console.error("[mp/subscription]", err);
           return new Response(JSON.stringify({ subscription: null }), {
-            status: 200, headers: { "Content-Type": "application/json" },
+            status: 200,
+            headers: { "Content-Type": "application/json" },
           });
         }
       },

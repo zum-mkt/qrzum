@@ -22,7 +22,11 @@ async function validateMpSignature(request: Request, rawBody: string): Promise<b
 
   // Extract data.id from body
   let dataId = "";
-  try { dataId = (JSON.parse(rawBody) as { data?: { id?: string } }).data?.id ?? ""; } catch { /* ignore */ }
+  try {
+    dataId = (JSON.parse(rawBody) as { data?: { id?: string } }).data?.id ?? "";
+  } catch {
+    /* ignore */
+  }
 
   const manifest = `id:${dataId};request-id:${xRequestId};ts:${ts};`;
   const expectedHash = createHmac("sha256", secret).update(manifest).digest("hex");
@@ -47,7 +51,11 @@ export const Route = createFileRoute("/api/mp/webhook")({
         }
 
         let body: { type?: string; data?: { id?: string } } = {};
-        try { body = JSON.parse(rawBody); } catch { /* ignore */ }
+        try {
+          body = JSON.parse(rawBody);
+        } catch {
+          /* ignore */
+        }
 
         // MP sends type=payment or type=subscription_preapproval
         const eventType = body.type;
@@ -66,7 +74,7 @@ export const Route = createFileRoute("/api/mp/webhook")({
             });
             if (!res.ok) return new Response("ok", { status: 200 });
 
-            const payment = await res.json() as {
+            const payment = (await res.json()) as {
               id: number;
               status: string;
               transaction_amount: number;
@@ -77,20 +85,45 @@ export const Route = createFileRoute("/api/mp/webhook")({
 
             const mpPaymentId = String(payment.id);
             const amountCents = Math.round(payment.transaction_amount * 100);
-            const paidAt = payment.date_approved ? new Date(payment.date_approved).toISOString() : null;
+            const paidAt = payment.date_approved
+              ? new Date(payment.date_approved).toISOString()
+              : null;
 
-            // Find subscription by MP subscription ID (may be in metadata or external_reference)
-            const preapprovalId = payment.metadata?.preapproval_id || payment.external_reference;
+            // Card preapproval payments carry the subscription via metadata.preapproval_id.
+            // Pix payments (no preapproval object) carry it via external_reference = user_subscriptions.id.
+            const preapprovalId = payment.metadata?.preapproval_id;
             let subscriptionId: string | null = null;
             let userId: string | null = null;
+            let subPeriod: "monthly" | "annual" | null = null;
+            let subPaymentMethod: string | null = null;
+            let subCurrentPeriodEnd: string | null = null;
 
             if (preapprovalId) {
               const { data: sub } = await admin
                 .from("user_subscriptions")
-                .select("id, user_id")
+                .select("id, user_id, period, payment_method, current_period_end")
                 .eq("mp_subscription_id", preapprovalId)
                 .maybeSingle();
-              if (sub) { subscriptionId = sub.id; userId = sub.user_id; }
+              if (sub) {
+                subscriptionId = sub.id;
+                userId = sub.user_id;
+                subPeriod = sub.period;
+                subPaymentMethod = sub.payment_method;
+                subCurrentPeriodEnd = sub.current_period_end;
+              }
+            } else if (payment.external_reference) {
+              const { data: sub } = await admin
+                .from("user_subscriptions")
+                .select("id, user_id, period, payment_method, current_period_end")
+                .eq("id", payment.external_reference)
+                .maybeSingle();
+              if (sub) {
+                subscriptionId = sub.id;
+                userId = sub.user_id;
+                subPeriod = sub.period;
+                subPaymentMethod = sub.payment_method;
+                subCurrentPeriodEnd = sub.current_period_end;
+              }
             }
 
             // Upsert payment record
@@ -108,10 +141,37 @@ export const Route = createFileRoute("/api/mp/webhook")({
 
             // Update subscription status if payment approved
             if (subscriptionId && payment.status === "approved") {
-              await admin
-                .from("user_subscriptions")
-                .update({ status: "authorized", updated_at: new Date().toISOString() })
-                .eq("id", subscriptionId);
+              if (subPaymentMethod === "pix") {
+                const base =
+                  subCurrentPeriodEnd && new Date(subCurrentPeriodEnd) > new Date()
+                    ? new Date(subCurrentPeriodEnd)
+                    : new Date();
+                const periodEnd = new Date(base);
+                if (subPeriod === "annual") periodEnd.setFullYear(periodEnd.getFullYear() + 1);
+                else periodEnd.setMonth(periodEnd.getMonth() + 1);
+
+                await admin
+                  .from("user_subscriptions")
+                  .update({
+                    status: "authorized",
+                    current_period_end: periodEnd.toISOString(),
+                    updated_at: new Date().toISOString(),
+                  })
+                  .eq("id", subscriptionId);
+
+                // Only one active subscription per user
+                await admin
+                  .from("user_subscriptions")
+                  .update({ status: "cancelled", updated_at: new Date().toISOString() })
+                  .eq("user_id", userId)
+                  .neq("id", subscriptionId)
+                  .in("status", ["authorized", "pending"]);
+              } else {
+                await admin
+                  .from("user_subscriptions")
+                  .update({ status: "authorized", updated_at: new Date().toISOString() })
+                  .eq("id", subscriptionId);
+              }
             }
           }
 
@@ -122,17 +182,20 @@ export const Route = createFileRoute("/api/mp/webhook")({
             });
             if (!res.ok) return new Response("ok", { status: 200 });
 
-            const sub = await res.json() as {
+            const sub = (await res.json()) as {
               id: string;
               status: string;
               next_payment_date?: string;
             };
 
             const newStatus =
-              sub.status === "authorized" ? "authorized"
-              : sub.status === "paused" ? "paused"
-              : sub.status === "cancelled" ? "cancelled"
-              : "pending";
+              sub.status === "authorized"
+                ? "authorized"
+                : sub.status === "paused"
+                  ? "paused"
+                  : sub.status === "cancelled"
+                    ? "cancelled"
+                    : "pending";
 
             await admin
               .from("user_subscriptions")

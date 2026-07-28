@@ -13,7 +13,7 @@ let serverEntryPromise: Promise<ServerEntry> | undefined;
 async function getServerEntry(): Promise<ServerEntry> {
   if (!serverEntryPromise) {
     serverEntryPromise = import("@tanstack/react-start/server-entry").then(
-      (m) => ((m as { default?: ServerEntry }).default ?? (m as unknown as ServerEntry)),
+      (m) => (m as { default?: ServerEntry }).default ?? (m as unknown as ServerEntry),
     );
   }
   return serverEntryPromise;
@@ -77,6 +77,16 @@ export default {
     } catch (error) {
       console.error(error);
       return brandedErrorResponse();
+    }
+  },
+
+  async scheduled(_event: unknown, env: unknown) {
+    setCloudflareEnv(env);
+    try {
+      const { expireLapsedPixSubscriptions } = await import("./lib/pix-expire.server");
+      await expireLapsedPixSubscriptions();
+    } catch (error) {
+      console.error("[scheduled]", error);
     }
   },
 };
