@@ -209,37 +209,50 @@ function CheckoutPage() {
 
     let scriptEl: HTMLScriptElement | null = null;
 
+    function unmountCardForm() {
+      if (!cardFormRef.current) return;
+      try {
+        cardFormRef.current.unmount();
+      } catch (err) {
+        // The MP SDK's unmount can throw if its iframes were already removed from the
+        // DOM (e.g. switching away from the card tab) — never let that crash the page.
+        console.warn("[MP] cardform unmount error:", err);
+      }
+      cardFormRef.current = null;
+    }
+
     function initCardForm() {
       if (!window.MercadoPago) return;
-      if (cardFormRef.current) {
-        cardFormRef.current.unmount();
-        cardFormRef.current = null;
-      }
+      unmountCardForm();
 
       const mp = new window.MercadoPago(publicKey, { locale: "pt-BR" });
       mpRef.current = mp;
 
-      cardFormRef.current = mp.cardForm({
-        amount: amountStr,
-        iframe: true,
-        form: {
-          id: "mp-card-form",
-          cardNumber: { id: "mp-card-number", placeholder: "Número do cartão" },
-          expirationDate: { id: "mp-expiration-date", placeholder: "MM/AAAA" },
-          securityCode: { id: "mp-security-code", placeholder: "CVV" },
-          cardholderName: { id: "mp-cardholder-name", placeholder: "Nome como no cartão" },
-          issuer: { id: "mp-issuer", placeholder: "Banco emissor" },
-          installments: { id: "mp-installments", placeholder: "Parcelas" },
-          identificationType: { id: "mp-identification-type" },
-          identificationNumber: { id: "mp-identification-number", placeholder: "CPF" },
-        },
-        callbacks: {
-          onFormMounted: (err: Error | null) => {
-            if (err) console.warn("[MP] cardform error:", err);
-            else setMpReady(true);
+      try {
+        cardFormRef.current = mp.cardForm({
+          amount: amountStr,
+          iframe: true,
+          form: {
+            id: "mp-card-form",
+            cardNumber: { id: "mp-card-number", placeholder: "Número do cartão" },
+            expirationDate: { id: "mp-expiration-date", placeholder: "MM/AAAA" },
+            securityCode: { id: "mp-security-code", placeholder: "CVV" },
+            cardholderName: { id: "mp-cardholder-name", placeholder: "Nome como no cartão" },
+            issuer: { id: "mp-issuer", placeholder: "Banco emissor" },
+            installments: { id: "mp-installments", placeholder: "Parcelas" },
+            identificationType: { id: "mp-identification-type" },
+            identificationNumber: { id: "mp-identification-number", placeholder: "CPF" },
           },
-        },
-      });
+          callbacks: {
+            onFormMounted: (err: Error | null) => {
+              if (err) console.warn("[MP] cardform error:", err);
+              else setMpReady(true);
+            },
+          },
+        });
+      } catch (err) {
+        console.warn("[MP] cardform init error:", err);
+      }
     }
 
     if (window.MercadoPago) {
@@ -252,12 +265,7 @@ function CheckoutPage() {
       document.head.appendChild(scriptEl);
     }
 
-    return () => {
-      if (cardFormRef.current) {
-        cardFormRef.current.unmount();
-        cardFormRef.current = null;
-      }
-    };
+    return unmountCardForm;
   }, [plan, period, paymentMethod]);
 
   const handleSubmit = async (e: React.FormEvent) => {
