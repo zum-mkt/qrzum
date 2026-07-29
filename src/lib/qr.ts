@@ -46,8 +46,77 @@ export function buildVCard(d: VCardData) {
   return lines.join("\n");
 }
 
-export type LinkItem = { label: string; url: string };
-export type LinksData = { bio?: string; items: LinkItem[] };
+export type LinkIconId =
+  | "auto" | "none" | "instagram" | "facebook" | "twitter" | "youtube"
+  | "linkedin" | "github" | "twitch" | "whatsapp" | "tiktok" | "telegram"
+  | "email" | "phone" | "site";
+
+export type LinksTextureId = "dots" | "grid" | "diagonal" | "waves";
+
+export type LinksBackground =
+  | { type: "solid"; color1: string }
+  | { type: "gradient"; color1: string; color2: string; angle: number }
+  | { type: "texture"; textureId: LinksTextureId; color1: string; color2: string };
+
+export type LinksButtonRadius = "sm" | "md" | "lg" | "full";
+
+export type LinksTheme = {
+  headerImageUrl?: string | null;
+  avatarUrl?: string | null;
+  background: LinksBackground;
+  titleColor: string;
+  bioColor: string;
+  buttonBgColor: string;
+  buttonTextColor: string;
+  buttonRadius: LinksButtonRadius;
+  effectsEnabled: boolean;
+};
+
+export function defaultLinksTheme(): LinksTheme {
+  return {
+    headerImageUrl: null,
+    avatarUrl: null,
+    background: { type: "gradient", color1: "#f0ebff", color2: "#e5e7eb", angle: 135 },
+    titleColor: "#0f172a",
+    bioColor: "#64748b",
+    buttonBgColor: "#ffffff",
+    buttonTextColor: "#0f172a",
+    buttonRadius: "md",
+    effectsEnabled: false,
+  };
+}
+
+const ICON_DOMAIN_RULES: [RegExp, Exclude<LinkIconId, "auto" | "none">][] = [
+  [/(^|\.)instagram\.com$/i, "instagram"],
+  [/(^|\.)(facebook\.com|fb\.com|fb\.me)$/i, "facebook"],
+  [/(^|\.)(twitter\.com|x\.com)$/i, "twitter"],
+  [/(^|\.)(youtube\.com|youtu\.be)$/i, "youtube"],
+  [/(^|\.)linkedin\.com$/i, "linkedin"],
+  [/(^|\.)github\.com$/i, "github"],
+  [/(^|\.)twitch\.tv$/i, "twitch"],
+  [/(^|\.)(wa\.me|whatsapp\.com)$/i, "whatsapp"],
+  [/(^|\.)tiktok\.com$/i, "tiktok"],
+  [/(^|\.)(t\.me|telegram\.org|telegram\.me)$/i, "telegram"],
+];
+
+/** Guess a platform icon from a link URL by matching its hostname/scheme against known providers. */
+export function detectIconFromUrl(url: string): Exclude<LinkIconId, "auto" | "none"> {
+  const raw = url.trim();
+  if (/^mailto:/i.test(raw)) return "email";
+  if (/^tel:/i.test(raw)) return "phone";
+  try {
+    const host = new URL(raw).hostname.replace(/^www\./i, "");
+    for (const [re, icon] of ICON_DOMAIN_RULES) {
+      if (re.test(host)) return icon;
+    }
+  } catch {
+    // not a valid absolute URL — fall through to generic site icon
+  }
+  return "site";
+}
+
+export type LinkItem = { label: string; url: string; icon?: LinkIconId };
+export type LinksData = { bio?: string; items: LinkItem[]; theme?: LinksTheme };
 
 export function buildWhatsAppUrl(rawPhone: string, message?: string) {
   const phone = rawPhone.replace(/\D/g, "");

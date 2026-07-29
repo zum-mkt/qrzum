@@ -1,10 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Card } from "@/components/ui/card";
-import { ExternalLink } from "lucide-react";
 import type { LinksData } from "@/lib/qr";
 import { firePixels } from "@/lib/firePixels";
+import { LinksPageView } from "@/components/LinksPageView";
 
 export const Route = createFileRoute("/links/$shortId")({
   component: LinksPage,
@@ -63,32 +62,11 @@ function LinksPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/10 via-background to-secondary p-4">
-      <div className="mx-auto max-w-md pt-12">
-        <div className="mb-6 text-center">
-          <h1 className="text-2xl font-semibold text-foreground">{data.title}</h1>
-          {data.links.bio && (
-            <p className="mt-2 text-sm text-muted-foreground">{data.links.bio}</p>
-          )}
-        </div>
-        <Card className="space-y-2 p-4">
-          {(data.links.items ?? []).map((item, i) => (
-            <a
-              key={i}
-              href={item.url}
-              target="_blank"
-              rel="noreferrer"
-              className="flex items-center justify-between rounded-lg border border-border bg-card px-4 py-3 text-sm font-medium text-foreground transition-colors hover:bg-secondary"
-            >
-              <span>{item.label}</span>
-              <ExternalLink className="h-4 w-4 text-muted-foreground" />
-            </a>
-          ))}
-          {(data.links.items ?? []).length === 0 && (
-            <p className="py-6 text-center text-sm text-muted-foreground">Nenhum link cadastrado.</p>
-          )}
-        </Card>
-      </div>
-    </div>
+    <LinksPageView
+      title={data.title}
+      bio={data.links.bio}
+      items={data.links.items ?? []}
+      theme={data.links.theme}
+    />
   );
 }

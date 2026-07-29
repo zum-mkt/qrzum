@@ -5,6 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RoutingRulesEditor } from "@/components/RoutingRulesEditor";
 import { KnowledgeEditor } from "@/components/KnowledgeEditor";
 import { ProofConfigEditor } from "@/components/ProofConfigEditor";
+import { LinksPageEditor } from "@/components/LinksPageEditor";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -499,6 +500,7 @@ function Dashboard() {
               <TabsTrigger value="routing" className="flex-1">Roteamento</TabsTrigger>
               <TabsTrigger value="knowledge" className="flex-1">Knowledge</TabsTrigger>
               <TabsTrigger value="presenca" className="flex-1">Presença</TabsTrigger>
+              {editRow?.type === "links" && <TabsTrigger value="pagina" className="flex-1">Página</TabsTrigger>}
             </TabsList>
 
             <TabsContent value="geral" className="space-y-4 pt-2">
@@ -545,6 +547,12 @@ function Dashboard() {
             <TabsContent value="presenca" className="pt-2">
               {editRow && <ProofConfigEditor qrId={editRow.id} />}
             </TabsContent>
+
+            {editRow?.type === "links" && (
+              <TabsContent value="pagina" className="pt-2">
+                <LinksPageEditor qrId={editRow.id} />
+              </TabsContent>
+            )}
           </Tabs>
 
           {(editTab === "geral" || editTab === "visual") && (
