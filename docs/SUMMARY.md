@@ -1,7 +1,7 @@
 # Table of contents
 
-* [Visão Geral](README.md)
-* [Funcionalidades]
+* [Visão Geral](../)
+* \[Funcionalidades]
   * [Tipos de QR Code e Personalização](funcionalidades/tipos-de-qr.md)
   * [Fluxo Operacional (Flow Builder)](funcionalidades/flow-builder.md)
   * [Registro de Ponto e Prova de Presença](funcionalidades/ponto-e-presenca.md)
