@@ -33,8 +33,8 @@ function LoginPage() {
           <a href="/">
             <img src="/logo.svg" alt="zum" className="mb-8 h-8" />
           </a>
-          <h1 className="text-2xl font-bold text-foreground">Entrar no zum</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Acesse sua conta para continuar</p>
+          <h1 className="text-2xl font-bold text-foreground">ENTRAR</h1>
+          <p className="mt-1 text-sm text-muted-foreground">Acesse sua conta ou crie seu cadastro gratuitamente</p>
           <div className="mt-8">
             <AuthForm defaultTab="signin" />
           </div>
