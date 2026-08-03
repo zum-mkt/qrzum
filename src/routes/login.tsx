@@ -7,7 +7,7 @@ import { HeroAnimation } from "@/components/HeroAnimation";
 
 export const Route = createFileRoute("/login")({
   head: () => ({
-    meta: [{ title: "Entrar — zum" }],
+    meta: [{ title: "Entrar — ZRCODE" }],
   }),
   component: LoginPage,
 });
@@ -31,7 +31,7 @@ function LoginPage() {
       <div className="flex items-center justify-center px-6 py-12">
         <div className="w-full max-w-sm">
           <a href="/">
-            <img src="/logo.svg" alt="zum" className="mb-8 h-8" />
+            <img src="/logo.svg" alt="ZRCODE" className="mb-8 h-8" />
           </a>
           <h1 className="text-2xl font-bold text-foreground">ENTRAR</h1>
           <p className="mt-1 text-sm text-muted-foreground">Acesse sua conta ou crie seu cadastro gratuitamente</p>

@@ -7,7 +7,7 @@ import { buildQrUrl } from "@/lib/qr";
 import { FeatureGate } from "@/components/FeatureGate";
 
 export const Route = createFileRoute("/_authenticated/flow-builder/$qrId")({
-  head: () => ({ meta: [{ title: "Flow Builder — zum" }] }),
+  head: () => ({ meta: [{ title: "Flow Builder — ZRCODE" }] }),
   component: FlowBuilderPageGated,
 });
 

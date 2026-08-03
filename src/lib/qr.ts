@@ -210,11 +210,11 @@ function icsDateTime(localStr: string): string {
 }
 
 export function buildIcsString(d: CalendarData): string {
-  const uid = `${Date.now()}-${Math.random().toString(36).slice(2)}@zum`;
+  const uid = `${Date.now()}-${Math.random().toString(36).slice(2)}@zrcode`;
   const lines = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "PRODID:-//zum//QR Calendar//PT",
+    "PRODID:-//ZRCODE//QR Calendar//PT",
     "CALSCALE:GREGORIAN",
     "METHOD:PUBLISH",
     "BEGIN:VEVENT",

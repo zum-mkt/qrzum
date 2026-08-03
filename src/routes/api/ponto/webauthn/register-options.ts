@@ -22,7 +22,7 @@ export const Route = createFileRoute("/api/ponto/webauthn/register-options")({
         const hostname = new URL(request.url).hostname;
 
         const options = await generateRegistrationOptions({
-          rpName: "QRzum · Registro de Ponto",
+          rpName: "ZRCODE · Registro de Ponto",
           rpID: hostname,
           userID: new TextEncoder().encode(emp.id),
           userName: emp.name,

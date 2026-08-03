@@ -1,6 +1,6 @@
 {
-  "name": "QRzum — QR Codes inteligentes",
-  "short_name": "QRzum",
+  "name": "ZRCODE — QR Codes inteligentes",
+  "short_name": "ZRCODE",
   "start_url": "/dashboard",
   "scope": "/",
   "display": "standalone",

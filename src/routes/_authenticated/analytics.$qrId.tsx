@@ -16,7 +16,7 @@ import { ArrowLeft, Download, Users } from "lucide-react";
 import { QR_TYPE_LABELS } from "@/lib/qr";
 
 export const Route = createFileRoute("/_authenticated/analytics/$qrId")({
-  head: () => ({ meta: [{ title: "Analytics do QR — zum" }] }),
+  head: () => ({ meta: [{ title: "Analytics do QR — ZRCODE" }] }),
   component: QrAnalytics,
 });
 

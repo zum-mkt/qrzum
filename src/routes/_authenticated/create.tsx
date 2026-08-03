@@ -28,7 +28,7 @@ import { useSubscription } from "@/contexts/SubscriptionContext";
 import { FeatureGate } from "@/components/FeatureGate";
 
 export const Route = createFileRoute("/_authenticated/create")({
-  head: () => ({ meta: [{ title: "Criar QR Code — zum" }] }),
+  head: () => ({ meta: [{ title: "Criar QR Code — ZRCODE" }] }),
   component: Create,
 });
 
@@ -40,7 +40,7 @@ type Created = {
   qrValue?: string;
 } | null;
 
-const PREVIEW_PLACEHOLDER = "https://zum.qr/preview";
+const PREVIEW_PLACEHOLDER = "https://zrcode.qr/preview";
 
 function Create() {
   const [created, setCreated] = useState<Created>(null);

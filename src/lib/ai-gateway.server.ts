@@ -34,7 +34,7 @@ export function resolveModel(modelId: string): LanguageModelV1 {
   return createOpenAICompatible({
     name: "openrouter",
     baseURL: "https://openrouter.ai/api/v1",
-    headers: { Authorization: `Bearer ${key}`, "HTTP-Referer": "https://qrzum.com", "X-Title": "QRzum" },
+    headers: { Authorization: `Bearer ${key}`, "HTTP-Referer": "https://qrzum.com", "X-Title": "ZRCODE" },
   })(modelId);
 }
 
@@ -80,6 +80,6 @@ export function createOpenRouterProvider(apiKey: string) {
   return createOpenAICompatible({
     name: "openrouter",
     baseURL: "https://openrouter.ai/api/v1",
-    headers: { Authorization: `Bearer ${apiKey}`, "HTTP-Referer": "https://qrzum.com", "X-Title": "QRzum" },
+    headers: { Authorization: `Bearer ${apiKey}`, "HTTP-Referer": "https://qrzum.com", "X-Title": "ZRCODE" },
   });
 }

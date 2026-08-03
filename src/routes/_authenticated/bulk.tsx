@@ -14,7 +14,7 @@ import { toast } from "sonner";
 import { generateShortId, buildQrUrl, buildWhatsAppUrl, buildWifiString } from "@/lib/qr";
 
 export const Route = createFileRoute("/_authenticated/bulk")({
-  head: () => ({ meta: [{ title: "Criar em lote — QRzum" }] }),
+  head: () => ({ meta: [{ title: "Criar em lote — ZRCODE" }] }),
   component: BulkPageGated,
 });
 
@@ -100,7 +100,7 @@ function BulkPage() {
     const blob = new Blob([TEMPLATE], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
-    a.href = url; a.download = "qrzum-template.csv"; a.click();
+    a.href = url; a.download = "zrcode-template.csv"; a.click();
     URL.revokeObjectURL(url);
   };
 
@@ -152,7 +152,7 @@ function BulkPage() {
     const blob = new Blob([lines.join("\n")], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
-    a.href = url; a.download = "qrzum-resultados.csv"; a.click();
+    a.href = url; a.download = "zrcode-resultados.csv"; a.click();
     URL.revokeObjectURL(url);
   };
 

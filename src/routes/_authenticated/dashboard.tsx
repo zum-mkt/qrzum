@@ -36,7 +36,7 @@ import {
 import { buildQrUrl, QR_TYPE_LABELS, emptyPixelConfig, type FrameStyle, type PixelConfig } from "@/lib/qr";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
-  head: () => ({ meta: [{ title: "Dashboard — zum" }] }),
+  head: () => ({ meta: [{ title: "Dashboard — ZRCODE" }] }),
   component: Dashboard,
 });
 

@@ -17,7 +17,7 @@ import { FeatureGate } from "@/components/FeatureGate";
 import { AiChatPanel } from "@/components/AiChatPanel";
 
 export const Route = createFileRoute("/_authenticated/submissions")({
-  head: () => ({ meta: [{ title: "Respostas — zum" }] }),
+  head: () => ({ meta: [{ title: "Respostas — ZRCODE" }] }),
   component: SubmissionsPageGated,
 });
 

@@ -17,7 +17,7 @@ import { isStandalonePwa } from "@/lib/pwaDisplayMode";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "zum — Automatize operações com QR Codes inteligentes" },
+      { title: "ZRCODE — Automatize operações com QR Codes inteligentes" },
       {
         name: "description",
         content:
@@ -67,7 +67,7 @@ export function Nav() {
     <header className="sticky top-0 z-50 border-b border-border bg-card/90 backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
         <a href="#">
-          <img src="/logo.svg" alt="zum" className="h-8" />
+          <img src="/logo.svg" alt="ZRCODE" className="h-8" />
         </a>
         <nav className="hidden items-center gap-6 text-sm text-muted-foreground md:flex">
           <a href="#fluxo" className="transition-colors hover:text-foreground">Fluxo Operacional</a>
@@ -515,7 +515,7 @@ function AiSection() {
                 <Brain className="h-4 w-4" />
               </div>
               <div>
-                <div className="text-sm font-medium text-foreground">Assistente zum</div>
+                <div className="text-sm font-medium text-foreground">Assistente ZRCODE</div>
                 <div className="text-xs text-muted-foreground">Base de conhecimento ativa · 3 documentos</div>
               </div>
               <div className="ml-auto h-2 w-2 rounded-full bg-green-500" />
@@ -966,9 +966,9 @@ export function Footer() {
     <footer className="border-t border-white/10 bg-[#133249] py-8 text-background">
       <div className="mx-auto flex max-w-6xl flex-col items-center gap-4 px-6 md:flex-row md:justify-between">
         <div className="flex items-center gap-2">
-          <img src="/logo.svg" alt="zum" className="h-6" />
+          <img src="/logo.svg" alt="ZRCODE" className="h-6" />
         </div>
-        <p className="text-sm text-background/30">© 2026 zum. Todos os direitos reservados.</p>
+        <p className="text-sm text-background/30">© 2026 ZRCODE. Todos os direitos reservados.</p>
         <div className="flex gap-4 text-sm text-background/30">
           <Link to="/privacidade" className="transition-colors hover:text-background/60">Privacidade</Link>
           <Link to="/termos" className="transition-colors hover:text-background/60">Termos</Link>

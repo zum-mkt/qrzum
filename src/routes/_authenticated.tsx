@@ -85,7 +85,7 @@ function AuthLayout() {
     <div className="flex min-h-screen bg-secondary/40">
       <aside className="hidden w-64 shrink-0 border-r border-border bg-card p-4 md:flex md:flex-col">
         <Link to="/dashboard" className="mb-8 px-2">
-          <img src="/logo.svg" alt="zum" className="h-7" />
+          <img src="/logo.svg" alt="ZRCODE" className="h-7" />
         </Link>
         <nav className="flex flex-col gap-1">
           <NavItem to="/dashboard" icon={LayoutDashboard} label="Dashboard" />
@@ -114,7 +114,7 @@ function AuthLayout() {
       <div className="flex-1">
         <header className="flex items-center justify-between border-b border-border bg-card px-4 py-3 md:hidden">
           <Link to="/dashboard">
-            <img src="/logo.svg" alt="zum" className="h-6" />
+            <img src="/logo.svg" alt="ZRCODE" className="h-6" />
           </Link>
           <div className="flex gap-2">
             <Link to="/create"><Button size="sm" variant="outline"><Plus className="h-4 w-4" /></Button></Link>
@@ -130,7 +130,7 @@ function AuthLayout() {
           {showAssistant && (
             <AiChatPanel
               agentSlug="dashboard_assistant"
-              agentName="Assistente QRzum"
+              agentName="Assistente ZRCODE"
               onClose={() => setShowAssistant(false)}
               className="w-80 h-[480px] md:w-96"
             />

@@ -4,8 +4,8 @@ import { Nav, Footer } from "./index";
 export const Route = createFileRoute("/termos")({
   head: () => ({
     meta: [
-      { title: "Termos de Uso — zum" },
-      { name: "description", content: "Termos de Uso da plataforma zum." },
+      { title: "Termos de Uso — ZRCODE" },
+      { name: "description", content: "Termos de Uso da plataforma ZRCODE." },
     ],
   }),
   component: TermsPage,
@@ -23,7 +23,7 @@ function TermsPage() {
           <section>
             <p>
               Estes Termos de Uso ("Termos") regulam o acesso e uso da plataforma{" "}
-              <strong>zum</strong> ("zum", "nós", "plataforma"), que permite criar, gerenciar e
+              <strong>ZRCODE</strong> ("ZRCODE", "nós", "plataforma"), que permite criar, gerenciar e
               rastrear QR Codes dinâmicos, fluxos operacionais, formulários, provas de presença,
               registro de ponto e assistentes de IA. Ao criar uma conta ou usar a plataforma,
               você declara ter lido, compreendido e aceito integralmente estes Termos.
@@ -32,7 +32,7 @@ function TermsPage() {
 
           <Section title="1. Objeto do serviço">
             <p>
-              A zum fornece uma plataforma de software como serviço (SaaS) para geração de QR
+              A ZRCODE fornece uma plataforma de software como serviço (SaaS) para geração de QR
               Codes dinâmicos e automação de operações de campo, incluindo, entre outras
               funcionalidades: links dinâmicos, PDFs, vCards, Wi-Fi, listas de links,
               fluxos operacionais com validação por GPS e/ou senha, formulários de coleta de
@@ -62,11 +62,11 @@ function TermsPage() {
           <Section title="4. Uso aceitável">
             <p>Ao usar a plataforma, você concorda em não:</p>
             <ul className="list-disc space-y-2 pl-6">
-              <li>Utilizar a zum para fins ilegais, fraudulentos, difamatórios ou que violem direitos de terceiros;</li>
+              <li>Utilizar a ZRCODE para fins ilegais, fraudulentos, difamatórios ou que violem direitos de terceiros;</li>
               <li>Criar QR Codes, formulários ou fluxos que coletem dados pessoais sem base legal adequada ou sem informar os titulares;</li>
               <li>Enviar spam, phishing, malware ou conteúdo enganoso através de QR Codes gerados na plataforma;</li>
               <li>Tentar acessar, sem autorização, dados de outros clientes ou vulnerar a segurança da plataforma;</li>
-              <li>Sobrecarregar a infraestrutura da zum com uso automatizado abusivo (scraping, ataques de negação de serviço, etc.).</li>
+              <li>Sobrecarregar a infraestrutura da ZRCODE com uso automatizado abusivo (scraping, ataques de negação de serviço, etc.).</li>
             </ul>
             <p>
               O descumprimento pode resultar em suspensão ou encerramento imediato da conta, sem prejuízo de outras medidas cabíveis.
@@ -79,7 +79,7 @@ function TermsPage() {
               imagens, formulários, bases de conhecimento de IA) e pelos dados pessoais de
               terceiros que coleta através de seus QR Codes, incluindo garantir base legal
               adequada perante a LGPD e demais legislações aplicáveis, especialmente no uso de
-              geolocalização, provas de presença e registro de ponto de colaboradores. A zum atua
+              geolocalização, provas de presença e registro de ponto de colaboradores. A ZRCODE atua
               como operadora desses dados, processando-os conforme suas instruções e a nossa
               Política de Privacidade.
             </p>
@@ -88,7 +88,7 @@ function TermsPage() {
           <Section title="6. Propriedade intelectual">
             <p>
               A plataforma, sua marca, design, código-fonte e demais elementos são de
-              propriedade da zum e protegidos por leis de propriedade intelectual. Estes Termos
+              propriedade da ZRCODE e protegidos por leis de propriedade intelectual. Estes Termos
               não transferem qualquer direito de propriedade intelectual sobre a plataforma ao
               cliente. O conteúdo inserido pelo cliente (textos, imagens, dados) permanece de
               propriedade do próprio cliente.
@@ -108,13 +108,13 @@ function TermsPage() {
 
           <Section title="8. Limitação de responsabilidade">
             <p>
-              A zum fornece ferramentas para automação de processos, mas não se responsabiliza
+              A ZRCODE fornece ferramentas para automação de processos, mas não se responsabiliza
               por decisões operacionais, trabalhistas ou legais tomadas com base nos dados
               gerados pela plataforma. Registros de ponto e provas de presença são fornecidos
               como evidência técnica (com validação de GPS, dispositivo e/ou biometria local),
               mas cabe ao cliente garantir conformidade com a legislação trabalhista aplicável ao
               seu uso específico. Na máxima extensão permitida por lei, a responsabilidade total
-              da zum por danos decorrentes do uso da plataforma fica limitada ao valor pago pelo
+              da ZRCODE por danos decorrentes do uso da plataforma fica limitada ao valor pago pelo
               cliente nos 12 meses anteriores ao evento gerador.
             </p>
           </Section>

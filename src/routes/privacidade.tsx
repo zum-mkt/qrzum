@@ -4,8 +4,8 @@ import { Nav, Footer } from "./index";
 export const Route = createFileRoute("/privacidade")({
   head: () => ({
     meta: [
-      { title: "Política de Privacidade — zum" },
-      { name: "description", content: "Política de Privacidade da plataforma zum." },
+      { title: "Política de Privacidade — ZRCODE" },
+      { name: "description", content: "Política de Privacidade da plataforma ZRCODE." },
     ],
   }),
   component: PrivacyPage,
@@ -22,7 +22,7 @@ function PrivacyPage() {
         <div className="prose-legal mt-10 space-y-8 text-foreground/90">
           <section>
             <p>
-              Esta Política de Privacidade descreve como a <strong>zum</strong> ("zum", "nós")
+              Esta Política de Privacidade descreve como a <strong>ZRCODE</strong> ("ZRCODE", "nós")
               coleta, usa, armazena e protege dados pessoais de usuários que criam conta na
               plataforma ("clientes") e de pessoas que interagem com QR Codes, formulários,
               fluxos operacionais, páginas de links e registros de ponto/presença gerados por
@@ -34,11 +34,11 @@ function PrivacyPage() {
 
           <Section title="1. Quem controla os dados">
             <p>
-              A zum atua como <strong>controladora</strong> dos dados de cadastro dos clientes
+              A ZRCODE atua como <strong>controladora</strong> dos dados de cadastro dos clientes
               da plataforma (conta, autenticação, cobrança) e como <strong>operadora</strong> dos
               dados coletados em nome do cliente através dos QR Codes que ele configura
               (respostas de formulário, escaneamentos, presenças, registros de ponto). Cabe a
-              cada cliente da zum garantir base legal adequada para coletar dados de seus
+              cada cliente da ZRCODE garantir base legal adequada para coletar dados de seus
               próprios usuários finais (colaboradores, clientes, visitantes).
             </p>
           </Section>
@@ -54,7 +54,7 @@ function PrivacyPage() {
               <li>
                 <strong>Dados de cobrança:</strong> plano contratado, status de assinatura e
                 histórico de pagamentos. Dados de cartão de crédito e Pix são processados
-                diretamente pelo Mercado Pago — a zum não armazena números de cartão.
+                diretamente pelo Mercado Pago — a ZRCODE não armazena números de cartão.
               </li>
               <li>
                 <strong>Dados de uso e scans:</strong> data/hora, localização aproximada (país,
@@ -81,7 +81,7 @@ function PrivacyPage() {
                 <strong>Dados de registro de ponto:</strong> horário de entrada/saída, geofence,
                 identificador do dispositivo vinculado ao funcionário e PIN. Quando a biometria
                 (impressão digital / Face ID via WebAuthn) é usada, a verificação ocorre
-                localmente no dispositivo do usuário — a zum não recebe nem armazena dados
+                localmente no dispositivo do usuário — a ZRCODE não recebe nem armazena dados
                 biométricos brutos, apenas a confirmação criptográfica de que a verificação
                 ocorreu.
               </li>
@@ -167,7 +167,7 @@ function PrivacyPage() {
             </ul>
             <p>
               Usuários finais que tiveram dados coletados através de um QR Code de um cliente da
-              zum devem, preferencialmente, dirigir a solicitação diretamente a esse cliente
+              ZRCODE devem, preferencialmente, dirigir a solicitação diretamente a esse cliente
               (controlador dos dados). Ainda assim, pode entrar em contato conosco pelo canal
               abaixo que encaminharemos a solicitação.
             </p>

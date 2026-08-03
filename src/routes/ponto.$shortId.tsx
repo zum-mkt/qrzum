@@ -613,7 +613,7 @@ function PontoPage() {
           </div>
         )}
 
-        <p className="text-center text-xs text-gray-300">QRzum · Registro de Presença</p>
+        <p className="text-center text-xs text-gray-300">ZRCODE · Registro de Presença</p>
       </div>
     </div>
   );
