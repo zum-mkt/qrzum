@@ -76,6 +76,14 @@ function Nav() {
           <a href="#ia" className="transition-colors hover:text-foreground">IA</a>
           <a href="#analytics" className="transition-colors hover:text-foreground">Analytics</a>
           <a href="#planos" className="transition-colors hover:text-foreground">Planos</a>
+          <a
+            href="https://zrcode.gitbook.io/zrcode/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="transition-colors hover:text-foreground"
+          >
+            Documentação
+          </a>
         </nav>
         <div className="flex gap-2">
           <a href="#entrar">
