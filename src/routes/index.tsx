@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -62,7 +62,7 @@ function Index() {
 }
 
 /* ─────────────── Navigation ─────────────── */
-function Nav() {
+export function Nav() {
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-card/90 backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
@@ -961,7 +961,7 @@ function AuthSection() {
 }
 
 /* ─────────────── Footer ─────────────── */
-function Footer() {
+export function Footer() {
   return (
     <footer className="border-t border-white/10 bg-[#133249] py-8 text-background">
       <div className="mx-auto flex max-w-6xl flex-col items-center gap-4 px-6 md:flex-row md:justify-between">
@@ -970,8 +970,8 @@ function Footer() {
         </div>
         <p className="text-sm text-background/30">© 2026 zum. Todos os direitos reservados.</p>
         <div className="flex gap-4 text-sm text-background/30">
-          <a href="#" className="transition-colors hover:text-background/60">Privacidade</a>
-          <a href="#" className="transition-colors hover:text-background/60">Termos</a>
+          <Link to="/privacidade" className="transition-colors hover:text-background/60">Privacidade</Link>
+          <Link to="/termos" className="transition-colors hover:text-background/60">Termos</Link>
         </div>
       </div>
     </footer>

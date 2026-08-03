@@ -9,6 +9,8 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TermosRouteImport } from './routes/termos'
+import { Route as PrivacidadeRouteImport } from './routes/privacidade'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
@@ -52,6 +54,16 @@ import { Route as ApiPontoWebauthnAuthOptionsRouteImport } from './routes/api/po
 import { Route as ApiPontoAdminWebauthnClearRouteImport } from './routes/api/ponto/admin/webauthn-clear'
 import { Route as ApiPontoAdminDeviceResetRouteImport } from './routes/api/ponto/admin/device-reset'
 
+const TermosRoute = TermosRouteImport.update({
+  id: '/termos',
+  path: '/termos',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacidadeRoute = PrivacidadeRouteImport.update({
+  id: '/privacidade',
+  path: '/privacidade',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
@@ -275,6 +287,8 @@ const ApiPontoAdminDeviceResetRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/privacidade': typeof PrivacidadeRoute
+  '/termos': typeof TermosRoute
   '/analytics': typeof AuthenticatedAnalyticsRouteWithChildren
   '/billing': typeof AuthenticatedBillingRoute
   '/bulk': typeof AuthenticatedBulkRoute
@@ -318,6 +332,8 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/privacidade': typeof PrivacidadeRoute
+  '/termos': typeof TermosRoute
   '/analytics': typeof AuthenticatedAnalyticsRouteWithChildren
   '/billing': typeof AuthenticatedBillingRoute
   '/bulk': typeof AuthenticatedBulkRoute
@@ -363,6 +379,8 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/login': typeof LoginRoute
+  '/privacidade': typeof PrivacidadeRoute
+  '/termos': typeof TermosRoute
   '/_authenticated/analytics': typeof AuthenticatedAnalyticsRouteWithChildren
   '/_authenticated/billing': typeof AuthenticatedBillingRoute
   '/_authenticated/bulk': typeof AuthenticatedBulkRoute
@@ -408,6 +426,8 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/login'
+    | '/privacidade'
+    | '/termos'
     | '/analytics'
     | '/billing'
     | '/bulk'
@@ -451,6 +471,8 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/login'
+    | '/privacidade'
+    | '/termos'
     | '/analytics'
     | '/billing'
     | '/bulk'
@@ -495,6 +517,8 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/login'
+    | '/privacidade'
+    | '/termos'
     | '/_authenticated/analytics'
     | '/_authenticated/billing'
     | '/_authenticated/bulk'
@@ -540,6 +564,8 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   LoginRoute: typeof LoginRoute
+  PrivacidadeRoute: typeof PrivacidadeRoute
+  TermosRoute: typeof TermosRoute
   AiShortIdRoute: typeof AiShortIdRoute
   FShortIdRoute: typeof FShortIdRoute
   LinksShortIdRoute: typeof LinksShortIdRoute
@@ -569,6 +595,20 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/termos': {
+      id: '/termos'
+      path: '/termos'
+      fullPath: '/termos'
+      preLoaderRoute: typeof TermosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacidade': {
+      id: '/privacidade'
+      path: '/privacidade'
+      fullPath: '/privacidade'
+      preLoaderRoute: typeof PrivacidadeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/login': {
       id: '/login'
       path: '/login'
@@ -920,6 +960,8 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   LoginRoute: LoginRoute,
+  PrivacidadeRoute: PrivacidadeRoute,
+  TermosRoute: TermosRoute,
   AiShortIdRoute: AiShortIdRoute,
   FShortIdRoute: FShortIdRoute,
   LinksShortIdRoute: LinksShortIdRoute,
