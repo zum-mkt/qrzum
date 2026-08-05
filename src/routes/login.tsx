@@ -9,11 +9,15 @@ export const Route = createFileRoute("/login")({
   head: () => ({
     meta: [{ title: "Entrar — ZRCODE" }],
   }),
+  validateSearch: (search: Record<string, unknown>) => ({
+    tab: (search.tab as "signup" | "signin" | undefined) ?? "signin",
+  }),
   component: LoginPage,
 });
 
 function LoginPage() {
   const navigate = useNavigate();
+  const { tab } = Route.useSearch();
   const [checking, setChecking] = useState(true);
 
   useEffect(() => {
@@ -36,7 +40,7 @@ function LoginPage() {
           <h1 className="text-2xl font-bold text-foreground">ENTRAR</h1>
           <p className="mt-1 text-sm text-muted-foreground">Acesse sua conta ou crie seu cadastro gratuitamente</p>
           <div className="mt-8">
-            <AuthForm defaultTab="signin" />
+            <AuthForm defaultTab={tab} />
           </div>
         </div>
       </div>

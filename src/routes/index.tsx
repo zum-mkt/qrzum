@@ -35,7 +35,7 @@ function Index() {
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       if (data.session) navigate({ to: "/dashboard" });
-      else if (isStandalonePwa()) navigate({ to: "/login", replace: true });
+      else if (isStandalonePwa()) navigate({ to: "/login", search: { tab: "signin" }, replace: true });
       else setChecking(false);
     });
   }, [navigate]);
@@ -86,12 +86,12 @@ export function Nav() {
           </a>
         </nav>
         <div className="flex gap-2">
-          <a href="#entrar">
+          <Link to="/login" search={{ tab: "signin" }}>
             <Button variant="outline" size="sm">Entrar</Button>
-          </a>
-          <a href="#entrar">
+          </Link>
+          <Link to="/login" search={{ tab: "signup" }}>
             <Button size="sm" className="hidden sm:inline-flex">Criar conta grátis</Button>
-          </a>
+          </Link>
         </div>
       </div>
     </header>
